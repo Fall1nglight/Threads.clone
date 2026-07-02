@@ -44,14 +44,10 @@ public class GetPost : IEndpoint
         if (post == null)
             return TypedResults.NotFound();
 
-        // todo | move this to filter
-        if (post.User.IsPrivate)
+        var userId = claimsPrincipal.GetUserId();
+
+        if (post.User.IsPrivate && post.User.Id != userId)
         {
-            var userId = claimsPrincipal.GetUserId();
-
-            if (post.UserId != userId)
-                return TypedResults.Forbid();
-
             // checks whether the requesting user follows the post owner
             bool isFollowing = await db.Follows.AnyAsync(
                 f =>

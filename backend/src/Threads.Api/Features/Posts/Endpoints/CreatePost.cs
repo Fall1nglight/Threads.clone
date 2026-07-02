@@ -13,7 +13,7 @@ public class CreatePost : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("/", Handle).WithValidation<Request>().WithSummary("Creates a post");
+        builder.MapPost("", Handle).WithValidation<Request>().WithSummary("Creates a post");
     }
 
     public record Request(string Content);

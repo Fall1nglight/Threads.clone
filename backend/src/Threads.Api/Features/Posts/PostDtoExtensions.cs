@@ -3,7 +3,7 @@ using Threads.Api.Data.Users;
 
 namespace Threads.Api.Features.Posts;
 
-public static class PostExtensions
+public static class PostDtoExtensions
 {
     public static IQueryable<PostDto> ToDto(this IQueryable<Post> query)
     {
