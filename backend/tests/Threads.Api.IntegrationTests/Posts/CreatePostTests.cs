@@ -22,7 +22,10 @@ public class CreatePostTests : IntegrationTestBase
         var before = DateTime.UtcNow;
         var postContent = "Hello from Alice";
 
-        var response = await client.PostAsJsonAsync(PostTestRoutes.Create, new { content = postContent });
+        var response = await client.PostAsJsonAsync(
+            PostTestRoutes.Create,
+            new { content = postContent }
+        );
         var after = DateTime.UtcNow;
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);

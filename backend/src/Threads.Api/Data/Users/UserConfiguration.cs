@@ -13,7 +13,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         //  there is no additional information about them
 
         builder.HasKey(x => x.Id);
-        
+
         builder.HasIndex(x => x.Email).IsUnique();
 
         builder.Property(x => x.Email).HasMaxLength(100);
