@@ -5,11 +5,13 @@ using Threads.Api.Data.Shared.Interfaces;
 
 namespace Threads.Api.Features.Posts.Endpoints;
 
-public class GetPosts : IEndpoint
+public class GetAnonymousFeedPosts : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/", Handle).WithSummary("Retrieves posts from public accounts");
+        builder
+            .MapGet("/anonymous-feed", Handle)
+            .WithSummary("Retrieves posts from public accounts for unauthenticated users");
     }
 
     private static async Task<Ok<PagedResponse<PostDto>>> Handle(
@@ -19,7 +21,7 @@ public class GetPosts : IEndpoint
     )
     {
         var posts = await db
-            .Posts.Where(p => !p.User.IsPrivate)
+            .Posts.WhereVisibleInAnonymousFeed()
             .ToDto()
             .ToPagedResponse(request, cancellationToken);
 

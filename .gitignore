@@ -15,3 +15,6 @@ Desktop.ini
 *.temp
 *.bak
 *.log
+
+.codex/
+.agents/

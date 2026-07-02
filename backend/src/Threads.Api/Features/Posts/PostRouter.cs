@@ -8,10 +8,15 @@ public class PostRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        builder
-            .MapGroup("/posts")
-            .RequireAuthorization()
-            .MapEndpoint<GetPosts>()
+        var anonymousPostsRoute = builder.MapGroup("/posts");
+
+        anonymousPostsRoute.MapEndpoint<GetAnonymousFeedPosts>();
+
+        var authorizedPostsRoute = builder.MapGroup("/posts").RequireAuthorization();
+
+        authorizedPostsRoute
+            .MapEndpoint<GetGlobalFeedPosts>()
+            .MapEndpoint<GetMyFeedPosts>()
             .MapEndpoint<GetPost>()
             .MapEndpoint<CreatePost>()
             .MapEndpoint<UpdatePost>()
