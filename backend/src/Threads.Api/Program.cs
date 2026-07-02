@@ -9,12 +9,12 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
     builder.AddServices();
-    
+
     var app = builder.Build();
     app.Configure();
     app.Run();
 }
-catch (Exception ex) when(ex is not HostAbortedException)
+catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "Application terminated unexpectedly");
 }
