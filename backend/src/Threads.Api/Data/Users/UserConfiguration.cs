@@ -7,11 +7,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        // IsRequired() is unnecessary for required properties
-        //  and also for value types
-        // DateTime properties are not configured because
-        //  there is no additional information about them
-
         builder.HasKey(x => x.Id);
 
         builder.HasIndex(x => x.Email).IsUnique();

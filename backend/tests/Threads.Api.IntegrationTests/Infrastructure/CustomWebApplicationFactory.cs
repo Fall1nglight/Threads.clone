@@ -20,7 +20,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // configures jwt options
         builder.ConfigureAppConfiguration(
             (_, configBuilder) =>
             {
