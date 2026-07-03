@@ -2,9 +2,6 @@
 
 namespace Threads.Api.Data.Follows;
 
-// functionality
-// - users can follow/unfollow other users
-
 public class Follow
 {
     public Guid FollowerId { get; init; }

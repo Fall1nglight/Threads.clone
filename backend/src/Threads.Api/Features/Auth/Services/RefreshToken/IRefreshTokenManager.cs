@@ -2,7 +2,6 @@
 
 public interface IRefreshTokenManager
 {
-    // Hozzon létre egyet
     Task<string> GenerateAsync(Guid userId, CancellationToken cancellationToken);
 
     Task<TokenRotationResult> RotateAsync(string plainToken, CancellationToken cancellationToken);

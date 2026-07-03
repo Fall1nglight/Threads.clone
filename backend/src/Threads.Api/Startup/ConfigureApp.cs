@@ -1,29 +1,31 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Serilog;
 using Threads.Api.Data.Shared.Interfaces;
 
-namespace Threads.Api;
+namespace Threads.Api.Startup;
 
 public static class ConfigureApp
 {
-    public static WebApplication Configure(this WebApplication app)
+    public static IApplicationBuilder UseMiddlewares(this IApplicationBuilder app)
     {
         app.UseSerilogRequestLogging();
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.AddEndpoints();
+
         return app;
     }
 
-    private static WebApplication AddEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder builder)
     {
         var assembly = typeof(Program).Assembly;
 
         var routers = assembly
             .GetTypes()
-            .Where(x => x.IsClass && x.IsAssignableTo(typeof(IEndpointRouter)) && !x.IsAbstract);
+            .Where(type =>
+                type.IsClass && type.IsAssignableTo(typeof(IEndpointRouter)) && !type.IsAbstract
+            );
 
         foreach (var router in routers)
         {
@@ -35,9 +37,9 @@ public static class ConfigureApp
             if (mapMethod == null)
                 continue;
 
-            mapMethod.Invoke(null, [app]);
+            mapMethod.Invoke(null, [builder]);
         }
 
-        return app;
+        return builder;
     }
 }

@@ -9,12 +9,9 @@ public class FollowConfiguration : IEntityTypeConfiguration<Follow>
     {
         builder.HasKey(x => new { x.FollowerId, x.FollowedId });
 
-        // enables to store Enums as strings in the database
-        //  which improves readability
+        //  storing Enums as string improves readibility in db
         builder.Property(x => x.Status).HasConversion<string>();
 
-        // restrict delete behaviour prevents the deletion of the parent entity
-        //  if related children exist
         builder
             .HasOne(x => x.Follower)
             .WithMany()
