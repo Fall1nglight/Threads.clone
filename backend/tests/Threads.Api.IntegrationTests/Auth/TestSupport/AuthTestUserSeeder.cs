@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Threads.Api.Data.Users;
 
-namespace Threads.Api.IntegrationTests.Auth.Infrastructure;
+namespace Threads.Api.IntegrationTests.Auth.TestSupport;
 
 public sealed class AuthTestUserSeeder
 {

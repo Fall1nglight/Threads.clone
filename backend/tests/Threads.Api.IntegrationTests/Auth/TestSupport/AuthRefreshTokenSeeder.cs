@@ -3,7 +3,7 @@ using Threads.Api.Data.Tokens;
 using Threads.Api.Data.Users;
 using Threads.Api.Features.Auth.Services.RefreshToken;
 
-namespace Threads.Api.IntegrationTests.Auth.Infrastructure;
+namespace Threads.Api.IntegrationTests.Auth.TestSupport;
 
 public sealed class AuthRefreshTokenSeeder
 {

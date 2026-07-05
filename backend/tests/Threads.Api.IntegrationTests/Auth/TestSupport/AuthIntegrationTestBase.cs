@@ -6,7 +6,7 @@ using Threads.Api.Data.Users;
 using Threads.Api.Features.Auth.Services.RefreshToken;
 using Threads.Api.IntegrationTests.Infrastructure;
 
-namespace Threads.Api.IntegrationTests.Auth.Infrastructure;
+namespace Threads.Api.IntegrationTests.Auth.TestSupport;
 
 public abstract class AuthIntegrationTestBase : IntegrationTestBase
 {

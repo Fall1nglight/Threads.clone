@@ -48,7 +48,7 @@ public class Login : IEndpoint
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return CustomResults.Unauthorized("The provided email is incorrect.");
+            return CustomResults.Unauthorized("The provided email is incorrect");
 
         var isValidPassword = await userManager.CheckPasswordAsync(user, request.Password);
         if (!isValidPassword)

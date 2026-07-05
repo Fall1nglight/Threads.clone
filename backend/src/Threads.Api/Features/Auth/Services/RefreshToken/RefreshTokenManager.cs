@@ -97,10 +97,10 @@ public class RefreshTokenManager : IRefreshTokenManager
         CancellationToken cancellationToken
     )
     {
-        var hashedValue = _refreshTokenProvider.Hash(plainToken);
+        var tokenHash = _refreshTokenProvider.Hash(plainToken);
 
         var token = await _db.RefreshTokens.FirstOrDefaultAsync(
-            rt => rt.TokenHash == hashedValue && rt.UserId == userId,
+            rt => rt.TokenHash == tokenHash && rt.UserId == userId,
             cancellationToken
         );
 

@@ -2,7 +2,7 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Tokens;
-using Threads.Api.IntegrationTests.Auth.Infrastructure;
+using Threads.Api.IntegrationTests.Auth.TestSupport;
 using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Auth;
