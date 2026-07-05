@@ -3,13 +3,11 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Users;
 using Threads.Api.Features.Auth.Services.JwtProvider;
-using Threads.Api.IntegrationTests.Posts;
 
 namespace Threads.Api.IntegrationTests.Infrastructure;
 
@@ -54,12 +52,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         );
 
         return client;
-    }
-
-    protected PostTestSeeder CreatePostSeeder()
-    {
-        var userManager = Services.GetRequiredService<UserManager<User>>();
-        return new PostTestSeeder(Db, userManager);
     }
 
     protected async Task<T> ReadJsonAsync<T>(HttpResponseMessage response)
