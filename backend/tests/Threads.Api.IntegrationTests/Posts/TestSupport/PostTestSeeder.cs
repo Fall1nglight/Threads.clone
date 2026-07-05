@@ -4,18 +4,10 @@ using Threads.Api.Data.Posts;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Users;
 
-namespace Threads.Api.IntegrationTests.Posts;
+namespace Threads.Api.IntegrationTests.Posts.TestSupport;
 
 public sealed class PostTestSeeder
 {
-    private static readonly DateTime BaseTime = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
-    private static readonly Guid LowerTieBreakerPostId = Guid.Parse(
-        "11111111-1111-1111-1111-111111111111"
-    );
-    private static readonly Guid HigherTieBreakerPostId = Guid.Parse(
-        "ffffffff-ffff-ffff-ffff-ffffffffffff"
-    );
-
     private readonly AppDbContext _db;
     private readonly UserManager<User> _userManager;
 
@@ -27,71 +19,85 @@ public sealed class PostTestSeeder
 
     public async Task<PostVisibilitySeed> SeedVisibilityGraphAsync()
     {
-        // create test users
-        var alice = await CreateUserAsync("alice");
-        var alicePrivate = await CreateUserAsync("alicePrivate", isPrivate: true);
-        var bobPublic = await CreateUserAsync("bobPublic");
-        var carolPublicFollowed = await CreateUserAsync("carolPublicFollowed");
-        var dinaPrivateFollowed = await CreateUserAsync("dinaPrivateFollowed", isPrivate: true);
-        var erinPrivatePending = await CreateUserAsync("erinPrivatePending", isPrivate: true);
-        var frankPrivateStranger = await CreateUserAsync("frankPrivateStranger", isPrivate: true);
-        var henry = await CreateUserAsync("henry");
+        var alice = await CreateUserAsync(username: PostTestData.AliceUsername);
 
-        // create follows
-        // alice -> carolPublic, dinaPrivate, erinPrivate
+        var alicePrivate = await CreateUserAsync(
+            username: PostTestData.AlicePrivateUsername,
+            isPrivate: true
+        );
+
+        var bobPublic = await CreateUserAsync(username: PostTestData.BobPublicUsername);
+        var carolPublicFollowed = await CreateUserAsync(
+            username: PostTestData.CarolPublicFollowedUsername
+        );
+
+        var dinaPrivateFollowed = await CreateUserAsync(
+            username: PostTestData.DinaPrivateFollowedUsername,
+            isPrivate: true
+        );
+
+        var erinPrivatePending = await CreateUserAsync(
+            username: PostTestData.ErinPrivatePendingUsername,
+            isPrivate: true
+        );
+
+        var frankPrivateStranger = await CreateUserAsync(
+            username: PostTestData.FrankPrivateStrangerUsername,
+            isPrivate: true
+        );
+
+        var henry = await CreateUserAsync(username: PostTestData.HenryUsername);
+
         await CreateFollowAsync(alice, carolPublicFollowed, FollowStatus.Accepted);
         await CreateFollowAsync(alice, dinaPrivateFollowed, FollowStatus.Accepted);
         await CreateFollowAsync(alice, erinPrivatePending, FollowStatus.Pending);
 
-        // create posts - alice
-        var aliceOwnPost = await CreatePostAsync(alice, "Alice own post", BaseTime.AddMinutes(1));
+        var aliceOwnPost = await CreatePostAsync(
+            owner: alice,
+            content: PostTestData.AliceOwnPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(1)
+        );
 
-        // create posts - alice (private)
         var alicePrivateOwnPost = await CreatePostAsync(
-            alicePrivate,
-            "Alice private own post",
-            BaseTime.AddMinutes(2)
+            owner: alicePrivate,
+            content: PostTestData.AlicePrivateOwnPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(2)
         );
 
-        // create posts - bob
         var bobPublicPost = await CreatePostAsync(
-            bobPublic,
-            "Bob public post",
-            BaseTime.AddMinutes(3)
+            owner: bobPublic,
+            content: PostTestData.BobPublicPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(3)
         );
 
-        // create posts - carol
         var carolPublicFollowedPost = await CreatePostAsync(
-            carolPublicFollowed,
-            "Carol public followed post",
-            BaseTime.AddMinutes(4)
+            owner: carolPublicFollowed,
+            content: PostTestData.CarolPublicFollowedPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(4)
         );
 
-        // create posts - dina
         var dinaPrivateFollowedPost = await CreatePostAsync(
-            dinaPrivateFollowed,
-            "Dina private followed post",
-            BaseTime.AddMinutes(5)
+            owner: dinaPrivateFollowed,
+            content: PostTestData.DinaPrivateFollowedPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(5)
         );
 
-        // create posts - erin
         var erinPrivatePendingPost = await CreatePostAsync(
-            erinPrivatePending,
-            "Erin private pending post",
-            BaseTime.AddMinutes(6)
+            owner: erinPrivatePending,
+            content: PostTestData.ErinPrivatePendingPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(6)
         );
 
-        // create posts - frank
         var frankPrivateStrangerPost = await CreatePostAsync(
-            frankPrivateStranger,
-            "Frank private stranger post",
-            BaseTime.AddMinutes(7)
+            owner: frankPrivateStranger,
+            content: PostTestData.FrankPrivateStrangerPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(7)
         );
 
         var deletedPublicPost = await CreatePostAsync(
-            bobPublic,
-            "Deleted public post",
-            BaseTime.AddMinutes(8),
+            owner: bobPublic,
+            content: PostTestData.DeletedPublicPostContent,
+            createdAtUtc: PostTestData.BaseTime.AddMinutes(8),
             isDeleted: true
         );
 
@@ -117,18 +123,19 @@ public sealed class PostTestSeeder
 
     public async Task<(User User, List<Post> Posts)> SeedBulkPublicPostsAsync(int count)
     {
-        var user = await CreateUserAsync($"bulk-{Guid.NewGuid():N}");
+        var user = await CreateUserAsync(
+            username: $"{PostTestData.BulkUsernamePrefix}-{Guid.NewGuid():N}"
+        );
         var posts = new List<Post>();
 
         for (var i = 0; i < count; i++)
         {
             var post = new Post
             {
-                // todo | id-t itt is reviewzni
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
-                Content = $"Bulk public post {i}",
-                CreatedAtUtc = BaseTime.AddMinutes(i),
+                Content = $"{PostTestData.BulkPostContentPrefix} {i}",
+                CreatedAtUtc = PostTestData.BaseTime.AddMinutes(i),
             };
 
             posts.Add(post);
@@ -146,22 +153,25 @@ public sealed class PostTestSeeder
         Post HigherIdPost
     )> SeedSameTimestampPostsAsync()
     {
-        var user = await CreateUserAsync($"sameTimestamp-{Guid.NewGuid():N}");
-        var timestamp = BaseTime.AddHours(1);
+        var user = await CreateUserAsync(
+            username: $"{PostTestData.SameTimestampUsernamePrefix}-{Guid.NewGuid():N}"
+        );
+
+        var timestamp = PostTestData.BaseTime.AddHours(1);
 
         var lowerIdPost = new Post
         {
-            Id = LowerTieBreakerPostId,
+            Id = PostTestData.LowerTieBreakerPostId,
             UserId = user.Id,
-            Content = "Same timestamp lower id",
+            Content = PostTestData.SameTimestampLowerPostContent,
             CreatedAtUtc = timestamp,
         };
 
         var higherIdPost = new Post
         {
-            Id = HigherTieBreakerPostId,
+            Id = PostTestData.HigherTieBreakerPostId,
             UserId = user.Id,
-            Content = "Same timestamp higher id",
+            Content = PostTestData.SameTimestampHigherPostContent,
             CreatedAtUtc = timestamp,
         };
 
@@ -175,7 +185,6 @@ public sealed class PostTestSeeder
     {
         var user = new User
         {
-            // todo | ezt ellenőrizni, hogy kell-e
             Id = Guid.NewGuid(),
             UserName = username,
             Email = $"{username}@example.test",
@@ -184,7 +193,7 @@ public sealed class PostTestSeeder
             CreatedAtUtc = DateTime.UtcNow,
         };
 
-        var result = await _userManager.CreateAsync(user, "Test123!");
+        var result = await _userManager.CreateAsync(user, PostTestData.ValidPassword);
         if (!result.Succeeded)
         {
             var errors = string.Join(" | ", result.Errors.Select(error => error.Description));
@@ -204,7 +213,6 @@ public sealed class PostTestSeeder
         Guid? id = null
     )
     {
-        // todo | itt is az id-t megnézni újra
         var post = new Post
         {
             Id = id ?? Guid.NewGuid(),

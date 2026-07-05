@@ -3,11 +3,14 @@ using System.Net.Http.Json;
 using System.Text;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Threads.Api.Data.Users;
+using Threads.Api.Features.Posts.Endpoints;
 using Threads.Api.IntegrationTests.Infrastructure;
+using Threads.Api.IntegrationTests.Posts.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Posts;
 
-public class UpdatePostTests : IntegrationTestBase
+public class UpdatePostTests : PostIntegrationTestBase
 {
     public UpdatePostTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -15,26 +18,32 @@ public class UpdatePostTests : IntegrationTestBase
     [Fact]
     public async Task UpdatePost_ShouldUpdatePost_WhenRequesterIsOwner()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var originalCreatedAt = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
-        var post = await seeder.CreatePostAsync(alice, "Original content", originalCreatedAt);
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(
+            owner: alice,
+            content: PostTestData.ValidContent,
+            createdAtUtc: PostTestData.BaseTime
+        );
+
         var client = await CreateAuthenticatedClientAsync(alice);
         var before = DateTime.UtcNow;
+        var requestBody = CreateUpdatePostRequest(PostTestData.OtherValidContent);
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = "Updated content" }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
         var after = DateTime.UtcNow;
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         Db.ChangeTracker.Clear();
+
         var persisted = await Db.Posts.SingleAsync(p => p.Id == post.Id);
-        persisted.Content.Should().Be("Updated content");
+        persisted.Content.Should().Be(PostTestData.OtherValidContent);
         persisted.UserId.Should().Be(alice.Id);
-        persisted.CreatedAtUtc.Should().Be(originalCreatedAt);
+        persisted.CreatedAtUtc.Should().Be(PostTestData.BaseTime);
         persisted.UpdatedAtUtc.Should().NotBeNull();
         persisted.UpdatedAtUtc.Value.Should().BeOnOrAfter(before);
         persisted.UpdatedAtUtc.Value.Should().BeOnOrBefore(after);
@@ -43,84 +52,94 @@ public class UpdatePostTests : IntegrationTestBase
     [Fact]
     public async Task UpdatePost_ShouldForbidUpdate_WhenRequesterIsNotOwner()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var henry = await seeder.CreateUserAsync("henry");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var henry = await seeder.CreateUserAsync(username: PostTestData.HenryUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(henry);
+        var requestBody = CreateUpdatePostRequest(PostTestData.OtherValidContent);
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = "Attempted update" }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
 
         Db.ChangeTracker.Clear();
+
         var persisted = await Db.Posts.SingleAsync(p => p.Id == post.Id);
-        persisted.Content.Should().Be("Original content");
+        persisted.Content.Should().Be(PostTestData.ValidContent);
         persisted.UpdatedAtUtc.Should().BeNull();
     }
 
     [Fact]
     public async Task UpdatePost_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(PostTestData.OtherValidContent);
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{Guid.NewGuid()}",
-            new { content = "Updated content" }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{Guid.NewGuid()}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task UpdatePost_ShouldReturnNotFound_WhenPostIsSoftDeleted()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Deleted content", isDeleted: true);
-        var client = await CreateAuthenticatedClientAsync(alice);
-
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = "Updated content" }
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(
+            owner: alice,
+            content: PostTestData.ValidContent,
+            isDeleted: true
         );
+        var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(PostTestData.OtherValidContent);
 
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
+
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task UpdatePost_ShouldReturnBadRequest_WhenIdIsEmpty()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(PostTestData.OtherValidContent);
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{Guid.Empty}",
-            new { content = "Updated content" }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{Guid.Empty}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task UpdatePost_ShouldAcceptContentAtMaximumLength()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(PostTestData.MaxLengthContent);
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = new string('a', 600) }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
@@ -130,18 +149,23 @@ public class UpdatePostTests : IntegrationTestBase
     [InlineData(" ")]
     public async Task UpdatePost_ShouldReturnBadRequest_WhenContentIsEmpty(string? content)
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(content);
 
-        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", new { content });
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         Db.ChangeTracker.Clear();
+
         var persisted = await Db.Posts.SingleAsync(p => p.Id == post.Id);
-        persisted.Content.Should().Be("Original content");
+        persisted.Content.Should().Be(PostTestData.ValidContent);
         persisted.UpdatedAtUtc.Should().BeNull();
     }
 
@@ -151,55 +175,64 @@ public class UpdatePostTests : IntegrationTestBase
     [InlineData(999)]
     public async Task UpdatePost_ShouldReturnBadRequest_WhenContentIsTooLong(int length)
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = CreateUpdatePostRequest(PostTestData.ContentOfLength(length));
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = new string('a', length) }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         Db.ChangeTracker.Clear();
+
         var persisted = await Db.Posts.SingleAsync(p => p.Id == post.Id);
-        persisted.Content.Should().Be("Original content");
+        persisted.Content.Should().Be(PostTestData.ValidContent);
         persisted.UpdatedAtUtc.Should().BeNull();
     }
 
     [Fact]
     public async Task UpdatePost_ShouldReturnBadRequest_WhenJsonContainsUnknownProperty()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(alice);
+        var requestBody = new { content = PostTestData.OtherValidContent, unexpected = true };
 
-        var response = await client.PutAsJsonAsync(
-            $"/posts/{post.Id}",
-            new { content = "Updated content", unexpected = true }
-        );
+        // Act
+        var response = await client.PutAsJsonAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task UpdatePost_ShouldReturnBadRequest_WhenJsonIsMalformed()
     {
+        // Arrange
         var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync("alice");
-        var post = await seeder.CreatePostAsync(alice, "Original content");
+        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(alice);
-        using var content = new StringContent(
-            "{\"content\":\"Updated content\"",
+        using var requestBody = new StringContent(
+            "{\"content\":\"Valid content\"",
             Encoding.UTF8,
             "application/json"
         );
 
-        var response = await client.PutAsync($"/posts/{post.Id}", content);
+        // Act
+        var response = await client.PutAsync($"/posts/{post.Id}", requestBody);
 
+        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
+
+    private static UpdatePost.Body CreateUpdatePostRequest(string? content) =>
+        new(content ?? string.Empty);
 }
