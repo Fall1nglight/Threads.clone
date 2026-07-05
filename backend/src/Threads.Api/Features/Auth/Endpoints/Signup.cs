@@ -43,6 +43,7 @@ public class Signup : IEndpoint
             RuleFor(x => x.Password)
                 .NotEmpty()
                 .MinimumLength(8)
+                .MaximumLength(100)
                 .Matches("[A-Z]")
                 .Matches("[a-z]")
                 .Matches("[0-9]")
@@ -76,7 +77,7 @@ public class Signup : IEndpoint
             return TypedResults.Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Signup failed",
-                detail: "The provided username or email is already in use."
+                detail: "The provided username or email is already in use"
             );
 
         var accessToken = await jwtProvider.GenerateAsync(newUser);

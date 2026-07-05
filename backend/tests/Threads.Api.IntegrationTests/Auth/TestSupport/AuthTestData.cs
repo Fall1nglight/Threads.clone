@@ -1,4 +1,4 @@
-namespace Threads.Api.IntegrationTests.Auth.Infrastructure;
+namespace Threads.Api.IntegrationTests.Auth.TestSupport;
 
 internal static class AuthTestData
 {
