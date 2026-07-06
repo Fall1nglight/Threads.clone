@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Threads.Api.Data.Users;
 using Threads.Api.Features.Posts.Endpoints;
 using Threads.Api.IntegrationTests.Infrastructure;
 using Threads.Api.IntegrationTests.Posts.TestSupport;
