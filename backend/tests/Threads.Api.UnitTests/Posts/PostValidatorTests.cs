@@ -7,13 +7,7 @@ namespace Threads.Api.UnitTests.Posts;
 public class PostValidatorTests
 {
     private const string ValidContent = "Valid content";
-    private const string UpdatedContent = "Updated content";
-    private const string EmptyContent = "";
-    private const string WhitespaceContent = " ";
     private const int MaxContentLength = 600;
-    private const int FirstInvalidContentLength = 601;
-    private const int SecondInvalidContentLength = 666;
-    private const int ThirdInvalidContentLength = 999;
 
     private static readonly Guid ValidPostId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
@@ -82,7 +76,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: ValidPostId, content: UpdatedContent);
+        var request = CreateUpdateRequest(id: ValidPostId, content: ValidContent);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -113,7 +107,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: Guid.Empty, content: UpdatedContent);
+        var request = CreateUpdateRequest(id: Guid.Empty, content: ValidContent);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -223,20 +217,19 @@ public class PostValidatorTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Id));
     }
 
-    public static TheoryData<string?> EmptyContentValues => [null, EmptyContent, WhitespaceContent];
+    public static TheoryData<string?> EmptyContentValues => [null, string.Empty, " "];
 
-    public static TheoryData<int> TooLongContentLengths =>
-        [FirstInvalidContentLength, SecondInvalidContentLength, ThirdInvalidContentLength];
+    public static TheoryData<int> TooLongContentLengths => [601, 666, 999];
 
     private static CreatePost.Request CreatePostRequest(string? content = ValidContent) =>
         new(content!);
 
     private static UpdatePost.Request CreateUpdateRequest(
         Guid? id = null,
-        string? content = UpdatedContent
+        string? content = ValidContent
     ) => new(id ?? ValidPostId, CreateUpdateBody(content: content));
 
-    private static UpdatePost.Body CreateUpdateBody(string? content = UpdatedContent) =>
+    private static UpdatePost.Body CreateUpdateBody(string? content = ValidContent) =>
         new(content!);
 
     private static GetPost.Request CreateGetRequest(Guid? id = null) => new(id ?? ValidPostId);
