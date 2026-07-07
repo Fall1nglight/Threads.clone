@@ -66,6 +66,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         Db.ChangeTracker.Clear();
 
         await Db.RefreshTokens.ExecuteDeleteAsync();
+        await Db.PostLikes.ExecuteDeleteAsync();
         await Db.Posts.IgnoreQueryFilters().ExecuteDeleteAsync();
         await Db.Follows.ExecuteDeleteAsync();
         await Db.UserTokens.ExecuteDeleteAsync();
