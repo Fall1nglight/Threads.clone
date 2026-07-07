@@ -3,7 +3,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
-using Threads.Api.Data.Follows;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 
@@ -46,22 +45,15 @@ public class GetPost : IEndpoint
 
         var userId = claimsPrincipal.GetUserId();
 
-        if (post.User.IsPrivate && post.User.Id != userId)
-        {
-            // checks whether the requesting user follows the post owner
-            bool isFollowing = await db.Follows.AnyAsync(
-                f =>
-                    f.FollowerId == userId
-                    && f.FollowedId == post.UserId
-                    && f.Status == FollowStatus.Accepted,
-                cancellationToken
-            );
+        bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
+        if (!canViewPost)
+            return TypedResults.Forbid();
 
-            if (!isFollowing)
-                return TypedResults.Forbid();
-        }
+        PostDto response = await db
+            .Posts.Where(p => p.Id == post.Id)
+            .ToDto(db, userId)
+            .FirstAsync(cancellationToken);
 
-        PostDto response = post.ToDto();
         return TypedResults.Ok(response);
     }
 }

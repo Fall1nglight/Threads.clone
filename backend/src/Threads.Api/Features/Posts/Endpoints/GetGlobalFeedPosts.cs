@@ -26,7 +26,7 @@ public class GetGlobalFeedPosts : IEndpoint
         var userId = claimsPrincipal.GetUserId();
         var posts = await db
             .Posts.WhereVisibleInGlobalFeed(db, userId)
-            .ToDto()
+            .ToDto(db, userId)
             .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(posts);

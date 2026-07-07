@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Follows;
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Shared;
@@ -44,6 +45,25 @@ public static class PostVisibilityExtensions
                 && f.FollowedId == p.UserId
                 && f.Status == FollowStatus.Accepted
             )
+        );
+    }
+
+    public static async Task<bool> CanBeViewedByUserAsync(
+        this Post post,
+        AppDbContext db,
+        Guid userId,
+        CancellationToken cancellationToken
+    )
+    {
+        if (!post.User.IsPrivate || post.UserId == userId)
+            return true;
+
+        return await db.Follows.AnyAsync(
+            follow =>
+                follow.FollowerId == userId
+                && follow.FollowedId == post.UserId
+                && follow.Status == FollowStatus.Accepted,
+            cancellationToken
         );
     }
 }
