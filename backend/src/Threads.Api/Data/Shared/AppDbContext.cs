@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Follows;
+using Threads.Api.Data.Likes;
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Tokens;
 using Threads.Api.Data.Users;
@@ -15,6 +16,7 @@ public sealed class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
 
     public DbSet<Post> Posts { get; set; }
     public DbSet<Follow> Follows { get; set; }
+    public DbSet<PostLike> PostLikes { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)

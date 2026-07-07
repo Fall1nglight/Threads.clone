@@ -3,32 +3,36 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
+using Threads.Api.Common.Pagination;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
+using Threads.Api.Features.Posts;
 
-namespace Threads.Api.Features.Posts.Endpoints;
+namespace Threads.Api.Features.Likes.Endpoints;
 
-public class GetPost : IEndpoint
+public class GetPostLikes : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
         builder
-            .MapGet("/{id}", Handle)
+            .MapGet("/{postId}/likes", Handle)
             .WithValidation<Request>()
-            .WithSummary("Retrieves a single post");
+            .WithSummary("Retrieves users who liked a post");
     }
 
-    public record Request(Guid Id);
+    public record Request(Guid PostId, string? Cursor, int PageSize = 20);
 
-    public class GetPostValidator : AbstractValidator<Request>
+    public class GetPostLikesValidator : AbstractValidator<Request>
     {
-        public GetPostValidator()
+        public GetPostLikesValidator()
         {
-            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.PostId).NotEmpty();
         }
     }
 
-    private static async Task<Results<Ok<PostDto>, NotFound, ForbidHttpResult>> Handle(
+    private static async Task<
+        Results<Ok<PagedResponse<PostLikeUserDto>>, NotFound, ForbidHttpResult>
+    > Handle(
         [AsParameters] Request request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
@@ -36,7 +40,7 @@ public class GetPost : IEndpoint
     )
     {
         var post = await db
-            .Posts.Where(p => p.Id == request.Id)
+            .Posts.Where(p => p.Id == request.PostId)
             .Include(p => p.User)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -44,15 +48,15 @@ public class GetPost : IEndpoint
             return TypedResults.NotFound();
 
         var userId = claimsPrincipal.GetUserId();
-
         bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
         if (!canViewPost)
             return TypedResults.Forbid();
 
-        PostDto response = await db
-            .Posts.Where(p => p.Id == post.Id)
-            .ToDto(db, userId)
-            .FirstAsync(cancellationToken);
+        var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
+        var response = await db
+            .PostLikes.Where(like => like.PostId == post.Id)
+            .ToPostLikeUserDto()
+            .ToPagedResponse(pagedRequest, cancellationToken);
 
         return TypedResults.Ok(response);
     }

@@ -22,7 +22,7 @@ public class GetAnonymousFeedPosts : IEndpoint
     {
         var posts = await db
             .Posts.WhereVisibleInAnonymousFeed()
-            .ToDto()
+            .ToDto(db)
             .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(posts);
