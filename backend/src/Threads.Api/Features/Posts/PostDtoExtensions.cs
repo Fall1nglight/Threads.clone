@@ -1,6 +1,5 @@
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Shared;
-using Threads.Api.Data.Users;
 
 namespace Threads.Api.Features.Posts;
 
@@ -39,27 +38,5 @@ public static class PostDtoExtensions
             CreatedAtUtc = post.CreatedAtUtc,
             UpdatedAtUtc = post.UpdatedAtUtc,
         });
-    }
-
-    public static PostDto ToDto(this Post post) => post.ToDto(post.User);
-
-    public static PostDto ToDto(this Post post, User user)
-    {
-        return new PostDto
-        {
-            Id = post.Id,
-            User = user.ToDto(),
-            Content = post.Content,
-            LikeCount = 0,
-            CommentCount = 0,
-            IsLikedByCurrentUser = false,
-            CreatedAtUtc = post.CreatedAtUtc,
-            UpdatedAtUtc = post.UpdatedAtUtc,
-        };
-    }
-
-    public static UserDto ToDto(this User user)
-    {
-        return new UserDto { Id = user.Id, Username = user.UserName! };
     }
 }
