@@ -32,6 +32,7 @@ public static class PostDtoExtensions
             User = new UserDto { Id = post.User.Id, Username = post.User.UserName! },
             Content = post.Content,
             LikeCount = db.PostLikes.Count(like => like.PostId == post.Id),
+            CommentCount = db.Comments.Count(comment => comment.PostId == post.Id),
             IsLikedByCurrentUser =
                 userId.HasValue
                 && db.PostLikes.Any(like => like.PostId == post.Id && like.UserId == userId.Value),
@@ -50,6 +51,7 @@ public static class PostDtoExtensions
             User = user.ToDto(),
             Content = post.Content,
             LikeCount = 0,
+            CommentCount = 0,
             IsLikedByCurrentUser = false,
             CreatedAtUtc = post.CreatedAtUtc,
             UpdatedAtUtc = post.UpdatedAtUtc,

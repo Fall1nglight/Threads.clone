@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Shared;
@@ -44,9 +45,11 @@ public class CreatePost : IEndpoint
 
         await db.Posts.AddAsync(post, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
-        await db.Entry(post).Reference(p => p.User).LoadAsync(cancellationToken);
 
-        PostDto response = post.ToDto();
+        PostDto response = await db
+            .Posts.Where(p => p.Id == post.Id)
+            .ToDto(db)
+            .FirstAsync(cancellationToken);
 
         return TypedResults.Created($"/posts/{post.Id}", response);
     }

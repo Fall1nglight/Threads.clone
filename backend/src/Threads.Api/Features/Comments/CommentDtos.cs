@@ -1,21 +1,19 @@
 using Threads.Api.Common.Pagination;
 
-namespace Threads.Api.Features.Posts;
+namespace Threads.Api.Features.Comments;
 
-public record PostDto : ICursorItem
+public record CommentDto : ICursorItem
 {
     public required Guid Id { get; init; }
-    public required UserDto User { get; init; }
+    public required Guid PostId { get; init; }
+    public required CommentUserDto User { get; init; }
     public required string Content { get; init; }
-    public required int LikeCount { get; init; }
-    public required int CommentCount { get; init; }
-    public required bool IsLikedByCurrentUser { get; init; }
     public required DateTime CreatedAtUtc { get; init; }
     public DateTime? UpdatedAtUtc { get; init; }
-};
+}
 
-public record UserDto
+public record CommentUserDto
 {
     public required Guid Id { get; init; }
     public required string Username { get; init; }
-};
+}
