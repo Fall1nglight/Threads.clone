@@ -1,0 +1,46 @@
+using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
+using Threads.Api.Common.Extensions;
+using Threads.Api.Data.Shared;
+using Threads.Api.Data.Shared.Interfaces;
+
+namespace Threads.Api.Features.Users.Endpoints;
+
+public class GetUser : IEndpoint
+{
+    public static void Map(IEndpointRouteBuilder builder)
+    {
+        builder
+            .MapGet("/{userId}", Handle)
+            .WithValidation<Request>()
+            .WithSummary("Retrieves a single user profile");
+    }
+
+    public record Request(Guid UserId);
+
+    public class GetUserValidator : AbstractValidator<Request>
+    {
+        public GetUserValidator()
+        {
+            RuleFor(x => x.UserId).NotEmpty();
+        }
+    }
+
+    private static async Task<Results<Ok<UserProfileDto>, NotFound>> Handle(
+        [AsParameters] Request request,
+        AppDbContext db,
+        CancellationToken cancellationToken
+    )
+    {
+        var user = await db
+            .Users.Where(user => user.Id == request.UserId)
+            .ToUserProfileDto()
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (user == null)
+            return TypedResults.NotFound();
+
+        return TypedResults.Ok(user);
+    }
+}
