@@ -17,9 +17,13 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldSoftDeletePost_WhenRequesterIsOwner()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
-        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await postSeeder.CreatePostAsync(
+            owner: alice,
+            content: IntegrationTestData.ValidContent
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -38,9 +42,13 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldHideDeletedPostFromFeedsAndSingleRead()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
-        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await postSeeder.CreatePostAsync(
+            owner: alice,
+            content: IntegrationTestData.ValidContent
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -61,10 +69,14 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldForbidDelete_WhenRequesterIsNotOwner()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
-        var henry = await seeder.CreateUserAsync(username: PostTestData.HenryUsername);
-        var post = await seeder.CreatePostAsync(owner: alice, content: PostTestData.ValidContent);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var henry = await userSeeder.CreateUserAsync(username: IntegrationTestData.HenryUsername);
+        var post = await postSeeder.CreatePostAsync(
+            owner: alice,
+            content: IntegrationTestData.ValidContent
+        );
         var client = await CreateAuthenticatedClientAsync(henry);
 
         // Act
@@ -83,8 +95,9 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldReturnNoContent_WhenPostDoesNotExist()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -98,11 +111,12 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldReturnNoContent_WhenPostIsAlreadyDeleted()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
-        var post = await seeder.CreatePostAsync(
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await postSeeder.CreatePostAsync(
             owner: alice,
-            content: PostTestData.ValidContent,
+            content: IntegrationTestData.ValidContent,
             isDeleted: true
         );
         var client = await CreateAuthenticatedClientAsync(alice);
@@ -120,11 +134,12 @@ public class DeletePostTests : PostIntegrationTestBase
     }
 
     [Fact]
-    public async Task DeletePost_ShouldReturnBadRequest_WhenIdIsEmpty()
+    public async Task DeletePost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act

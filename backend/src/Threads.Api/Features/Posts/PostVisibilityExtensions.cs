@@ -1,69 +1,36 @@
-using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Follows;
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Shared;
+using Threads.Api.Features.Blocks;
 
 namespace Threads.Api.Features.Posts;
 
 public static class PostVisibilityExtensions
 {
-    public static IQueryable<Post> WhereVisibleInAnonymousFeed(this IQueryable<Post> posts)
-    {
-        return posts.Where(p => !p.User.IsPrivate);
-    }
-
-    public static IQueryable<Post> WhereVisibleInGlobalFeed(
+    // visibility rules
+    //  # requester can access:
+    //      - public posts
+    //      - own posts
+    //      - followed private posts
+    //  # requester can't access:
+    //      - blocked user-s posts
+    //      - posts from users who blocked the requester
+    public static IQueryable<Post> WhereVisibleTo(
         this IQueryable<Post> posts,
-        AppDbContext db,
-        Guid userId
+        Guid currentUserId,
+        AppDbContext db
     )
     {
-        return posts.Where(p =>
-            // public users' posts
-            !p.User.IsPrivate
-            // requester's posts
-            || p.UserId == userId
-            // posts from accounts which are followed by the requester
-            || db.Follows.Any(follow =>
-                follow.FollowerId == userId
-                && follow.FollowedId == p.UserId
-                && follow.Status == FollowStatus.Accepted
-            )
-        );
-    }
-
-    public static IQueryable<Post> WhereVisibleInMyFeed(
-        this IQueryable<Post> posts,
-        AppDbContext db,
-        Guid userId
-    )
-    {
-        return posts.Where(p =>
-            p.UserId == userId
-            || db.Follows.Any(f =>
-                f.FollowerId == userId
-                && f.FollowedId == p.UserId
-                && f.Status == FollowStatus.Accepted
-            )
-        );
-    }
-
-    public static async Task<bool> CanBeViewedByUserAsync(
-        this Post post,
-        AppDbContext db,
-        Guid userId,
-        CancellationToken cancellationToken
-    )
-    {
-        if (!post.User.IsPrivate || post.UserId == userId)
-            return true;
-
-        return await db.Follows.AnyAsync(
-            follow =>
-                follow.FollowerId == userId
-                && follow.FollowedId == post.UserId
-                && follow.Status == FollowStatus.Accepted,
-            cancellationToken
-        );
+        return posts
+            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
+            .Where(post =>
+                !post.User.IsPrivate
+                || post.UserId == currentUserId
+                || db.Follows.Any(follow =>
+                    follow.FollowerId == currentUserId
+                    && follow.FollowedId == post.UserId
+                    && follow.Status == FollowStatus.Accepted
+                )
+            );
     }
 }

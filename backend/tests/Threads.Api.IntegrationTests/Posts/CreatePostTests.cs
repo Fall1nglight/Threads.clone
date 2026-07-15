@@ -19,11 +19,12 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldCreatePostForAuthenticatedUser()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         var before = DateTime.UtcNow;
-        var requestBody = CreatePostRequest(PostTestData.ValidContent);
+        var requestBody = CreatePostRequest(IntegrationTestData.ValidContent);
 
         // Act
         var response = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);
@@ -37,7 +38,7 @@ public class CreatePostTests : PostIntegrationTestBase
 
         responseBody.User.Id.Should().Be(alice.Id);
         responseBody.User.Username.Should().Be(alice.UserName);
-        responseBody.Content.Should().Be(PostTestData.ValidContent);
+        responseBody.Content.Should().Be(IntegrationTestData.ValidContent);
         responseBody.UpdatedAtUtc.Should().BeNull();
         responseBody.CreatedAtUtc.Should().BeOnOrAfter(before);
         responseBody.CreatedAtUtc.Should().BeOnOrBefore(after);
@@ -48,7 +49,7 @@ public class CreatePostTests : PostIntegrationTestBase
         var persisted = await Db.Posts.SingleAsync(post => post.Id == responseBody.Id);
 
         persisted.UserId.Should().Be(alice.Id);
-        persisted.Content.Should().Be(PostTestData.ValidContent);
+        persisted.Content.Should().Be(IntegrationTestData.ValidContent);
         persisted.UpdatedAtUtc.Should().BeNull();
         persisted.CreatedAtUtc.Should().BeOnOrAfter(before);
         persisted.CreatedAtUtc.Should().BeOnOrBefore(after);
@@ -58,10 +59,11 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldAllowCreatedPostToBeRead()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
-        var requestBody = CreatePostRequest(PostTestData.ValidContent);
+        var requestBody = CreatePostRequest(IntegrationTestData.ValidContent);
         var createResponse = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);
         var createdPost = await ReadJsonAsync<PostDto>(createResponse);
 
@@ -72,17 +74,18 @@ public class CreatePostTests : PostIntegrationTestBase
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var fetchedPost = await ReadJsonAsync<PostDto>(getResponse);
         fetchedPost.Id.Should().Be(createdPost.Id);
-        fetchedPost.Content.Should().Be(PostTestData.ValidContent);
+        fetchedPost.Content.Should().Be(IntegrationTestData.ValidContent);
     }
 
     [Fact]
     public async Task CreatePost_ShouldAcceptContentAtMaximumLength()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
-        var requestBody = CreatePostRequest(PostTestData.MaxLengthContent);
+        var requestBody = CreatePostRequest(IntegrationTestData.MaxLengthContent);
 
         // Act
         var response = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);
@@ -98,8 +101,9 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldReturnBadRequest_WhenContentIsEmpty(string? content)
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = CreatePostRequest(content);
 
@@ -118,10 +122,11 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldReturnBadRequest_WhenContentIsTooLong(int length)
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
-        var requestBody = CreatePostRequest(PostTestData.ContentOfLength(length));
+        var requestBody = CreatePostRequest(IntegrationTestData.ContentOfLength(length));
 
         // Act
         var response = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);
@@ -135,8 +140,9 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldReturnBadRequest_WhenContentIsMissing()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new { };
 
@@ -152,10 +158,11 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldReturnBadRequest_WhenJsonContainsUnknownProperty()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
-        var requestBody = new { content = PostTestData.ValidContent, unexpected = true };
+        var requestBody = new { content = IntegrationTestData.ValidContent, unexpected = true };
 
         // Act
         var response = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);
@@ -169,8 +176,9 @@ public class CreatePostTests : PostIntegrationTestBase
     public async Task CreatePost_ShouldReturnBadRequest_WhenJsonIsMalformed()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var alice = await seeder.CreateUserAsync(username: PostTestData.AliceUsername);
+        var userSeeder = CreateUserSeeder();
+        var postSeeder = CreatePostSeeder();
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         using var requestBody = new StringContent(
             "{\"content\":\"Valid content\"",

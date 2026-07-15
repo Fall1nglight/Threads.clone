@@ -6,6 +6,7 @@ using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Follows;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
+using Threads.Api.Features.Users;
 
 namespace Threads.Api.Features.Follows.Endpoints;
 
@@ -36,20 +37,19 @@ public class SendFollowRequest : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var followerId = claimsPrincipal.GetUserId();
-        if (request.TargetUserId == followerId)
+        var currentUserId = claimsPrincipal.GetUserId();
+        if (request.TargetUserId == currentUserId)
             return TypedResults.BadRequest();
 
-        var targetUser = await db.Users.FirstOrDefaultAsync(
-            user => user.Id == request.TargetUserId,
-            cancellationToken
-        );
+        var targetUser = await db
+            .Users.WhereVisibleTo(currentUserId, db)
+            .FirstOrDefaultAsync(user => user.Id == request.TargetUserId, cancellationToken);
 
         if (targetUser == null)
             return TypedResults.NotFound();
 
         var follow = await db.Follows.FirstOrDefaultAsync(
-            follow => follow.FollowerId == followerId && follow.FollowedId == targetUser.Id,
+            follow => follow.FollowerId == currentUserId && follow.FollowedId == targetUser.Id,
             cancellationToken
         );
 
@@ -57,7 +57,7 @@ public class SendFollowRequest : IEndpoint
         {
             follow = new Follow
             {
-                FollowerId = followerId,
+                FollowerId = currentUserId,
                 FollowedId = targetUser.Id,
                 Status = targetUser.IsPrivate ? FollowStatus.Pending : FollowStatus.Accepted,
                 CreatedAtUtc = DateTime.UtcNow,
@@ -67,6 +67,7 @@ public class SendFollowRequest : IEndpoint
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        return TypedResults.Ok(new FollowStatusResponse(follow.Status));
+        var response = new FollowStatusResponse(follow.Status);
+        return TypedResults.Ok(response);
     }
 }

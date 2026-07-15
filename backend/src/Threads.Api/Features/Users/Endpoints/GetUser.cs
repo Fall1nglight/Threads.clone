@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -30,13 +31,19 @@ public class GetUser : IEndpoint
     private static async Task<Results<Ok<UserProfileDto>, NotFound>> Handle(
         [AsParameters] Request request,
         AppDbContext db,
+        ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
-        var user = await db
-            .Users.Where(user => user.Id == request.UserId)
-            .ToUserProfileDto()
-            .FirstOrDefaultAsync(cancellationToken);
+        var usersQuery = db.Users.Where(user => user.Id == request.UserId);
+
+        if (claimsPrincipal.Identity?.IsAuthenticated == true)
+        {
+            var currentUserId = claimsPrincipal.GetUserId();
+            usersQuery = usersQuery.WhereVisibleTo(currentUserId, db);
+        }
+
+        var user = await usersQuery.ToUserProfileDto().FirstOrDefaultAsync(cancellationToken);
 
         if (user == null)
             return TypedResults.NotFound();

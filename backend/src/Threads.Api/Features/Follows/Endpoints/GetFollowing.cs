@@ -22,11 +22,12 @@ public class GetFollowing : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var followerId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
         var users = await db
             .Follows.Where(follow =>
-                follow.FollowerId == followerId && follow.Status == FollowStatus.Accepted
+                follow.FollowerId == currentUserId && follow.Status == FollowStatus.Accepted
             )
+            .WhereParticipantsHaveNoBlockRelationship(db)
             .ToFollowedDto()
             .ToPagedResponse(request, cancellationToken);
 

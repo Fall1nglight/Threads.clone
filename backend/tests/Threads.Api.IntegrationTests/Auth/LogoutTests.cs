@@ -34,7 +34,7 @@ public class LogoutTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(activeToken.PlainToken);
@@ -58,14 +58,14 @@ public class LogoutTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var existingToken = await tokenSeeder.CreateActiveTokenAsync(
             alice,
             tokenSeed: AuthTestData.ActiveTokenSeed
         );
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(
-            AuthRefreshTokenSeeder.CreatePlainToken(AuthTestData.UnknownTokenSeed)
+            RefreshTokenTestSeeder.CreatePlainToken(AuthTestData.UnknownTokenSeed)
         );
 
         // Act
@@ -86,8 +86,8 @@ public class LogoutTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
-        var henry = await userSeeder.CreateUserAsync(username: AuthTestData.HenryUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var henry = await userSeeder.CreateUserAsync(username: IntegrationTestData.HenryUsername);
         var henryToken = await tokenSeeder.CreateActiveTokenAsync(henry);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(henryToken.PlainToken);
@@ -112,7 +112,7 @@ public class LogoutTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var expiredToken = await tokenSeeder.CreateExpiredTokenAsync(alice);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(expiredToken.PlainToken);
@@ -139,7 +139,7 @@ public class LogoutTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var revokedToken = await tokenSeeder.CreateRevokedTokenAsync(alice, reason);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(revokedToken.PlainToken);
@@ -161,7 +161,7 @@ public class LogoutTests : AuthIntegrationTestBase
     {
         // Arrange
         var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request("short");
 
@@ -177,7 +177,7 @@ public class LogoutTests : AuthIntegrationTestBase
     {
         // Arrange
         var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -185,7 +185,7 @@ public class LogoutTests : AuthIntegrationTestBase
             AuthTestRoutes.Logout,
             new
             {
-                refreshToken = AuthRefreshTokenSeeder.CreatePlainToken(
+                refreshToken = RefreshTokenTestSeeder.CreatePlainToken(
                     AuthTestData.ActiveTokenSeed
                 ),
                 unexpected = true,
@@ -201,7 +201,7 @@ public class LogoutTests : AuthIntegrationTestBase
     {
         // Arrange
         var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
         using var requestBody = new StringContent(
             "{\"refreshToken\":\"value\"",

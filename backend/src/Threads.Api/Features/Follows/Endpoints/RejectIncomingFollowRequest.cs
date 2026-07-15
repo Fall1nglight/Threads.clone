@@ -36,14 +36,17 @@ public class RejectIncomingFollowRequest : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var followedId = claimsPrincipal.GetUserId();
-        var follow = await db.Follows.FirstOrDefaultAsync(
-            follow =>
-                follow.FollowerId == request.FollowerId
-                && follow.FollowedId == followedId
-                && follow.Status == FollowStatus.Pending,
-            cancellationToken
-        );
+        var currentUserId = claimsPrincipal.GetUserId();
+
+        var follow = await db
+            .Follows.WhereParticipantsHaveNoBlockRelationship(db)
+            .FirstOrDefaultAsync(
+                follow =>
+                    follow.FollowerId == request.FollowerId
+                    && follow.FollowedId == currentUserId
+                    && follow.Status == FollowStatus.Pending,
+                cancellationToken
+            );
 
         if (follow == null)
             return TypedResults.NotFound();

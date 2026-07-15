@@ -35,9 +35,9 @@ public class DeleteFollowing : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var followerId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
         var follow = await db.Follows.FirstOrDefaultAsync(
-            follow => follow.FollowerId == followerId && follow.FollowedId == request.FollowedId,
+            follow => follow.FollowerId == currentUserId && follow.FollowedId == request.FollowedId,
             cancellationToken
         );
 

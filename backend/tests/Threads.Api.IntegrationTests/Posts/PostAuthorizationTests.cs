@@ -27,7 +27,7 @@ public class PostAuthorizationTests : PostIntegrationTestBase
 
     [Theory]
     [InlineData(PostTestRoutes.GlobalFeed)]
-    [InlineData(PostTestRoutes.MyFeed)]
+    [InlineData(PostTestRoutes.PersonalFeed)]
     public async Task ProtectedGetFeedEndpoints_ShouldRejectAnonymousRequests(string path)
     {
         // Arrange
@@ -71,7 +71,7 @@ public class PostAuthorizationTests : PostIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        var requestBody = CreatePostRequest(PostTestData.ValidContent);
+        var requestBody = CreatePostRequest(IntegrationTestData.ValidContent);
 
         // Act
         var response = await client.PostAsJsonAsync(PostTestRoutes.Base, requestBody);

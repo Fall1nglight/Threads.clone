@@ -21,7 +21,7 @@ public class GetAnonymousFeedPosts : IEndpoint
     )
     {
         var posts = await db
-            .Posts.WhereVisibleInAnonymousFeed()
+            .Posts.Where(post => !post.User.IsPrivate)
             .ToDto(db)
             .ToPagedResponse(request, cancellationToken);
 

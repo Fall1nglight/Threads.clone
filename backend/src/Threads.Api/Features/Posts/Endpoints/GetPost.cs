@@ -13,18 +13,18 @@ public class GetPost : IEndpoint
     public static void Map(IEndpointRouteBuilder builder)
     {
         builder
-            .MapGet("/{id}", Handle)
+            .MapGet("/{postId}", Handle)
             .WithValidation<Request>()
             .WithSummary("Retrieves a single post");
     }
 
-    public record Request(Guid Id);
+    public record Request(Guid PostId);
 
     public class GetPostValidator : AbstractValidator<Request>
     {
         public GetPostValidator()
         {
-            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.PostId).NotEmpty();
         }
     }
 
@@ -35,25 +35,17 @@ public class GetPost : IEndpoint
         CancellationToken cancellationToken
     )
     {
+        var currentUserId = claimsPrincipal.GetUserId();
+
         var post = await db
-            .Posts.Where(p => p.Id == request.Id)
-            .Include(p => p.User)
+            .Posts.Where(post => post.Id == request.PostId)
+            .WhereVisibleTo(currentUserId, db)
+            .ToDto(currentUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-
-        bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
-        if (!canViewPost)
-            return TypedResults.Forbid();
-
-        PostDto response = await db
-            .Posts.Where(p => p.Id == post.Id)
-            .ToDto(db, userId)
-            .FirstAsync(cancellationToken);
-
-        return TypedResults.Ok(response);
+        return TypedResults.Ok(post);
     }
 }

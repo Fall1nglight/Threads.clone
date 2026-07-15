@@ -12,16 +12,19 @@ public class DeletePost : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("/{id}", Handle).WithValidation<Request>().WithSummary("Deletes a post");
+        builder
+            .MapDelete("/{postId}", Handle)
+            .WithValidation<Request>()
+            .WithSummary("Deletes a post");
     }
 
-    public record Request(Guid Id);
+    public record Request(Guid PostId);
 
     public class DeletePostValidator : AbstractValidator<Request>
     {
         public DeletePostValidator()
         {
-            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.PostId).NotEmpty();
         }
     }
 
@@ -32,12 +35,15 @@ public class DeletePost : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var post = await db.Posts.FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
+        var post = await db.Posts.FirstOrDefaultAsync(
+            post => post.Id == request.PostId,
+            cancellationToken
+        );
         if (post == null)
             return TypedResults.NoContent();
 
-        var userId = claimsPrincipal.GetUserId();
-        if (post.UserId != userId)
+        var currentUserId = claimsPrincipal.GetUserId();
+        if (post.UserId != currentUserId)
             return TypedResults.Forbid();
 
         post.IsDeleted = true;

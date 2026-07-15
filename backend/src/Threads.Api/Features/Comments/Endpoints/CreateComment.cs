@@ -34,30 +34,27 @@ public class CreateComment : IEndpoint
         }
     }
 
-    private static async Task<Results<Created<CommentDto>, NotFound, ForbidHttpResult>> Handle(
+    private static async Task<Results<Created<CommentDto>, NotFound>> Handle(
         [AsParameters] Request request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
+        var currentUserId = claimsPrincipal.GetUserId();
+
         var post = await db
-            .Posts.Where(p => p.Id == request.PostId)
-            .Include(p => p.User)
+            .Posts.Where(post => post.Id == request.PostId)
+            .WhereVisibleTo(currentUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-        bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
-        if (!canViewPost)
-            return TypedResults.Forbid();
-
         var comment = new Comment
         {
             PostId = post.Id,
-            UserId = userId,
+            UserId = currentUserId,
             Content = request.Body.Content,
             CreatedAtUtc = DateTime.UtcNow,
         };
@@ -66,7 +63,7 @@ public class CreateComment : IEndpoint
         await db.SaveChangesAsync(cancellationToken);
 
         CommentDto response = await db
-            .Comments.Where(c => c.Id == comment.Id)
+            .Comments.Where(createdComment => createdComment.Id == comment.Id)
             .ToCommentDto()
             .FirstAsync(cancellationToken);
 

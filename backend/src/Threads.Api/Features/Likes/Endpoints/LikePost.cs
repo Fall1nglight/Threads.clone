@@ -30,28 +30,25 @@ public class LikePost : IEndpoint
         }
     }
 
-    private static async Task<Results<NoContent, NotFound, ForbidHttpResult>> Handle(
+    private static async Task<Results<NoContent, NotFound>> Handle(
         [AsParameters] Request request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
+        var currentUserId = claimsPrincipal.GetUserId();
+
         var post = await db
-            .Posts.Where(p => p.Id == request.PostId)
-            .Include(p => p.User)
+            .Posts.Where(post => post.Id == request.PostId)
+            .WhereVisibleTo(currentUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-        bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
-        if (!canViewPost)
-            return TypedResults.Forbid();
-
         bool likeExists = await db.PostLikes.AnyAsync(
-            like => like.PostId == post.Id && like.UserId == userId,
+            like => like.PostId == post.Id && like.UserId == currentUserId,
             cancellationToken
         );
 
@@ -61,7 +58,7 @@ public class LikePost : IEndpoint
         var postLike = new PostLike
         {
             PostId = post.Id,
-            UserId = userId,
+            UserId = currentUserId,
             CreatedAtUtc = DateTime.UtcNow,
         };
 

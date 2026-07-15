@@ -35,9 +35,9 @@ public class UnlikePost : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var userId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
         var postLike = await db.PostLikes.FirstOrDefaultAsync(
-            like => like.PostId == request.PostId && like.UserId == userId,
+            like => like.PostId == request.PostId && like.UserId == currentUserId,
             cancellationToken
         );
 

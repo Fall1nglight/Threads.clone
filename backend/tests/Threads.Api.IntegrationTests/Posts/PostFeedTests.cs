@@ -34,8 +34,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldReturnOnlyPublicActivePosts()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = CreateAnonymousClient();
 
         // Act
@@ -61,8 +61,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetGlobalFeed_ShouldReturnPostsVisibleToAuthenticatedUser()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -88,15 +88,15 @@ public class PostFeedTests : PostIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetMyFeed_ShouldReturnOwnAndAcceptedFollowedPostsOnly()
+    public async Task GetPersonalFeed_ShouldReturnOwnAndAcceptedFollowedPostsOnly()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync(PostTestRoutes.MyFeed);
+        var response = await client.GetAsync(PostTestRoutes.PersonalFeed);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -115,11 +115,75 @@ public class PostFeedTests : PostIntegrationTestBase
     }
 
     [Fact]
+    public async Task GetGlobalFeed_ShouldExcludePostsFromUsersWithBlockRelationship()
+    {
+        // Arrange
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var blockSeeder = CreateBlockSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
+
+        await blockSeeder.CreateUserBlockAsync(blocker: seed.Alice, blocked: seed.BobPublic);
+        await blockSeeder.CreateUserBlockAsync(
+            blocker: seed.CarolPublicFollowed,
+            blocked: seed.Alice
+        );
+
+        var client = await CreateAuthenticatedClientAsync(seed.Alice);
+
+        // Act
+        var response = await client.GetAsync(PostTestRoutes.GlobalFeed);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var responseBody = await ReadJsonAsync<PagedResponse<PostDto>>(response);
+        var postIds = responseBody.Items.Select(post => post.Id).ToList();
+
+        postIds.Should().Contain(seed.AliceOwnPost.Id);
+        postIds.Should().Contain(seed.DinaPrivateFollowedPost.Id);
+        postIds.Should().NotContain(seed.BobPublicPost.Id);
+        postIds.Should().NotContain(seed.CarolPublicFollowedPost.Id);
+    }
+
+    [Fact]
+    public async Task GetPersonalFeed_ShouldExcludeAcceptedFollowedUsersWithBlockRelationship()
+    {
+        // Arrange
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var blockSeeder = CreateBlockSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
+
+        await blockSeeder.CreateUserBlockAsync(
+            blocker: seed.Alice,
+            blocked: seed.CarolPublicFollowed
+        );
+        await blockSeeder.CreateUserBlockAsync(
+            blocker: seed.DinaPrivateFollowed,
+            blocked: seed.Alice
+        );
+
+        var client = await CreateAuthenticatedClientAsync(seed.Alice);
+
+        // Act
+        var response = await client.GetAsync(PostTestRoutes.PersonalFeed);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var responseBody = await ReadJsonAsync<PagedResponse<PostDto>>(response);
+        var postIds = responseBody.Items.Select(post => post.Id).ToList();
+
+        postIds.Should().Contain(seed.AliceOwnPost.Id);
+        postIds.Should().NotContain(seed.CarolPublicFollowedPost.Id);
+        postIds.Should().NotContain(seed.DinaPrivateFollowedPost.Id);
+    }
+
+    [Fact]
     public async Task GetAnonymousFeed_ShouldOrderByCreatedAtThenIdDescending()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedSameTimestampPostsAsync();
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        var seed = await scenarioSeeder.SeedSameTimestampPostsAsync();
         var client = CreateAnonymousClient();
 
         // Act
@@ -141,8 +205,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldUseDefaultPageSize()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        await seeder.SeedBulkPublicPostsAsync(25);
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        await scenarioSeeder.SeedBulkPublicPostsAsync(25);
         var client = CreateAnonymousClient();
 
         // Act
@@ -163,8 +227,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldClampPageSizeToMinimum(int pageSize)
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        await seeder.SeedBulkPublicPostsAsync(2);
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        await scenarioSeeder.SeedBulkPublicPostsAsync(2);
         var client = CreateAnonymousClient();
 
         // Act
@@ -185,8 +249,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldClampPageSizeToMaximum(int pageSize)
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        await seeder.SeedBulkPublicPostsAsync(105);
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        await scenarioSeeder.SeedBulkPublicPostsAsync(105);
         var client = CreateAnonymousClient();
 
         // Act
@@ -205,8 +269,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldReturnNextPage_WhenCursorIsProvided()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        await seeder.SeedBulkPublicPostsAsync(25);
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        await scenarioSeeder.SeedBulkPublicPostsAsync(25);
         var client = CreateAnonymousClient();
 
         // Act
@@ -235,8 +299,8 @@ public class PostFeedTests : PostIntegrationTestBase
     public async Task GetAnonymousFeed_ShouldTreatInvalidCursorAsFirstPage()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        await seeder.SeedBulkPublicPostsAsync(5);
+        var scenarioSeeder = CreatePostPaginationScenarioSeeder();
+        await scenarioSeeder.SeedBulkPublicPostsAsync(5);
         var client = CreateAnonymousClient();
 
         // Act

@@ -153,6 +153,29 @@ namespace Threads.Api.Migrations
                     b.ToTable("UserTokens", "identity");
                 });
 
+            modelBuilder.Entity("Threads.Api.Data.Blocks.UserBlock", b =>
+                {
+                    b.Property<Guid>("BlockerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BlockedId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("BlockerId", "BlockedId");
+
+                    b.HasIndex("BlockedId", "BlockerId");
+
+                    b.HasIndex("BlockerId", "CreatedAtUtc", "BlockedId");
+
+                    b.ToTable("UserBlocks", "social", t =>
+                        {
+                            t.HasCheckConstraint("CK_UserBlocks_BlockerId_NotBlockedId", "\"BlockerId\" <> \"BlockedId\"");
+                        });
+                });
+
             modelBuilder.Entity("Threads.Api.Data.Comments.Comment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -430,6 +453,25 @@ namespace Threads.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Threads.Api.Data.Blocks.UserBlock", b =>
+                {
+                    b.HasOne("Threads.Api.Data.Users.User", "Blocked")
+                        .WithMany()
+                        .HasForeignKey("BlockedId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Threads.Api.Data.Users.User", "Blocker")
+                        .WithMany()
+                        .HasForeignKey("BlockerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Blocked");
+
+                    b.Navigation("Blocker");
                 });
 
             modelBuilder.Entity("Threads.Api.Data.Comments.Comment", b =>

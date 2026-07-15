@@ -1,9 +1,10 @@
 using Threads.Api.Data.Posts;
+using Threads.Api.Data.Shared.Interfaces;
 using Threads.Api.Data.Users;
 
 namespace Threads.Api.Data.Likes;
 
-public class PostLike
+public class PostLike : IOwnedEntity
 {
     public Guid PostId { get; init; }
     public Post Post { get; init; } = null!;
