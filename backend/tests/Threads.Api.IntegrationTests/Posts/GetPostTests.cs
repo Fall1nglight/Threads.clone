@@ -15,8 +15,8 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnPublicPost_WhenUserIsAuthenticated()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -39,8 +39,8 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnPrivatePost_WhenRequesterIsOwner()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.AlicePrivate);
 
         // Act
@@ -54,8 +54,8 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnPrivatePost_WhenRequesterIsAcceptedFollower()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -66,41 +66,88 @@ public class GetPostTests : PostIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPost_ShouldForbidPrivatePost_WhenRequesterIsPendingFollower()
+    public async Task GetPost_ShouldReturnNotFound_WhenRequesterIsPendingFollower()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
         var response = await client.GetAsync($"/posts/{seed.ErinPrivatePendingPost.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
-    public async Task GetPost_ShouldForbidPrivatePost_WhenRequesterIsStranger()
+    public async Task GetPost_ShouldReturnNotFound_WhenRequesterIsStranger()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Henry);
 
         // Act
         var response = await client.GetAsync($"/posts/{seed.DinaPrivateFollowedPost.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetPost_ShouldReturnNotFound_WhenRequesterAndPostOwnerHaveBlockRelationship(
+        bool requesterBlocksOwner
+    )
+    {
+        // Arrange
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var blockSeeder = CreateBlockSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
+
+        await blockSeeder.CreateUserBlockAsync(
+            blocker: requesterBlocksOwner ? seed.Alice : seed.BobPublic,
+            blocked: requesterBlocksOwner ? seed.BobPublic : seed.Alice
+        );
+
+        var client = await CreateAuthenticatedClientAsync(seed.Alice);
+
+        // Act
+        var response = await client.GetAsync($"/posts/{seed.BobPublicPost.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetPost_ShouldExcludeBlockedUsersFromLikeAndCommentCounts()
+    {
+        // Arrange
+        var scenarioSeeder = CreatePostEngagementVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
+        var client = await CreateAuthenticatedClientAsync(seed.Requester);
+
+        // Act
+        var response = await client.GetAsync($"/posts/{seed.TargetPost.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var responseBody = await ReadJsonAsync<PostDto>(response);
+
+        responseBody.LikeCount.Should().Be(1);
+        responseBody.CommentCount.Should().Be(1);
+        responseBody.IsLikedByCurrentUser.Should().BeTrue();
     }
 
     [Fact]
     public async Task GetPost_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -114,8 +161,8 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnNotFound_WhenPostIsSoftDeleted()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -126,11 +173,11 @@ public class GetPostTests : PostIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPost_ShouldReturnBadRequest_WhenIdIsEmpty()
+    public async Task GetPost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var seeder = CreatePostSeeder();
-        var seed = await seeder.SeedVisibilityGraphAsync();
+        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
+        var seed = await scenarioSeeder.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
