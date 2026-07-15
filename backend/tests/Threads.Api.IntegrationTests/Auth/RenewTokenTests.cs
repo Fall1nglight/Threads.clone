@@ -23,7 +23,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
@@ -64,7 +64,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
@@ -87,7 +87,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        var unknownToken = AuthRefreshTokenSeeder.CreatePlainToken(AuthTestData.UnknownTokenSeed);
+        var unknownToken = RefreshTokenTestSeeder.CreatePlainToken(AuthTestData.UnknownTokenSeed);
         var requestBody = new RenewToken.Request(unknownToken);
 
         // Act
@@ -103,7 +103,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var expiredToken = await tokenSeeder.CreateExpiredTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(expiredToken.PlainToken);
@@ -127,7 +127,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var revokedToken = await tokenSeeder.CreateRevokedTokenAsync(
             alice,
             RevocationReason.Logout
@@ -154,7 +154,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
         var userSeeder = CreateUserSeeder();
         var tokenSeeder = CreateTokenSeeder();
         var refreshTokenProvider = Services.GetRequiredService<IRefreshTokenProvider>();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
@@ -204,7 +204,7 @@ public class RenewTokenTests : AuthIntegrationTestBase
             AuthTestRoutes.RenewToken,
             new
             {
-                refreshToken = AuthRefreshTokenSeeder.CreatePlainToken(
+                refreshToken = RefreshTokenTestSeeder.CreatePlainToken(
                     AuthTestData.UnknownTokenSeed
                 ),
                 unexpected = true,

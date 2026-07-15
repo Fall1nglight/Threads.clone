@@ -24,10 +24,10 @@ public class SignupTests : AuthIntegrationTestBase
         var before = DateTime.UtcNow;
         var client = CreateAnonymousClient();
         var requestBody = CreateSignupRequest(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail,
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail,
             isPrivate: true,
-            bio: AuthTestData.AliceBio
+            bio: IntegrationTestData.AliceBio
         );
 
         // Act
@@ -70,8 +70,8 @@ public class SignupTests : AuthIntegrationTestBase
         // Arrange
         var client = CreateAnonymousClient();
         var requestBody = CreateSignupRequest(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail
         );
 
         // Act
@@ -93,8 +93,8 @@ public class SignupTests : AuthIntegrationTestBase
         // Arrange
         var userSeeder = CreateUserSeeder();
         var alice = await userSeeder.CreateUserAsync(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail
         );
         var client = CreateAnonymousClient();
         var requestBody = CreateSignupRequest(email: alice.Email!);
@@ -118,7 +118,7 @@ public class SignupTests : AuthIntegrationTestBase
     {
         // Arrange
         var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: AuthTestData.AliceUsername);
+        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = CreateAnonymousClient();
         var requestBody = CreateSignupRequest(username: alice.UserName!);
 
@@ -164,9 +164,9 @@ public class SignupTests : AuthIntegrationTestBase
             AuthTestRoutes.Signup,
             new
             {
-                email = AuthTestData.AliceEmail,
-                username = AuthTestData.AliceUsername,
-                password = AuthTestData.ValidPassword,
+                email = IntegrationTestData.AliceEmail,
+                username = IntegrationTestData.AliceUsername,
+                password = IntegrationTestData.ValidPassword,
                 isPrivate = false,
                 bio = "Hello",
                 unexpected = true,
@@ -216,9 +216,9 @@ public class SignupTests : AuthIntegrationTestBase
         ];
 
     private static Signup.Request CreateSignupRequest(
-        string email = AuthTestData.AliceEmail,
-        string username = AuthTestData.AliceUsername,
-        string password = AuthTestData.ValidPassword,
+        string email = IntegrationTestData.AliceEmail,
+        string username = IntegrationTestData.AliceUsername,
+        string password = IntegrationTestData.ValidPassword,
         bool isPrivate = false,
         string? bio = null
     )

@@ -25,8 +25,8 @@ public class LoginTests : AuthIntegrationTestBase
         var client = CreateAnonymousClient();
         var userSeeder = CreateUserSeeder();
         var alice = await userSeeder.CreateUserAsync(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail
         );
         var requestBody = CreateLoginRequestFor(alice);
 
@@ -58,8 +58,8 @@ public class LoginTests : AuthIntegrationTestBase
         var client = CreateAnonymousClient();
         var userSeeder = CreateUserSeeder();
         var alice = await userSeeder.CreateUserAsync(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail
         );
         var requestBody = CreateLoginRequestFor(alice);
 
@@ -84,7 +84,7 @@ public class LoginTests : AuthIntegrationTestBase
         var client = CreateAnonymousClient();
         var requestBody = CreateLoginRequest(
             email: "missing@example.test",
-            password: AuthTestData.ValidPassword
+            password: IntegrationTestData.ValidPassword
         );
 
         // Act
@@ -104,8 +104,8 @@ public class LoginTests : AuthIntegrationTestBase
         var client = CreateAnonymousClient();
         var userSeeder = CreateUserSeeder();
         var alice = await userSeeder.CreateUserAsync(
-            username: AuthTestData.AliceUsername,
-            email: AuthTestData.AliceEmail
+            username: IntegrationTestData.AliceUsername,
+            email: IntegrationTestData.AliceEmail
         );
         var requestBody = CreateLoginRequestFor(alice, password: AuthTestData.WrongPassword);
 
@@ -146,8 +146,8 @@ public class LoginTests : AuthIntegrationTestBase
             AuthTestRoutes.Login,
             new
             {
-                email = AuthTestData.AliceEmail,
-                password = AuthTestData.ValidPassword,
+                email = IntegrationTestData.AliceEmail,
+                password = IntegrationTestData.ValidPassword,
                 unexpected = true,
             }
         );
@@ -176,23 +176,23 @@ public class LoginTests : AuthIntegrationTestBase
 
     public static TheoryData<Login.Request> InvalidLoginRequests =>
         [
-            CreateLoginRequest(email: "", password: AuthTestData.ValidPassword),
-            CreateLoginRequest(email: "invalid-email", password: AuthTestData.ValidPassword),
+            CreateLoginRequest(email: "", password: IntegrationTestData.ValidPassword),
+            CreateLoginRequest(email: "invalid-email", password: IntegrationTestData.ValidPassword),
             CreateLoginRequest(
                 email: $"{new string('a', 257)}@example.test",
-                password: AuthTestData.ValidPassword
+                password: IntegrationTestData.ValidPassword
             ),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: ""),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: "Short1!"),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: "test123!"),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: "TEST123!"),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: "TestTest!"),
-            CreateLoginRequest(email: AuthTestData.AliceEmail, password: "Test1234"),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: ""),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: "Short1!"),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: "test123!"),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: "TEST123!"),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: "TestTest!"),
+            CreateLoginRequest(email: IntegrationTestData.AliceEmail, password: "Test1234"),
         ];
 
     private static Login.Request CreateLoginRequestFor(
         User user,
-        string password = AuthTestData.ValidPassword
+        string password = IntegrationTestData.ValidPassword
     ) => new(user.Email!, password);
 
     private static Login.Request CreateLoginRequest(string email, string password) =>

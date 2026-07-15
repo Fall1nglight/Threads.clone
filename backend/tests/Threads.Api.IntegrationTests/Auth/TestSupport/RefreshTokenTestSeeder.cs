@@ -5,18 +5,18 @@ using Threads.Api.Features.Auth.Services.RefreshToken;
 
 namespace Threads.Api.IntegrationTests.Auth.TestSupport;
 
-public sealed class AuthRefreshTokenSeeder
+public sealed class RefreshTokenTestSeeder
 {
     private readonly AppDbContext _db;
     private readonly IRefreshTokenProvider _refreshTokenProvider;
 
-    public AuthRefreshTokenSeeder(AppDbContext db, IRefreshTokenProvider refreshTokenProvider)
+    public RefreshTokenTestSeeder(AppDbContext db, IRefreshTokenProvider refreshTokenProvider)
     {
         _db = db;
         _refreshTokenProvider = refreshTokenProvider;
     }
 
-    public async Task<AuthRefreshTokenSeed> CreateActiveTokenAsync(User user, int tokenSeed = 1)
+    public async Task<RefreshTokenSeed> CreateActiveTokenAsync(User user, int tokenSeed = 1)
     {
         return await CreateTokenAsync(
             user,
@@ -27,7 +27,7 @@ public sealed class AuthRefreshTokenSeeder
         );
     }
 
-    public async Task<AuthRefreshTokenSeed> CreateExpiredTokenAsync(User user, int tokenSeed = 2)
+    public async Task<RefreshTokenSeed> CreateExpiredTokenAsync(User user, int tokenSeed = 2)
     {
         return await CreateTokenAsync(
             user,
@@ -38,7 +38,7 @@ public sealed class AuthRefreshTokenSeeder
         );
     }
 
-    public async Task<AuthRefreshTokenSeed> CreateRevokedTokenAsync(
+    public async Task<RefreshTokenSeed> CreateRevokedTokenAsync(
         User user,
         RevocationReason revocationReason,
         int tokenSeed = 3
@@ -53,13 +53,43 @@ public sealed class AuthRefreshTokenSeeder
         );
     }
 
+    public async Task<RefreshTokenChainSeed> CreateTokenChainAsync(User user)
+    {
+        var replacementToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = _refreshTokenProvider.Hash(CreatePlainToken(2)),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+        };
+
+        await _db.RefreshTokens.AddAsync(replacementToken);
+        await _db.SaveChangesAsync();
+
+        var replacedToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = _refreshTokenProvider.Hash(CreatePlainToken(1)),
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7),
+            RevokedAtUtc = DateTime.UtcNow,
+            RevocationReason = RevocationReason.ReplacedByNewToken,
+            ReplacedByTokenId = replacementToken.Id,
+        };
+
+        await _db.RefreshTokens.AddAsync(replacedToken);
+        await _db.SaveChangesAsync();
+
+        return new RefreshTokenChainSeed(replacedToken, replacementToken);
+    }
+
     public static string CreatePlainToken(int tokenSeed)
     {
         var bytes = Enumerable.Repeat((byte)tokenSeed, 32).ToArray();
         return Convert.ToBase64String(bytes);
     }
 
-    private async Task<AuthRefreshTokenSeed> CreateTokenAsync(
+    private async Task<RefreshTokenSeed> CreateTokenAsync(
         User user,
         int tokenSeed,
         DateTime expiresAtUtc,
@@ -81,8 +111,13 @@ public sealed class AuthRefreshTokenSeeder
         await _db.RefreshTokens.AddAsync(refreshToken);
         await _db.SaveChangesAsync();
 
-        return new AuthRefreshTokenSeed(plainToken, refreshToken);
+        return new RefreshTokenSeed(plainToken, refreshToken);
     }
 }
 
-public sealed record AuthRefreshTokenSeed(string PlainToken, RefreshToken Entity);
+public sealed record RefreshTokenSeed(string PlainToken, RefreshToken Entity);
+
+public sealed record RefreshTokenChainSeed(
+    RefreshToken ReplacedToken,
+    RefreshToken ReplacementToken
+);
