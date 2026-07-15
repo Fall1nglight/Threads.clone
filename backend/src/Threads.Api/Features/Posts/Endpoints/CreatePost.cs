@@ -34,11 +34,11 @@ public class CreatePost : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var userId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
 
         var post = new Post
         {
-            UserId = userId,
+            UserId = currentUserId,
             Content = request.Content,
             CreatedAtUtc = DateTime.UtcNow,
         };
@@ -47,8 +47,8 @@ public class CreatePost : IEndpoint
         await db.SaveChangesAsync(cancellationToken);
 
         PostDto response = await db
-            .Posts.Where(p => p.Id == post.Id)
-            .ToDto(db)
+            .Posts.Where(createdPost => createdPost.Id == post.Id)
+            .ToDto(currentUserId, db)
             .FirstAsync(cancellationToken);
 
         return TypedResults.Created($"/posts/{post.Id}", response);

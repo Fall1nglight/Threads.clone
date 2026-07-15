@@ -13,10 +13,10 @@ public class UpdatePost : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("/{id}", Handle).WithValidation<Request>().WithSummary("Updates a post");
+        builder.MapPut("/{postId}", Handle).WithValidation<Request>().WithSummary("Updates a post");
     }
 
-    public record Request(Guid Id, [FromBody] Body Body);
+    public record Request(Guid PostId, [FromBody] Body Body);
 
     public record Body(string Content);
 
@@ -24,7 +24,7 @@ public class UpdatePost : IEndpoint
     {
         public UpdatePostValidator()
         {
-            RuleFor(x => x.Id).NotEmpty();
+            RuleFor(x => x.PostId).NotEmpty();
             RuleFor(x => x.Body.Content).NotEmpty().MaximumLength(600);
         }
     }
@@ -36,12 +36,15 @@ public class UpdatePost : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var post = await db.Posts.FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
+        var post = await db.Posts.FirstOrDefaultAsync(
+            post => post.Id == request.PostId,
+            cancellationToken
+        );
         if (post == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-        if (post.UserId != userId)
+        var currentUserId = claimsPrincipal.GetUserId();
+        if (post.UserId != currentUserId)
             return TypedResults.Forbid();
 
         post.Content = request.Body.Content;

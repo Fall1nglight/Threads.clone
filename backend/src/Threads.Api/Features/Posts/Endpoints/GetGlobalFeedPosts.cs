@@ -23,10 +23,11 @@ public class GetGlobalFeedPosts : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var userId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
+
         var posts = await db
-            .Posts.WhereVisibleInGlobalFeed(db, userId)
-            .ToDto(db, userId)
+            .Posts.WhereVisibleTo(currentUserId, db)
+            .ToDto(currentUserId, db)
             .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(posts);
