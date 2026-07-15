@@ -6,6 +6,7 @@ using Threads.Api.Common.Extensions;
 using Threads.Api.Common.Pagination;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
+using Threads.Api.Features.Blocks;
 using Threads.Api.Features.Posts;
 
 namespace Threads.Api.Features.Likes.Endpoints;
@@ -30,31 +31,27 @@ public class GetPostLikes : IEndpoint
         }
     }
 
-    private static async Task<
-        Results<Ok<PagedResponse<PostLikeUserDto>>, NotFound, ForbidHttpResult>
-    > Handle(
+    private static async Task<Results<Ok<PagedResponse<PostLikeUserDto>>, NotFound>> Handle(
         [AsParameters] Request request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
+        var currentUserId = claimsPrincipal.GetUserId();
+
         var post = await db
-            .Posts.Where(p => p.Id == request.PostId)
-            .Include(p => p.User)
+            .Posts.Where(post => post.Id == request.PostId)
+            .WhereVisibleTo(currentUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-        bool canViewPost = await post.CanBeViewedByUserAsync(db, userId, cancellationToken);
-        if (!canViewPost)
-            return TypedResults.Forbid();
-
         var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
         var response = await db
             .PostLikes.Where(like => like.PostId == post.Id)
+            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
             .ToPostLikeUserDto()
             .ToPagedResponse(pagedRequest, cancellationToken);
 
