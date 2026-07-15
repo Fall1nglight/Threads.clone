@@ -4,9 +4,9 @@ namespace Threads.Api.Features.Follows;
 
 public static class FollowDtoExtensions
 {
-    public static IQueryable<FollowUserDto> ToFollowerDto(this IQueryable<Follow> query)
+    public static IQueryable<FollowUserDto> ToFollowerDto(this IQueryable<Follow> follows)
     {
-        return query.Select(follow => new FollowUserDto
+        return follows.Select(follow => new FollowUserDto
         {
             Id = follow.Follower.Id,
             Username = follow.Follower.UserName!,
@@ -15,9 +15,9 @@ public static class FollowDtoExtensions
         });
     }
 
-    public static IQueryable<FollowUserDto> ToFollowedDto(this IQueryable<Follow> query)
+    public static IQueryable<FollowUserDto> ToFollowedDto(this IQueryable<Follow> follows)
     {
-        return query.Select(follow => new FollowUserDto
+        return follows.Select(follow => new FollowUserDto
         {
             Id = follow.Followed.Id,
             Username = follow.Followed.UserName!,

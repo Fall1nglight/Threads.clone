@@ -36,11 +36,11 @@ public class RemoveFollower : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var followedId = claimsPrincipal.GetUserId();
+        var currentUserId = claimsPrincipal.GetUserId();
         var follow = await db.Follows.FirstOrDefaultAsync(
             follow =>
                 follow.FollowerId == request.FollowerId
-                && follow.FollowedId == followedId
+                && follow.FollowedId == currentUserId
                 && follow.Status == FollowStatus.Accepted,
             cancellationToken
         );
