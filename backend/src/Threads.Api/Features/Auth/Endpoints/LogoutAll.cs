@@ -19,8 +19,8 @@ public class LogoutAll : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var userId = claimsPrincipal.GetUserId();
-        await rtManager.LogoutGlobalAsync(userId, cancellationToken);
+        var currentUserId = claimsPrincipal.GetUserId();
+        await rtManager.LogoutGlobalAsync(currentUserId, cancellationToken);
         return TypedResults.Ok();
     }
 }
