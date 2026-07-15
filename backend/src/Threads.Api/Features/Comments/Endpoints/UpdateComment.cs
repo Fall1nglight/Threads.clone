@@ -41,15 +41,15 @@ public class UpdateComment : IEndpoint
     )
     {
         var comment = await db.Comments.FirstOrDefaultAsync(
-            c => c.PostId == request.PostId && c.Id == request.CommentId,
+            comment => comment.PostId == request.PostId && comment.Id == request.CommentId,
             cancellationToken
         );
 
         if (comment == null)
             return TypedResults.NotFound();
 
-        var userId = claimsPrincipal.GetUserId();
-        if (comment.UserId != userId)
+        var currentUserId = claimsPrincipal.GetUserId();
+        if (comment.UserId != currentUserId)
             return TypedResults.Forbid();
 
         comment.Content = request.Body.Content;

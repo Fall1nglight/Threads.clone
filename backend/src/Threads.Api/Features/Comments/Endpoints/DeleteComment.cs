@@ -37,15 +37,15 @@ public class DeleteComment : IEndpoint
     )
     {
         var comment = await db.Comments.FirstOrDefaultAsync(
-            c => c.PostId == request.PostId && c.Id == request.CommentId,
+            comment => comment.PostId == request.PostId && comment.Id == request.CommentId,
             cancellationToken
         );
 
         if (comment == null)
             return TypedResults.NoContent();
 
-        var userId = claimsPrincipal.GetUserId();
-        if (comment.UserId != userId)
+        var currentUserId = claimsPrincipal.GetUserId();
+        if (comment.UserId != currentUserId)
             return TypedResults.Forbid();
 
         db.Comments.Remove(comment);

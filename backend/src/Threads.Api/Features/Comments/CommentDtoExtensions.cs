@@ -4,9 +4,9 @@ namespace Threads.Api.Features.Comments;
 
 public static class CommentDtoExtensions
 {
-    public static IQueryable<CommentDto> ToCommentDto(this IQueryable<Comment> query)
+    public static IQueryable<CommentDto> ToCommentDto(this IQueryable<Comment> comments)
     {
-        return query.Select(comment => new CommentDto
+        return comments.Select(comment => new CommentDto
         {
             Id = comment.Id,
             PostId = comment.PostId,
