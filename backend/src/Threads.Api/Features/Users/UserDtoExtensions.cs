@@ -4,9 +4,9 @@ namespace Threads.Api.Features.Users;
 
 public static class UserDtoExtensions
 {
-    public static IQueryable<UserProfileDto> ToUserProfileDto(this IQueryable<User> query)
+    public static IQueryable<UserProfileDto> ToUserProfileDto(this IQueryable<User> users)
     {
-        return query.Select(user => new UserProfileDto
+        return users.Select(user => new UserProfileDto
         {
             Id = user.Id,
             Username = user.UserName!,
