@@ -76,7 +76,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: ValidPostId, content: ValidContent);
+        var request = CreateUpdateRequest(postId: ValidPostId, content: ValidContent);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -91,7 +91,7 @@ public class PostValidatorTests
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
         var request = CreateUpdateRequest(
-            id: ValidPostId,
+            postId: ValidPostId,
             content: new string('a', MaxContentLength)
         );
 
@@ -103,18 +103,18 @@ public class PostValidatorTests
     }
 
     [Fact]
-    public void UpdatePostValidator_ShouldFail_WhenIdIsEmpty()
+    public void UpdatePostValidator_ShouldFail_WhenPostIdIsEmpty()
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: Guid.Empty, content: ValidContent);
+        var request = CreateUpdateRequest(postId: Guid.Empty, content: ValidContent);
 
         // Act
         ValidationResult result = validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Id));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
 
     [Theory]
@@ -123,7 +123,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: ValidPostId, content: content);
+        var request = CreateUpdateRequest(postId: ValidPostId, content: content);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -144,7 +144,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(id: ValidPostId, content: new string('a', length));
+        var request = CreateUpdateRequest(postId: ValidPostId, content: new string('a', length));
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -160,11 +160,11 @@ public class PostValidatorTests
     }
 
     [Fact]
-    public void GetPostValidator_ShouldPass_WhenIdIsNotEmpty()
+    public void GetPostValidator_ShouldPass_WhenPostIdIsNotEmpty()
     {
         // Arrange
         var validator = new GetPost.GetPostValidator();
-        var request = CreateGetRequest(id: ValidPostId);
+        var request = CreateGetRequest(postId: ValidPostId);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -174,26 +174,26 @@ public class PostValidatorTests
     }
 
     [Fact]
-    public void GetPostValidator_ShouldFail_WhenIdIsEmpty()
+    public void GetPostValidator_ShouldFail_WhenPostIdIsEmpty()
     {
         // Arrange
         var validator = new GetPost.GetPostValidator();
-        var request = CreateGetRequest(id: Guid.Empty);
+        var request = CreateGetRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Id));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
 
     [Fact]
-    public void DeletePostValidator_ShouldPass_WhenIdIsNotEmpty()
+    public void DeletePostValidator_ShouldPass_WhenPostIdIsNotEmpty()
     {
         // Arrange
         var validator = new DeletePost.DeletePostValidator();
-        var request = CreateDeleteRequest(id: ValidPostId);
+        var request = CreateDeleteRequest(postId: ValidPostId);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -203,18 +203,18 @@ public class PostValidatorTests
     }
 
     [Fact]
-    public void DeletePostValidator_ShouldFail_WhenIdIsEmpty()
+    public void DeletePostValidator_ShouldFail_WhenPostIdIsEmpty()
     {
         // Arrange
         var validator = new DeletePost.DeletePostValidator();
-        var request = CreateDeleteRequest(id: Guid.Empty);
+        var request = CreateDeleteRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Id));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
 
     public static TheoryData<string?> EmptyContentValues => [null, string.Empty, " "];
@@ -225,15 +225,16 @@ public class PostValidatorTests
         new(content!);
 
     private static UpdatePost.Request CreateUpdateRequest(
-        Guid? id = null,
+        Guid? postId = null,
         string? content = ValidContent
-    ) => new(id ?? ValidPostId, CreateUpdateBody(content: content));
+    ) => new(postId ?? ValidPostId, CreateUpdateBody(content: content));
 
     private static UpdatePost.Body CreateUpdateBody(string? content = ValidContent) =>
         new(content!);
 
-    private static GetPost.Request CreateGetRequest(Guid? id = null) => new(id ?? ValidPostId);
+    private static GetPost.Request CreateGetRequest(Guid? postId = null) =>
+        new(postId ?? ValidPostId);
 
-    private static DeletePost.Request CreateDeleteRequest(Guid? id = null) =>
-        new(id ?? ValidPostId);
+    private static DeletePost.Request CreateDeleteRequest(Guid? postId = null) =>
+        new(postId ?? ValidPostId);
 }
