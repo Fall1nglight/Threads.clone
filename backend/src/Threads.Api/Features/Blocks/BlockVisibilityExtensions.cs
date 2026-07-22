@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Threads.Api.Data.Blocks;
-using Threads.Api.Data.Shared;
+﻿using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 
 namespace Threads.Api.Features.Blocks;

@@ -9,7 +9,7 @@ public static class PagedQueryableExtensions
         PagedRequest request,
         CancellationToken cancellationToken
     )
-        where TResponseDto : ICursorItem
+        where TResponseDto : class, ICursorItem
     {
         if (!string.IsNullOrEmpty(request.Cursor))
         {
