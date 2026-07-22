@@ -6,7 +6,7 @@ namespace Threads.Api.Common.Extensions;
 public static class RouteBuilderExtensions
 {
     public static IEndpointRouteBuilder MapEndpoint<TEndpoint>(this IEndpointRouteBuilder builder)
-        where TEndpoint : IEndpoint
+        where TEndpoint : class, IEndpoint
     {
         TEndpoint.Map(builder);
         return builder;

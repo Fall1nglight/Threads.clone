@@ -6,6 +6,7 @@ using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Blocks;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
+using Threads.Api.Features.Follows;
 
 namespace Threads.Api.Features.Blocks.Endpoints;
 
@@ -68,10 +69,7 @@ public class BlockUser : IEndpoint
         }
 
         await db
-            .Follows.Where(follow =>
-                (follow.FollowerId == currentUserId && follow.FollowedId == request.TargetUserId)
-                || (follow.FollowerId == request.TargetUserId && follow.FollowedId == currentUserId)
-            )
+            .Follows.WhereBetween(currentUserId, request.TargetUserId)
             .ExecuteDeleteAsync(cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
