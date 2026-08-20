@@ -11,4 +11,5 @@ public record FollowUserDto : ICursorItem
     public required string Username { get; init; }
     public required bool IsPrivate { get; init; }
     public required DateTime CreatedAtUtc { get; init; }
+    public FollowStatus? FollowStatusWithCurrentUser { get; init; }
 }
