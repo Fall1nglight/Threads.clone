@@ -39,7 +39,17 @@ public class GetUserTests : UserIntegrationTestBase
             .RootElement.EnumerateObject()
             .Select(property => property.Name)
             .Should()
-            .BeEquivalentTo("id", "username", "isPrivate", "createdAtUtc", "updatedAtUtc", "bio");
+            .BeEquivalentTo(
+                "id",
+                "username",
+                "isPrivate",
+                "createdAtUtc",
+                "updatedAtUtc",
+                "bio",
+                "followerCount",
+                "followingCount",
+                "followStatusWithCurrentUser"
+            );
 
         var responseBody = JsonSerializer.Deserialize<UserProfileDto>(json, JsonOptions);
         responseBody.Should().NotBeNull();
