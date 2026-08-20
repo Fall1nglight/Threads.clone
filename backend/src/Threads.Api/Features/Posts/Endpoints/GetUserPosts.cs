@@ -12,9 +12,10 @@ public class GetUserPosts : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/{userId}", Handle).WithSummary("Retrieves posts by userId");
+        builder.MapGet("", Handle).WithSummary("Retrieves posts by userId");
     }
 
+    // userId comes from query parameters so we dont specify it in the route path
     public record Request(Guid UserId, string? Cursor, int PageSize = 20);
 
     private static async Task<Ok<PagedResponse<PostDto>>> Handle(
