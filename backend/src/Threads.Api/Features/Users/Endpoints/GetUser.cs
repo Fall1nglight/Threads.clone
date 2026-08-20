@@ -36,14 +36,17 @@ public class GetUser : IEndpoint
     )
     {
         var usersQuery = db.Users.Where(user => user.Id == request.UserId);
+        Guid? currentUserId = null;
 
         if (claimsPrincipal.Identity?.IsAuthenticated == true)
         {
-            var currentUserId = claimsPrincipal.GetUserId();
-            usersQuery = usersQuery.WhereVisibleTo(currentUserId, db);
+            currentUserId = claimsPrincipal.GetUserId();
+            usersQuery = usersQuery.WhereVisibleTo(currentUserId.Value, db);
         }
 
-        var user = await usersQuery.ToUserProfileDto().FirstOrDefaultAsync(cancellationToken);
+        var user = await usersQuery
+            .ToUserProfileDto(currentUserId, db)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (user == null)
             return TypedResults.NotFound();
