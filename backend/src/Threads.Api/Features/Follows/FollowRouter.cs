@@ -20,5 +20,8 @@ public class FollowRouter : IEndpointRouter
             .MapEndpoint<GetFollowing>()
             .MapEndpoint<RemoveFollower>()
             .MapEndpoint<DeleteFollowing>();
+
+        var userSpecificAuthorizedRoute = builder.MapGroup("/users").RequireAuthorization();
+        userSpecificAuthorizedRoute.MapEndpoint<GetUserFollowers>().MapEndpoint<GetUserFollowing>();
     }
 }

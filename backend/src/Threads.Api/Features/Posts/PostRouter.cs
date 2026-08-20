@@ -18,6 +18,7 @@ public class PostRouter : IEndpointRouter
             .MapEndpoint<GetGlobalFeedPosts>()
             .MapEndpoint<GetMyFeedPosts>()
             .MapEndpoint<GetPost>()
+            .MapEndpoint<GetUserPosts>()
             .MapEndpoint<CreatePost>()
             .MapEndpoint<UpdatePost>()
             .MapEndpoint<DeletePost>();

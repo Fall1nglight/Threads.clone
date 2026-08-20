@@ -22,14 +22,17 @@ public class GetUsers : IEndpoint
     )
     {
         var usersQuery = db.Users.AsQueryable();
+        Guid? currentUserId = null;
 
         if (claimsPrincipal.Identity?.IsAuthenticated == true)
         {
-            var currentUserId = claimsPrincipal.GetUserId();
-            usersQuery = usersQuery.WhereVisibleTo(currentUserId, db);
+            currentUserId = claimsPrincipal.GetUserId();
+            usersQuery = usersQuery.WhereVisibleTo(currentUserId.Value, db);
         }
 
-        var users = await usersQuery.ToUserProfileDto().ToPagedResponse(request, cancellationToken);
+        var users = await usersQuery
+            .ToUserProfileDto(currentUserId, db)
+            .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(users);
     }

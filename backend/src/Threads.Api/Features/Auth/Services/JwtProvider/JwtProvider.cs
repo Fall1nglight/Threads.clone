@@ -31,6 +31,7 @@ public class JwtProvider : IJwtProvider
         [
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email!),
+            new Claim(ClaimTypes.Name, user.UserName!),
             .. roles.Select(r => new Claim(ClaimTypes.Role, r)),
         ];
 
