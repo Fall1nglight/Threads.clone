@@ -1,0 +1,77 @@
+:root {
+  color-scheme: light;
+
+  --color-page: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #eeeeee;
+  --color-surface-raised: #fafafa;
+  --color-text: #101010;
+  --color-text-muted: #5f5f5f;
+  --color-border: #dedede;
+  --color-control-border: #6f6f6f;
+  --color-action: #101010;
+  --color-action-hover: #2d2d2d;
+  --color-action-active: #444444;
+  --color-action-contrast: #f7f7f7;
+  --color-focus: #005fcc;
+  --color-danger: #b42318;
+  --color-disabled: #d7d7d7;
+  --color-disabled-text: #555555;
+  --color-media-ink: #232323;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --type-ratio: 1.2;
+  --font-size-micro: 0.75rem;
+  --font-size-support: 0.875rem;
+  --font-size-body: 1rem;
+  --font-size-title: 1.25rem;
+  --font-size-page-title: 1.5rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 999rem;
+
+  --control-height: 2.75rem;
+  --app-content-width: 40rem;
+  --desktop-nav-width: 5.5rem;
+  --mobile-top-height: 3.5rem;
+  --mobile-bottom-height: 4rem;
+  --transition-fast: 120ms ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-page: #0a0a0a;
+    --color-surface: #151515;
+    --color-surface-subtle: #242424;
+    --color-surface-raised: #1d1d1d;
+    --color-text: #f2f2f2;
+    --color-text-muted: #adadad;
+    --color-border: #3b3b3b;
+    --color-control-border: #858585;
+    --color-action: #f2f2f2;
+    --color-action-hover: #dcdcdc;
+    --color-action-active: #c7c7c7;
+    --color-action-contrast: #111111;
+    --color-focus: #79adff;
+    --color-danger: #ff8a80;
+    --color-disabled: #3a3a3a;
+    --color-disabled-text: #b8b8b8;
+    --color-media-ink: #ececec;
+  }
+}
