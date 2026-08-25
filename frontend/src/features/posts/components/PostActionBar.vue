@@ -17,7 +17,6 @@ const {
 const emit = defineEmits<{
   showComments: []
   toggleLike: [nextLikeState: boolean]
-  openShareDialog: []
 }>()
 
 const { runOrShowLoginForm } = useLoginPrompt()
@@ -30,9 +29,6 @@ function handleLikeButtonClick() {
   emit('toggleLike', !isLikedByCurrentUser)
 }
 
-function handleShareButtonClick() {
-  emit('openShareDialog')
-}
 </script>
 
 <template>
@@ -57,16 +53,6 @@ function handleShareButtonClick() {
     >
       <AppIcon :name="isLikedByCurrentUser ? 'heart-filled' : 'heart'" />
       <span>{{ likeCount }}</span>
-    </button>
-
-    <button
-      @click="runOrShowLoginForm(handleShareButtonClick)"
-      aria-label="Share thread"
-      class="post-actions__button post-actions__button--icon"
-      :disabled="disabled"
-      type="button"
-    >
-      <AppIcon name="send" />
     </button>
   </div>
 </template>
