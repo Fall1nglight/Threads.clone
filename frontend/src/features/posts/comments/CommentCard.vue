@@ -6,6 +6,7 @@ import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
 import { onBeforeUnmount, ref, toRefs, useId, useTemplateRef, watch } from 'vue'
 import BaseTextField from '@/shared/ui/BaseTextField.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
+import { useDateFormatter } from '@/shared/composables/useDateFormatter.ts'
 
 const props = withDefaults(
   defineProps<{
@@ -15,6 +16,7 @@ const props = withDefaults(
     username: string
     avatarInitials: string
     createdAtUtc: string
+    updatedAtUtc: string | null
     content: string
     verified?: boolean
     showMoreOptions?: boolean
@@ -27,7 +29,9 @@ const props = withDefaults(
   },
 )
 
-const { isSubmitting, validationErrorMessage } = toRefs(props)
+const { createdAtUtc, updatedAtUtc, isSubmitting, validationErrorMessage } = toRefs(props)
+const { formattedDate: formattedCreatedAtUtc } = useDateFormatter(createdAtUtc)
+const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 
 const isEditing = ref<boolean>(false)
 
@@ -135,9 +139,10 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
             {{ authorName }}
           </RouterLink>
           <AppIcon v-if="verified" class="comment-card__verified" name="verified" />
-          <span class="comment-card__username">@{{ username }}</span>
           <span aria-hidden="true">·</span>
-          <time class="comment-card__timestamp">{{ createdAtUtc }}</time>
+          <time v-if="formattedCreatedAtUtc" class="comment-card__timestamp">
+            {{ formattedCreatedAtUtc }}
+          </time>
         </div>
 
         <div
@@ -177,26 +182,29 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
         </div>
       </header>
 
-      <div v-if="isEditing">
-        <form @submit.prevent="emit('editComment', id, newContent)">
-          <BaseTextField
-            v-model="newContent"
-            :error-message="validationErrorMessage"
-            id="update-comment-content"
-            label=""
-          />
+      <div class="comment-card__content-row">
+        <div v-if="isEditing" class="comment-card__editor">
+          <form @submit.prevent="emit('editComment', id, newContent)">
+            <BaseTextField
+              v-model="newContent"
+              :error-message="validationErrorMessage"
+              id="update-comment-content"
+              label=""
+            />
 
-          <BaseButton
-            :is-loading="isSubmitting"
-            loading-text="Saving..."
-            type="submit"
-            variant="primary"
-            >Save changes</BaseButton
-          >
-        </form>
-      </div>
-      <div v-else>
-        <p class="comment-card__content">{{ content }}</p>
+            <BaseButton
+              :is-loading="isSubmitting"
+              loading-text="Saving..."
+              type="submit"
+              variant="primary"
+              >Save changes</BaseButton
+            >
+          </form>
+        </div>
+        <p v-else class="comment-card__content">{{ content }}</p>
+        <time v-if="formattedUpdatedAtUtc" class="comment-card__updated-at">
+          Updated {{ formattedUpdatedAtUtc }}
+        </time>
       </div>
     </div>
   </article>
@@ -319,31 +327,41 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
   color: var(--color-text);
 }
 
-.comment-card__username,
 .comment-card__timestamp {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.comment-card__username {
-  max-width: 8.5rem;
 }
 
 .comment-card__timestamp {
   min-width: 0;
 }
 
+.comment-card__content-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.comment-card__editor {
+  min-width: 0;
+  flex: 0 0 100%;
+}
+
+.comment-card__updated-at {
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-support);
+  text-align: end;
+  white-space: nowrap;
+}
+
 .comment-card__content {
+  min-width: min(100%, 12rem);
   max-width: 65ch;
-  margin-block-end: var(--space-2);
+  flex: 1 1 12rem;
   overflow-wrap: anywhere;
   line-height: 1.5;
   text-wrap: pretty;
-}
-
-@media (max-width: 28rem) {
-  .comment-card__username {
-    display: none;
-  }
 }
 </style>
