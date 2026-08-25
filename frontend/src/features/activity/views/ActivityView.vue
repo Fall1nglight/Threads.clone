@@ -2,6 +2,8 @@
 import PageHeader from '@/app/components/PageHeader.vue'
 import ActivityFilterBar from '@/features/activity/components/ActivityFilterBar.vue'
 import ActivityItem from '@/features/activity/components/ActivityItem.vue'
+
+const date = new Date().toDateString()
 </script>
 
 <template>
@@ -10,6 +12,7 @@ import ActivityItem from '@/features/activity/components/ActivityItem.vue'
     <ActivityFilterBar />
     <section aria-label="Recent activity">
       <ActivityItem
+        :created-at-utc="date"
         action="started following you"
         actor="Leo Park"
         initials="LP"
@@ -18,7 +21,9 @@ import ActivityItem from '@/features/activity/components/ActivityItem.vue'
         user-id="leo"
         username="leopark"
       />
+
       <ActivityItem
+        :created-at-utc="date"
         action="replied to your thread"
         actor="Maya Chen"
         details="The spacing rhythm is doing the heavy lifting here."
@@ -27,7 +32,9 @@ import ActivityItem from '@/features/activity/components/ActivityItem.vue'
         user-id="maya"
         username="mayamakes"
       />
+
       <ActivityItem
+        :created-at-utc="date"
         action="mentioned you in a thread"
         actor="Avery Stone"
         details="@demo-user this is the feature-first structure we discussed."
@@ -36,7 +43,9 @@ import ActivityItem from '@/features/activity/components/ActivityItem.vue'
         user-id="avery"
         username="averystone"
       />
+
       <ActivityItem
+        :created-at-utc="date"
         action="liked your thread"
         actor="Noah Williams"
         initials="NW"
