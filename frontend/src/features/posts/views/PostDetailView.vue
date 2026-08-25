@@ -181,6 +181,7 @@ async function editComment(validPayload: UpdateCommentDto) {
             :content="comment.content"
             :avatar-initials="comment.user.username.slice(0, 2)"
             :created-at-utc="comment.createdAtUtc"
+            :updated-at-utc="comment.updatedAtUtc"
             @delete-comment="handleDeleteComment"
             @edit-comment="handleEditComment"
             :show-more-options="currentUserId === comment.user.id"

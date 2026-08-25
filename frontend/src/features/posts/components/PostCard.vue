@@ -4,10 +4,10 @@ import AppIcon from '@/shared/icons/AppIcon.vue'
 import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
 import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
 import PostActionBar from '@/features/posts/components/PostActionBar.vue'
-import { formatDistanceToNow } from 'date-fns'
-import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, toRefs, useTemplateRef, watch } from 'vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
+import { useDateFormatter } from '@/shared/composables/useDateFormatter.ts'
 
 const props = withDefaults(
   defineProps<{
@@ -43,6 +43,9 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { createdAtUtc, updatedAtUtc } = toRefs(props)
+const { formattedDate: formattedCreatedAtUtc } = useDateFormatter(createdAtUtc)
+const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 const { currentUserId } = storeToRefs(authStore)
 const isPostOwner = computed(() => currentUserId.value === props.userId)
 const isPostActionsOpen = ref(false)
@@ -132,15 +135,14 @@ onBeforeUnmount(removeOpenMenuListeners)
             {{ authorName }}
           </RouterLink>
           <AppIcon v-if="verified" class="post-card__verified" name="verified" />
-          <span class="post-card__username">@{{ username }}</span>
           <span aria-hidden="true">·</span>
-          <RouterLink class="post-card__timestamp" :to="`/posts/${postId}`">
-            {{ formatDistanceToNow(createdAtUtc, { addSuffix: true }) }}
+          <RouterLink
+            v-if="formattedCreatedAtUtc"
+            class="post-card__timestamp"
+            :to="`/posts/${postId}`"
+          >
+            {{ formattedCreatedAtUtc }}
           </RouterLink>
-          <span aria-hidden="true">·</span>
-          <span v-if="updatedAtUtc">
-            {{ formatDistanceToNow(updatedAtUtc, { addSuffix: true }) }}
-          </span>
         </div>
         <div
           v-if="isPostOwner"
@@ -193,13 +195,18 @@ onBeforeUnmount(removeOpenMenuListeners)
         <figcaption class="sr-only">A compact interface system preview</figcaption>
       </figure>
 
-      <PostActionBar
-        :is-liked-by-current-user="isLikedByCurrentUser"
-        :like-count="likeCount"
-        :comment-count="commentCount"
-        @show-comments="emit('showComments', postId)"
-        @toggle-like="(nextLikeState: boolean) => emit('toggleLike', postId, nextLikeState)"
-      />
+      <div class="post-card__footer">
+        <PostActionBar
+          :is-liked-by-current-user="isLikedByCurrentUser"
+          :like-count="likeCount"
+          :comment-count="commentCount"
+          @show-comments="emit('showComments', postId)"
+          @toggle-like="(nextLikeState: boolean) => emit('toggleLike', postId, nextLikeState)"
+        />
+        <time v-if="formattedUpdatedAtUtc" class="post-card__updated-at">
+          Updated {{ formattedUpdatedAtUtc }}
+        </time>
+      </div>
     </div>
   </article>
 </template>
@@ -339,12 +346,6 @@ onBeforeUnmount(removeOpenMenuListeners)
   color: var(--color-text);
 }
 
-.post-card__username {
-  max-width: 8.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .post-card__timestamp {
   display: inline-flex;
   min-width: var(--control-height);
@@ -353,6 +354,21 @@ onBeforeUnmount(removeOpenMenuListeners)
   justify-content: center;
   color: var(--color-text-muted);
   text-decoration: none;
+}
+
+.post-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.post-card__updated-at {
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-support);
+  text-align: end;
+  white-space: nowrap;
 }
 
 .post-card__content {
@@ -404,11 +420,5 @@ onBeforeUnmount(removeOpenMenuListeners)
   background: var(--color-surface);
   font-size: var(--font-size-micro);
   font-weight: var(--font-weight-semibold);
-}
-
-@media (max-width: 28rem) {
-  .post-card__username {
-    display: none;
-  }
 }
 </style>
