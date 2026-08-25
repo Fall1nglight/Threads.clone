@@ -1,6 +1,6 @@
 ﻿import Joi from 'joi'
-import type { SignupRequestDto } from '@/features/auth/authApi.ts'
 import { emailSchema, passwordSchema } from '@/features/auth/schemas/authFieldSchemas.ts'
+import type { SignupRequestDto } from '@/features/auth/authTypes.ts'
 
 const signupSchema = Joi.object<SignupRequestDto, true>({
   username: Joi.string()
