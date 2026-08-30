@@ -16,40 +16,45 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
-const initialPayload: LoginRequestDto = { email: '', password: '' }
+const initialLoginForm: LoginRequestDto = { email: '', password: '' }
 
 const {
-  payload,
-  errors: validationError,
-  submit,
-  isSubmitting,
-} = usePayloadValidator<LoginRequestDto>(initialPayload, loginSchema, handleValidSubmit)
+  payload: loginForm,
+  errors: loginValidationErrors,
+  submit: submitLogin,
+  isSubmitting: isSubmittingLogin,
+} = usePayloadValidator(initialLoginForm, loginSchema, handleLoginSubmit)
 
-const { error, errorMessage, clearError } = useErrorHandler()
+const {
+  error: loginApiError,
+  errorMessage: loginApiErrorMsg,
+  clearError: clearApiError,
+} = useErrorHandler()
+
 const fallbackErrorMessage: string = 'Something went wrong during login. Please try again later.'
 
-async function handleValidSubmit(validPayload: LoginRequestDto) {
+async function handleLoginSubmit(validPayload: LoginRequestDto) {
   try {
     await authStore.login(validPayload)
 
     if (!isAuthenticated.value) {
-      error.value = new Error(fallbackErrorMessage)
+      loginApiError.value = new Error(fallbackErrorMessage)
       return
     }
 
     await router.push('/')
   } catch (err) {
-    error.value = err as Error
+    loginApiError.value = err as Error
   }
 }
 </script>
 
 <template>
   <AuthCard subtitle="Welcome back to the conversation." title="Log in">
-    <form aria-label="Login details" class="auth-form" @submit.prevent="submit">
+    <form aria-label="Login details" class="auth-form" @submit.prevent="submitLogin">
       <BaseTextField
-        v-model="payload.email"
-        :error-message="validationError.email"
+        v-model="loginForm.email"
+        :error-message="loginValidationErrors.email"
         id="login-identity"
         label="Email"
         placeholder="name@example.com"
@@ -58,8 +63,8 @@ async function handleValidSubmit(validPayload: LoginRequestDto) {
       />
 
       <BaseTextField
-        v-model="payload.password"
-        :error-message="validationError.password"
+        v-model="loginForm.password"
+        :error-message="loginValidationErrors.password"
         id="login-password"
         label="Password"
         placeholder="Enter your password"
@@ -67,10 +72,10 @@ async function handleValidSubmit(validPayload: LoginRequestDto) {
         variant="subtle"
       />
 
-      <AuthErrorAlert :message="errorMessage" @close-alert="clearError" />
+      <AuthErrorAlert :message="loginApiErrorMsg" @close-alert="clearApiError" />
 
       <BaseButton
-        :is-loading="isSubmitting"
+        :is-loading="isSubmittingLogin"
         loading-text="Logging in..."
         class="auth-form__submit"
         type="submit"
