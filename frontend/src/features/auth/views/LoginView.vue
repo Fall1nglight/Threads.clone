@@ -23,7 +23,7 @@ const {
   errors: loginValidationErrors,
   submit: submitLogin,
   isSubmitting: isSubmittingLogin,
-} = usePayloadValidator(initialLoginForm, loginSchema, handleLoginSubmit)
+} = usePayloadValidator(initialLoginForm, loginSchema, performLogin)
 
 const {
   error: loginApiError,
@@ -33,7 +33,7 @@ const {
 
 const fallbackErrorMessage: string = 'Something went wrong during login. Please try again later.'
 
-async function handleLoginSubmit(validPayload: LoginRequestDto) {
+async function performLogin(validPayload: LoginRequestDto) {
   try {
     await authStore.login(validPayload)
 
