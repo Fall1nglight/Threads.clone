@@ -1,6 +1,7 @@
 ﻿import { defineStore } from 'pinia'
 import { type Component, computed, markRaw, ref, shallowRef } from 'vue'
 import LoginView from '@/features/auth/views/LoginView.vue'
+import RedirectToLogin from '@/shared/modal/RedirectToLogin.vue'
 
 export type ModalStatus = 'hidden' | 'active'
 
@@ -17,7 +18,7 @@ export const useModalStore = defineStore('modalStore', () => {
   }
 
   function openLoginForm() {
-    view.value = markRaw(LoginView)
+    view.value = markRaw(RedirectToLogin)
     props.value = {}
     status.value = 'active'
   }
