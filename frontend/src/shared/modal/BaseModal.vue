@@ -9,7 +9,14 @@ const modalStore = useModalStore()
     <Transition name="modal">
       <div v-if="modalStore.isOpen" class="modal-overlay" @click.self="modalStore.close">
         <div class="modal-content">
-          <button class="close-btn" @click="modalStore.close">&times;</button>
+          <button
+            aria-label="Close modal"
+            class="close-btn"
+            type="button"
+            @click="modalStore.close"
+          >
+            <span aria-hidden="true" class="close-btn__icon">&times;</span>
+          </button>
 
           <component :is="modalStore.view" v-bind="modalStore.props" @close="modalStore.close" />
         </div>
@@ -33,16 +40,45 @@ const modalStore = useModalStore()
 }
 .modal-content {
   background: transparent;
-  padding: 20px;
-  border-radius: 8px;
+  padding: var(--space-4);
   min-width: 300px;
   position: relative;
 }
+
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: var(--space-6);
+  right: var(--space-6);
+  z-index: 1;
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
+  font-size: var(--font-size-title);
+  line-height: 1;
   cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    transform 90ms ease-out;
+}
+
+.close-btn__icon {
+  display: block;
+  transform: translateY(-0.0625rem);
+}
+
+.close-btn:hover {
+  background: var(--color-border);
+}
+
+.close-btn:active {
+  transform: scale(0.98);
 }
 
 .modal-enter-active,
