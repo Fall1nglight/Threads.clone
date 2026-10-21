@@ -3,39 +3,40 @@ import type {
   AuthResponseDto,
   LoginRequestDto,
   SignupRequestDto,
-} from '@/features/auth/authTypes.ts'
-const api = getApi('/auth', { retryUnauthorized: false })
+} from '@/features/auth/authApiTypes.ts'
 
-const routes = {
+const api = getApi('/auth', { retryOnUnauthorized: false })
+
+const paths = {
   login: '/login',
   signup: '/signup',
   renewToken: '/renew-token',
   logout: '/logout',
   logoutAll: '/logout-all',
-}
+} as const
 
-async function login(payload: LoginRequestDto): Promise<AuthResponseDto> {
-  const response = await api.post<AuthResponseDto>(routes.login, payload)
+async function login(payload: LoginRequestDto) {
+  const response = await api.post<AuthResponseDto>(paths.login, payload)
   return response.data
 }
 
-async function signup(payload: SignupRequestDto): Promise<AuthResponseDto> {
-  const response = await api.post<AuthResponseDto>(routes.signup, payload)
+async function signup(payload: SignupRequestDto) {
+  const response = await api.post<AuthResponseDto>(paths.signup, payload)
   return response.data
 }
 
-async function renewToken(plainToken: string): Promise<AuthResponseDto> {
-  const response = await api.post<AuthResponseDto>(routes.renewToken, { refreshToken: plainToken })
+async function renewToken(plainToken: string) {
+  const response = await api.post<AuthResponseDto>(paths.renewToken, { refreshToken: plainToken })
   return response.data
 }
 
 async function logout(plainToken: string) {
-  const response = await api.post(routes.logout, { refreshToken: plainToken })
+  const response = await api.post(paths.logout, { refreshToken: plainToken })
   return response.data
 }
 
 async function logoutAll() {
-  const response = await api.post(routes.logoutAll)
+  const response = await api.post(paths.logoutAll)
   return response.data
 }
 
