@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import NavigationLink from '@/app/components/NavigationLink.vue'
+
 defineProps<{
   title: string
   subtitle: string
@@ -7,10 +9,20 @@ defineProps<{
 
 <template>
   <section class="auth-card">
-    <header class="auth-card__header">
-      <h1>{{ title }}</h1>
-      <p>{{ subtitle }}</p>
-    </header>
+    <div class="auth-card__intro">
+      <NavigationLink
+        class="auth-card__home-link"
+        icon="home"
+        label="Home"
+        :to="{ name: 'home' }"
+      />
+
+      <header class="auth-card__header">
+        <h1>{{ title }}</h1>
+        <p>{{ subtitle }}</p>
+      </header>
+    </div>
+
     <slot />
   </section>
 </template>
@@ -26,6 +38,21 @@ defineProps<{
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background: var(--color-surface);
+}
+
+.auth-card__intro {
+  display: grid;
+}
+
+.auth-card__intro > .auth-card__home-link {
+  width: 2.75rem;
+  padding-inline: 0;
+  justify-self: start;
+  justify-content: center;
+}
+
+.auth-card__home-link :deep(.navigation-link__label) {
+  display: none;
 }
 
 .auth-card__header {

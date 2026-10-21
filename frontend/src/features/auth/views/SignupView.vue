@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
 import AuthCard from '@/features/auth/components/AuthCard.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+import BaseTextField from '@/shared/components/BaseTextField.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
-import type { SignupRequestDto } from '@/features/auth/authTypes.ts'
+import type { SignupRequestDto } from '@/features/auth/authApiTypes.ts'
 import { usePayloadValidator } from '@/shared/composables/usePayloadValidator.ts'
 import signupSchema from '@/features/auth/schemas/signupSchema.ts'
 import { useErrorHandler } from '@/shared/composables/useErrorHandler.ts'
@@ -14,7 +14,7 @@ import AuthErrorAlert from '@/features/auth/components/AuthErrorAlert.vue'
 const router = useRouter()
 
 const authStore = useAuthStore()
-const { isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 
 const initialSignupForm: SignupRequestDto = {
   username: '',
@@ -43,12 +43,12 @@ async function performSignup(validPayload: SignupRequestDto) {
   try {
     await authStore.signup(validPayload)
 
-    if (!isAuthenticated.value) {
+    if (!isLoggedIn.value) {
       signupApiError.value = new Error(fallbackErrorMessage)
       return
     }
 
-    router.push('/')
+    await router.replace({ name: 'home' })
   } catch (err) {
     signupApiError.value = err as Error
   }

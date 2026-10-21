@@ -1,22 +1,23 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
 import AuthCard from '@/features/auth/components/AuthCard.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+import BaseTextField from '@/shared/components/BaseTextField.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { usePayloadValidator } from '@/shared/composables/usePayloadValidator.ts'
 import loginSchema from '@/features/auth/schemas/loginSchema.ts'
-import type { LoginRequestDto } from '@/features/auth/authTypes.ts'
+import type { LoginRequestDto } from '@/features/auth/authApiTypes.ts'
 import AuthErrorAlert from '@/features/auth/components/AuthErrorAlert.vue'
 import { useErrorHandler } from '@/shared/composables/useErrorHandler.ts'
 
 const router = useRouter()
 
 const authStore = useAuthStore()
-const { isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 
 const initialLoginForm: LoginRequestDto = { email: '', password: '' }
+const fallbackErrorMessage: string = 'Something went wrong during login. Please try again later.'
 
 const {
   payload: loginForm,
@@ -31,18 +32,16 @@ const {
   clearError: clearApiError,
 } = useErrorHandler()
 
-const fallbackErrorMessage: string = 'Something went wrong during login. Please try again later.'
-
 async function performLogin(validPayload: LoginRequestDto) {
   try {
     await authStore.login(validPayload)
 
-    if (!isAuthenticated.value) {
+    if (!isLoggedIn.value) {
       loginApiError.value = new Error(fallbackErrorMessage)
       return
     }
 
-    await router.push('/')
+    await router.replace({ name: 'home' })
   } catch (err) {
     loginApiError.value = err as Error
   }

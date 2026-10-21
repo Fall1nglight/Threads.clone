@@ -1,6 +1,6 @@
 ﻿import Joi from 'joi'
 import { emailSchema, passwordSchema } from '@/features/auth/schemas/authFieldSchemas.ts'
-import type { SignupRequestDto } from '@/features/auth/authTypes.ts'
+import type { SignupRequestDto } from '@/features/auth/authApiTypes.ts'
 
 const signupSchema = Joi.object<SignupRequestDto, true>({
   username: Joi.string()
@@ -19,7 +19,6 @@ const signupSchema = Joi.object<SignupRequestDto, true>({
 
   email: emailSchema,
 
-  // todo | revise backend dto contract as signup and login dtos differ
   password: passwordSchema.max(100).messages({
     'string.max': 'Password must not exceed {{#limit}} characters.',
   }),
