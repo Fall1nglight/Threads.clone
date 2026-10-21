@@ -13,7 +13,7 @@ public class CursorEncoderTests
     {
         // Arrange
         var lastDate = new DateTime(2026, 7, 15, 12, 34, 56, DateTimeKind.Utc).AddTicks(1234567);
-        Guid lastId = ValidatorTestData.PrimaryId;
+        Guid lastId = ValidatorTestData.ValidPrimaryGuid;
 
         // Act
         string encodedCursor = CursorEncoder.Encode(lastDate, lastId);
@@ -21,14 +21,15 @@ public class CursorEncoderTests
 
         // Assert
         decodedCursor.Should().NotBeNull();
-        decodedCursor!.LastDate.Should().Be(lastDate);
+        decodedCursor.LastDate.Should().Be(lastDate);
         decodedCursor.LastId.Should().Be(lastId);
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
+    [MemberData(
+        nameof(ValidatorTestData.EmptyContentValues),
+        MemberType = typeof(ValidatorTestData)
+    )]
     public void Decode_ShouldReturnNull_WhenCursorIsEmpty(string? encodedCursor)
     {
         // Arrange
@@ -72,7 +73,7 @@ public class CursorEncoderTests
     {
         // Arrange
         var lastDate = new DateTime(2026, 7, 15, 12, 34, 56, DateTimeKind.Utc);
-        Guid lastId = ValidatorTestData.PrimaryId;
+        Guid lastId = ValidatorTestData.ValidPrimaryGuid;
 
         // Act
         string encodedCursor = CursorEncoder.Encode(lastDate, lastId);
