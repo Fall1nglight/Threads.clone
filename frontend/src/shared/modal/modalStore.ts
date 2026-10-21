@@ -1,7 +1,7 @@
 ﻿import { defineStore } from 'pinia'
 import { type Component, computed, markRaw, ref, shallowRef } from 'vue'
-import LoginView from '@/features/auth/views/LoginView.vue'
-import RedirectToLogin from '@/shared/modal/RedirectToLogin.vue'
+import RedirectToLogin from '@/shared/modal/components/RedirectToLogin.vue'
+import AlertMessage from '@/shared/modal/components/AlertMessage.vue'
 
 export type ModalStatus = 'hidden' | 'active'
 
@@ -23,9 +23,15 @@ export const useModalStore = defineStore('modalStore', () => {
     status.value = 'active'
   }
 
+  function openAlertModal(message: string) {
+    view.value = markRaw(AlertMessage)
+    props.value = { message }
+    status.value = 'active'
+  }
+
   function close() {
     status.value = 'hidden'
   }
 
-  return { view, props, status, isOpen, open, openLoginForm, close }
+  return { view, props, status, isOpen, open, openLoginForm, openAlertModal, close }
 })

@@ -12,7 +12,7 @@ const modalStore = useModalStore()
     <RouterLink
       @click="modalStore.close"
       class="redirect-to-login__link button-link"
-      to="/auth/login"
+      :to="{ name: 'login' }"
       >Log in</RouterLink
     >
   </section>
