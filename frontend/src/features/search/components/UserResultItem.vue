@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import type { FollowStatus } from '@/features/follow/followTypes.ts'
+import { computed } from 'vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
+import { FollowStatus } from '@/features/follow/followTypes.ts'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     userId: string
     name: string
@@ -15,11 +16,30 @@ withDefaults(
     verified?: boolean
     followStatus: FollowStatus | null
     showFollowButton: boolean
+    isFollowPending?: boolean
   }>(),
   {
     verified: false,
+    isFollowPending: false,
   },
 )
+
+const userPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-profile',
+  params: { userId: props.userId },
+}))
+const userPageDesc = computed(() => `View ${props.name}'s profile`)
+const userAvatarDesc = computed(() => `${props.name}'s avatar`)
+
+const followButtonTitle = computed(() => {
+  if (props.followStatus === null) return 'Follow user'
+  return props.followStatus === FollowStatus.Pending ? 'Cancel follow request' : 'Unfollow user'
+})
+
+const followButtonIcon = computed<'user-add' | 'user-pending' | 'user-accepted'>(() => {
+  if (props.followStatus === null) return 'user-add'
+  return props.followStatus === FollowStatus.Pending ? 'user-pending' : 'user-accepted'
+})
 
 const emit = defineEmits<{
   handleFollow: []
@@ -28,26 +48,29 @@ const emit = defineEmits<{
 
 <template>
   <article class="user-result">
-    <RouterLink :aria-label="`View ${name}'s profile`" :to="`/users/${userId}`">
-      <BaseAvatar :initials="initials" :label="`${name}'s avatar`" />
+    <RouterLink :to="userPage" :aria-label="userPageDesc">
+      <BaseAvatar :initials="initials" :label="userAvatarDesc" />
     </RouterLink>
     <div class="user-result__copy">
       <div class="user-result__name-row">
-        <RouterLink class="user-result__name" :to="`/users/${userId}`">{{ name }}</RouterLink>
+        <RouterLink :to="userPage" :aria-label="userPageDesc" class="user-result__name">
+          {{ name }}
+        </RouterLink>
         <AppIcon v-if="verified" class="user-result__verified" name="verified" />
       </div>
       <p class="user-result__username">@{{ username }}</p>
       <p class="user-result__summary">{{ summary }}</p>
     </div>
 
-    <BaseButton
+    <BaseIconButton
       v-if="showFollowButton"
+      :disabled="isFollowPending"
+      :label="followButtonTitle"
+      :title="followButtonTitle"
       @click="emit('handleFollow')"
-      size="compact"
-      variant="secondary"
     >
-      {{ followStatus == null ? 'Follow' : followStatus == 0 ? 'Pending' : 'Following' }}
-    </BaseButton>
+      <AppIcon :name="followButtonIcon" />
+    </BaseIconButton>
   </article>
 </template>
 
