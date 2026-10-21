@@ -3,11 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Users;
 using Threads.Api.Features.Auth.Services.JwtProvider;
+using Threads.Api.Features.Auth.Services.RefreshToken;
 
 namespace Threads.Api.IntegrationTests.Infrastructure;
 
@@ -19,6 +21,8 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     protected readonly CustomWebApplicationFactory Factory;
     protected readonly AppDbContext Db;
     protected readonly IServiceProvider Services;
+    protected readonly TestSeeders Seeders;
+    protected readonly TestScenarios Scenarios;
 
     private readonly IServiceScope _scope;
 
@@ -28,6 +32,12 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         _scope = Factory.Services.CreateScope();
         Services = _scope.ServiceProvider;
         Db = Services.GetRequiredService<AppDbContext>();
+
+        var userManager = Services.GetRequiredService<UserManager<User>>();
+        var refreshTokenProvider = Services.GetRequiredService<IRefreshTokenProvider>();
+
+        Seeders = new TestSeeders(Db, userManager, refreshTokenProvider);
+        Scenarios = new TestScenarios(Seeders);
     }
 
     public async Task InitializeAsync()
