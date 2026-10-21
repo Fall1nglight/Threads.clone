@@ -29,8 +29,8 @@ public class LogoutAllTests : AuthIntegrationTestBase
     public async Task LogoutAll_ShouldRevokeOnlyAuthenticatedUsersActiveTokens()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
+        var userSeeder = Seeders.Users;
+        var tokenSeeder = Seeders.RefreshTokens;
 
         var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var henry = await userSeeder.CreateUserAsync(username: IntegrationTestData.HenryUsername);
@@ -90,8 +90,9 @@ public class LogoutAllTests : AuthIntegrationTestBase
     public async Task LogoutAll_ShouldReturnOk_WhenUserHasNoRefreshTokens()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act

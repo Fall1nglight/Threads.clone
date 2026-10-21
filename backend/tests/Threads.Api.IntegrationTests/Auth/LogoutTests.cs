@@ -32,10 +32,10 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldRevokeMatchingActiveToken()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var activeToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(alice);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(activeToken.PlainToken);
 
@@ -56,10 +56,10 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldReturnOk_WhenTokenIsUnknown()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var existingToken = await tokenSeeder.CreateActiveTokenAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var existingToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(
             alice,
             tokenSeed: AuthTestData.ActiveTokenSeed
         );
@@ -84,11 +84,10 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldLeaveOtherUsersTokenUnchanged()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
+        var userSeeder = Seeders.Users;
         var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var henry = await userSeeder.CreateUserAsync(username: IntegrationTestData.HenryUsername);
-        var henryToken = await tokenSeeder.CreateActiveTokenAsync(henry);
+        var henryToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(henry);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(henryToken.PlainToken);
 
@@ -110,10 +109,10 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldLeaveExpiredTokenUnchanged()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var expiredToken = await tokenSeeder.CreateExpiredTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var expiredToken = await Seeders.RefreshTokens.CreateExpiredTokenAsync(alice);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(expiredToken.PlainToken);
 
@@ -137,10 +136,10 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldLeaveAlreadyRevokedTokenUnchanged(RevocationReason reason)
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var revokedToken = await tokenSeeder.CreateRevokedTokenAsync(alice, reason);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var revokedToken = await Seeders.RefreshTokens.CreateRevokedTokenAsync(alice, reason);
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request(revokedToken.PlainToken);
 
@@ -160,8 +159,9 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldReturnBadRequest_WhenTokenLengthIsInvalid()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
         var requestBody = new Logout.Request("short");
 
@@ -176,8 +176,9 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldReturnBadRequest_WhenJsonContainsUnknownProperty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -200,8 +201,9 @@ public class LogoutTests : AuthIntegrationTestBase
     public async Task Logout_ShouldReturnBadRequest_WhenJsonIsMalformed()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
         using var requestBody = new StringContent(
             "{\"refreshToken\":\"value\"",

@@ -21,10 +21,10 @@ public class RenewTokenTests : AuthIntegrationTestBase
     public async Task RenewToken_ShouldRotateActiveToken()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var activeToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
 
@@ -62,10 +62,10 @@ public class RenewTokenTests : AuthIntegrationTestBase
     public async Task RenewToken_ShouldReturnAccessTokenThatCanAuthorizeProtectedAuthEndpoint()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var activeToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
 
@@ -101,10 +101,10 @@ public class RenewTokenTests : AuthIntegrationTestBase
     public async Task RenewToken_ShouldReturnBadRequest_WhenTokenIsExpired()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var expiredToken = await tokenSeeder.CreateExpiredTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var expiredToken = await Seeders.RefreshTokens.CreateExpiredTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(expiredToken.PlainToken);
 
@@ -125,10 +125,10 @@ public class RenewTokenTests : AuthIntegrationTestBase
     public async Task RenewToken_ShouldReturnBadRequest_WhenTokenIsAlreadyRevoked()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var revokedToken = await tokenSeeder.CreateRevokedTokenAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var revokedToken = await Seeders.RefreshTokens.CreateRevokedTokenAsync(
             alice,
             RevocationReason.Logout
         );
@@ -151,11 +151,11 @@ public class RenewTokenTests : AuthIntegrationTestBase
     public async Task RenewToken_ShouldCompromiseActiveTokens_WhenReplacedTokenIsReused()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var tokenSeeder = CreateTokenSeeder();
         var refreshTokenProvider = Services.GetRequiredService<IRefreshTokenProvider>();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var activeToken = await tokenSeeder.CreateActiveTokenAsync(alice);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var activeToken = await Seeders.RefreshTokens.CreateActiveTokenAsync(alice);
         var client = CreateAnonymousClient();
         var requestBody = new RenewToken.Request(activeToken.PlainToken);
 
