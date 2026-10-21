@@ -7,27 +7,30 @@ namespace Threads.Api.Features.Posts;
 
 public static class PostVisibilityExtensions
 {
-    // visibility rules
-    //  # requester can access:
-    //      - public posts
-    //      - own posts
-    //      - followed private posts
-    //  # requester can't access:
-    //      - blocked user-s posts
-    //      - posts from users who blocked the requester
     public static IQueryable<Post> WhereVisibleTo(
         this IQueryable<Post> posts,
-        Guid currentUserId,
+        Guid? loggedInUserId,
+        AppDbContext db
+    )
+    {
+        return loggedInUserId.HasValue
+            ? posts.WhereVisibleTo(loggedInUserId.Value, db)
+            : posts.Where(post => !post.User.IsPrivate);
+    }
+
+    private static IQueryable<Post> WhereVisibleTo(
+        this IQueryable<Post> posts,
+        Guid loggedInUserId,
         AppDbContext db
     )
     {
         return posts
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
             .Where(post =>
                 !post.User.IsPrivate
-                || post.UserId == currentUserId
+                || post.UserId == loggedInUserId
                 || db.Follows.Any(follow =>
-                    follow.FollowerId == currentUserId
+                    follow.FollowerId == loggedInUserId
                     && follow.FollowedId == post.UserId
                     && follow.Status == FollowStatus.Accepted
                 )

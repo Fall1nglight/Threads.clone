@@ -28,19 +28,19 @@ public class GetPost : IEndpoint
         }
     }
 
-    private static async Task<Results<Ok<PostDto>, NotFound, ForbidHttpResult>> Handle(
+    private static async Task<Results<Ok<PostDto>, NotFound>> Handle(
         [AsParameters] Request request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.TryGetUserId();
 
         var post = await db
             .Posts.Where(post => post.Id == request.PostId)
-            .WhereVisibleTo(currentUserId, db)
-            .ToDto(currentUserId, db)
+            .WhereVisibleTo(loggedInUserId, db)
+            .ToDto(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)

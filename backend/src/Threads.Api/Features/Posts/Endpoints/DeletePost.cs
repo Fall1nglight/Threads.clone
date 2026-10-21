@@ -42,8 +42,8 @@ public class DeletePost : IEndpoint
         if (post == null)
             return TypedResults.NoContent();
 
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (post.UserId != currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (post.UserId != loggedInUserId)
             return TypedResults.Forbid();
 
         post.IsDeleted = true;

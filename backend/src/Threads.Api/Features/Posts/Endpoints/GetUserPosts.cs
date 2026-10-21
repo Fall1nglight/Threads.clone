@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Common.Pagination;
 using Threads.Api.Data.Shared;
@@ -12,11 +14,22 @@ public class GetUserPosts : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("", Handle).WithSummary("Retrieves posts by userId");
+        builder
+            .MapGet("/{userId}/posts", Handle)
+            .WithValidation<Request>()
+            .WithSummary("Retrieves posts by userId");
     }
 
-    // userId comes from query parameters so we dont specify it in the route path
-    public record Request(Guid UserId, string? Cursor, int PageSize = 20);
+    public record Request(Guid UserId, string? Cursor, int PageSize = PaginationDefaults.PageSize)
+        : PagedRequest(Cursor, PageSize);
+
+    public class GetUserPostsValidator : AbstractValidator<Request>
+    {
+        public GetUserPostsValidator()
+        {
+            RuleFor(x => x.UserId).NotEmpty();
+        }
+    }
 
     private static async Task<Ok<PagedResponse<PostDto>>> Handle(
         [AsParameters] Request request,
@@ -25,13 +38,14 @@ public class GetUserPosts : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
-        var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
+        var loggedInUserId = claimsPrincipal.TryGetUserId();
+
         var posts = await db
             .Posts.Where(post => post.UserId == request.UserId)
-            .WhereVisibleTo(currentUserId, db)
-            .ToDto(currentUserId, db)
-            .ToPagedResponse(pagedRequest, cancellationToken);
+            .WhereVisibleTo(loggedInUserId, db)
+            .ToDto(loggedInUserId, db)
+            .ToPagedResponse(request, cancellationToken);
+
         return TypedResults.Ok(posts);
     }
 }
