@@ -1,5 +1,6 @@
 ﻿import { getApi } from '@/shared/api/baseApi.ts'
 import type { PagedRequest, PagedResponse } from '@/shared/types/paginationTypes.ts'
+import { getPaginatedUrl } from '@/shared/api/baseApi.ts'
 import type {
   CommentDto,
   CreateCommentDto,
@@ -8,28 +9,35 @@ import type {
 
 const api = getApi('/posts')
 
-function createPagedUrlFor(path: string, paginationDetails: PagedRequest) {
-  return `${path}?pageSize=${paginationDetails.pageSize}&cursor=${paginationDetails.cursor}`
-}
+const paths = {
+  getComments: (postId: string) => `${postId}/comments`,
+  addComment: (postId: string) => `${postId}/comments`,
+  deleteComment: (postId: string, commentId: string) => `${postId}/comments/${commentId}`,
+  updateComment: (postId: string, commentId: string) => `${postId}/comments/${commentId}`,
+} as const
 
-async function getComments(postId: string, paginationDetails: PagedRequest = { pageSize: 5 }) {
-  const path = postId + '/comments'
-  const pathWithPagination = createPagedUrlFor(path, paginationDetails)
-  const response = await api.get<PagedResponse<CommentDto>>(pathWithPagination)
+async function getComments(
+  postId: string,
+  paginationDetails: PagedRequest = { pageSize: 5, cursor: null },
+) {
+  const url = getPaginatedUrl(paths.getComments(postId), paginationDetails)
+  const response = await api.get<PagedResponse<CommentDto>>(url)
   return response.data
 }
 
 async function addComment(postId: string, payload: CreateCommentDto) {
-  const response = await api.post<CommentDto>(postId + '/comments', payload)
+  const response = await api.post<CommentDto>(paths.addComment(postId), payload)
   return response.data
 }
 
 async function deleteComment(postId: string, commentId: string) {
-  const response = await api.delete(postId + '/comments/' + commentId)
+  await api.delete(paths.deleteComment(postId, commentId))
 }
 
 async function updateComment(postId: string, payload: UpdateCommentDto) {
-  const response = await api.put(postId + '/comments/' + payload.id, { content: payload.content })
+  await api.put(paths.updateComment(postId, payload.id), {
+    content: payload.content,
+  })
 }
 
 export default { getComments, addComment, deleteComment, updateComment }
