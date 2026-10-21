@@ -7,7 +7,7 @@ using Threads.Api.IntegrationTests.Users.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Users;
 
-public class GetUserTests : UserIntegrationTestBase
+public class GetUserTests : IntegrationTestBase
 {
     public GetUserTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -16,8 +16,7 @@ public class GetUserTests : UserIntegrationTestBase
     public async Task GetUser_ShouldReturnUserProfile_WhenUserExists()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername,
             isPrivate: true,
             bio: IntegrationTestData.AliceBio,
@@ -69,12 +68,11 @@ public class GetUserTests : UserIntegrationTestBase
     )
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var blockSeeder = CreateBlockSeeder();
+        var userSeeder = Seeders.Users;
         var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var bob = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
 
-        await blockSeeder.CreateUserBlockAsync(
+        await Seeders.Blocks.CreateUserBlockAsync(
             blocker: requesterBlocksTarget ? alice : bob,
             blocked: requesterBlocksTarget ? bob : alice
         );

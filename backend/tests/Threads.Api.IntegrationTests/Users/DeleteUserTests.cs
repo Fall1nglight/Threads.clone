@@ -6,7 +6,7 @@ using Threads.Api.IntegrationTests.Users.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Users;
 
-public class DeleteUserTests : UserIntegrationTestBase
+public class DeleteUserTests : IntegrationTestBase
 {
     public DeleteUserTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -15,8 +15,9 @@ public class DeleteUserTests : UserIntegrationTestBase
     public async Task DeleteUser_ShouldReturnUnauthorized_WhenRequesterIsAnonymous()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = CreateAnonymousClient();
 
         // Act
@@ -30,7 +31,7 @@ public class DeleteUserTests : UserIntegrationTestBase
     public async Task DeleteUser_ShouldForbidDelete_WhenRequesterTargetsAnotherUser()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
+        var userSeeder = Seeders.Users;
         var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var bob = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
         var client = await CreateAuthenticatedClientAsync(alice);
@@ -51,8 +52,9 @@ public class DeleteUserTests : UserIntegrationTestBase
     public async Task DeleteUser_ShouldReturnBadRequest_WhenIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
@@ -66,8 +68,7 @@ public class DeleteUserTests : UserIntegrationTestBase
     public async Task DeleteUser_ShouldHardDeleteCurrentUserAndDependentData()
     {
         // Arrange
-        var scenarioSeeder = CreateUserDeletionScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.UserDeletion.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -123,6 +124,22 @@ public class DeleteUserTests : UserIntegrationTestBase
             .BeFalse();
 
         (
+            await Db.Notifications.AnyAsync(notification =>
+                notification.Id == seed.AliceTriggeredNotification.Id
+                || notification.Id == seed.AliceReceivedNotification.Id
+            )
+        )
+            .Should()
+            .BeFalse();
+        (
+            await Db.Notifications.AnyAsync(notification =>
+                notification.Id == seed.UnrelatedNotification.Id
+            )
+        )
+            .Should()
+            .BeTrue();
+
+        (
             await Db.RefreshTokens.AnyAsync(token =>
                 token.Id == seed.TokenChain.ReplacedToken.Id
                 || token.Id == seed.TokenChain.ReplacementToken.Id
@@ -136,8 +153,9 @@ public class DeleteUserTests : UserIntegrationTestBase
     public async Task DeleteUser_ShouldReturnNoContent_WhenCurrentUserNoLongerExists()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         Db.Users.Remove(alice);
