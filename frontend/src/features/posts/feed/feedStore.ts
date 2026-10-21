@@ -1,13 +1,20 @@
-﻿import type { PagedRequest, PagedResponse } from '@/shared/types/paginationTypes.ts'
+import type { PagedRequest } from '@/shared/types/paginationTypes.ts'
 import type { CreatePostDto, PostDto } from '@/features/posts/postTypes.ts'
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 import feedApi from '@/features/posts/feed/feedApi.ts'
 import postApi from '@/features/posts/postApi.ts'
 import type { FeedKind } from '@/features/posts/feed/feedTypes.ts'
-import likeApi from '@/features/posts/likeApi.ts'
+import likeApi from '@/features/posts/likes/likeApi.ts'
+import { sleep } from '@/shared/helpers/sleep.ts'
 
-export type FeedStatus = 'idle' | 'loading' | 'success' | 'error'
+export type FeedStatus =
+  | 'idle'
+  | 'initial-loading'
+  | 'initial-error'
+  | 'success'
+  | 'more-loading'
+  | 'more-error'
 
 export type FeedState = {
   items: PostDto[]
@@ -28,6 +35,7 @@ function createFeedState(): FeedState {
 }
 
 export const useFeedStore = defineStore('feed', () => {
+  // state
   const feeds = reactive<Record<FeedKind, FeedState>>({
     anonymous: createFeedState(),
     global: createFeedState(),
@@ -38,28 +46,26 @@ export const useFeedStore = defineStore('feed', () => {
     const feed = feeds[kind]
 
     // prevent simultaneous calls from executing
-    if (feed.status == 'loading') return
+    if (feed.status === 'initial-loading' || feed.status === 'more-loading') return
 
-    feed.status = 'loading'
+    feed.status = 'initial-loading'
     feed.items = []
     feed.hasMore = false
     feed.cursor = null
     feed.error = null
 
-    const pagedRequest: PagedRequest = {
-      pageSize: 5,
-    }
-
     try {
-      const response = await feedApi.getFeed(kind, pagedRequest)
+      await sleep(2000)
+      const response = await feedApi.getFeed(kind, { pageSize: 5, cursor: null })
       feed.items = response.items
       feed.hasMore = response.hasMore
       feed.cursor = response.cursor ?? null
       feed.status = 'success'
     } catch (err) {
-      feed.status = 'error'
+      // there is no need to display error with modalStore, because we use feed.status to determine if there is an error
+      // then display error in the UI
+      feed.status = 'initial-error'
       feed.error = err
-      console.error(err)
     }
   }
 
@@ -68,9 +74,9 @@ export const useFeedStore = defineStore('feed', () => {
 
     if (!feed.hasMore) return
     if (!feed.cursor) return
-    if (feed.status == 'loading') return
+    if (feed.status === 'initial-loading' || feed.status === 'more-loading') return
 
-    feed.status = 'loading'
+    feed.status = 'more-loading'
     feed.error = null
 
     const pagedRequest: PagedRequest = {
@@ -79,15 +85,17 @@ export const useFeedStore = defineStore('feed', () => {
     }
 
     try {
+      await sleep(2000)
       const response = await feedApi.getFeed(kind, pagedRequest)
       feed.items.push(...response.items)
       feed.hasMore = response.hasMore
       feed.cursor = response.cursor ?? null
       feed.status = 'success'
     } catch (err) {
-      feed.status = 'error'
+      // there is no need to display error with modalStore, because we use feed.status to determine if there is an error
+      // then display error in the UI
+      feed.status = 'more-error'
       feed.error = err
-      console.error(err)
     }
   }
 
@@ -120,11 +128,13 @@ export const useFeedStore = defineStore('feed', () => {
       }
 
       updatePostLikeState(postId, nextLikeState)
-    } catch (err) {
-      console.error(err)
     } finally {
       pendingLikeIds.delete(postId)
     }
+  }
+
+  async function toggleLike(post: PostDto) {
+    await setLike(post.id, !post.isLikedByCurrentUser)
   }
 
   function updatePostLikeState(id: string, nextLikeState: boolean) {
@@ -153,5 +163,5 @@ export const useFeedStore = defineStore('feed', () => {
     }
   }
 
-  return { feeds, fetchInitialFeed, fetchMoreFeed, createPost, setLike, deletePost }
+  return { feeds, fetchInitialFeed, fetchMoreFeed, createPost, toggleLike, setLike, deletePost }
 })
