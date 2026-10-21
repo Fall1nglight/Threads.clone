@@ -1,13 +1,9 @@
 ﻿import { ref } from 'vue'
-import type { ObjectSchema, ValidationErrorItem, ValidationResult } from 'joi'
+import type { ObjectSchema, ValidationResult } from 'joi'
 import type { Ref } from 'vue'
 
 export type FieldErrors<T extends object> = {
   [Key in keyof T]: string | null
-}
-
-function sleep(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
 export function usePayloadValidator<T extends object>(
@@ -30,7 +26,7 @@ export function usePayloadValidator<T extends object>(
 
     if (result.error) {
       // sort error messages to ensure that error messages containing information about length are shown first
-      result.error.details.sort((a, b): number => {
+      result.error.details.sort((a, _b): number => {
         if (a.type.endsWith('.min') || a.type.endsWith('.max')) return -1
         return 0
       })
@@ -50,7 +46,6 @@ export function usePayloadValidator<T extends object>(
     isSubmitting.value = true
 
     try {
-      await sleep(2000)
       await onValid(result.value)
     } finally {
       isSubmitting.value = false
