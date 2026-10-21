@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Features.Comments;
 using Threads.Api.Features.Comments.Endpoints;
 using Threads.Api.IntegrationTests.Comments.TestSupport;
@@ -10,7 +11,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Comments;
 
-public class CreateCommentTests : CommentIntegrationTestBase
+public class CreateCommentTests : IntegrationTestBase
 {
     public CreateCommentTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -19,8 +20,7 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldCreateCommentAndReturnDto_WhenPostIsPublic()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
         var before = DateTime.UtcNow;
@@ -40,7 +40,7 @@ public class CreateCommentTests : CommentIntegrationTestBase
         response
             .Headers.Location!.ToString()
             .Should()
-            .Be(CommentTestRoutes.ForComment(seed.BobPublicPost.Id, responseBody.Id));
+            .Be($"/posts/{seed.BobPublicPost.Id}/comments/{responseBody.Id}");
         responseBody.PostId.Should().Be(seed.BobPublicPost.Id);
         responseBody.User.Id.Should().Be(seed.Alice.Id);
         responseBody.User.Username.Should().Be(seed.Alice.UserName);
@@ -55,14 +55,20 @@ public class CreateCommentTests : CommentIntegrationTestBase
         persistedComment.PostId.Should().Be(seed.BobPublicPost.Id);
         persistedComment.UserId.Should().Be(seed.Alice.Id);
         persistedComment.Content.Should().Be(IntegrationTestData.ValidContent);
+
+        var notification = await Db.Notifications.SingleAsync();
+        notification.TriggeredByUserId.Should().Be(seed.Alice.Id);
+        notification.NotifiedUserId.Should().Be(seed.BobPublic.Id);
+        notification.Type.Should().Be(NotificationType.PostCommented);
+        notification.SubjectKind.Should().Be(NotificationSubjectKind.Post);
+        notification.SubjectId.Should().Be(seed.BobPublicPost.Id);
     }
 
     [Fact]
     public async Task CreateComment_ShouldCreateComment_WhenRequesterOwnsPrivatePost()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.AlicePrivate);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
 
@@ -75,14 +81,14 @@ public class CreateCommentTests : CommentIntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         (await Db.Comments.CountAsync()).Should().Be(1);
+        (await Db.Notifications.CountAsync()).Should().Be(0);
     }
 
     [Fact]
     public async Task CreateComment_ShouldCreateComment_WhenPrivateOwnerIsAcceptedFollowed()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
 
@@ -101,10 +107,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldAcceptContentAtMaximumLength()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = CreateCommentRequest(IntegrationTestData.MaxLengthContent);
 
@@ -125,10 +129,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenContentIsEmpty(string? content)
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = CreateCommentRequest(content);
 
@@ -149,10 +151,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenContentIsTooLong(int length)
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = CreateCommentRequest(IntegrationTestData.ContentOfLength(length));
 
@@ -171,8 +171,7 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
 
@@ -191,8 +190,7 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
 
@@ -211,8 +209,7 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnNotFound_WhenPostIsNotVisible()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
         var requestBody = CreateCommentRequest(IntegrationTestData.ValidContent);
 
@@ -245,10 +242,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     )
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
-        await blockSeeder.CreateUserBlockAsync(
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksOwner ? seed.Alice : seed.BobPublic,
             requesterBlocksOwner ? seed.BobPublic : seed.Alice
         );
@@ -270,10 +265,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenContentIsMissing()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = new { };
 
@@ -292,10 +285,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenJsonContainsUnknownProperty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         var requestBody = new { content = IntegrationTestData.ValidContent, unexpected = true };
 
@@ -314,10 +305,8 @@ public class CreateCommentTests : CommentIntegrationTestBase
     public async Task CreateComment_ShouldReturnBadRequest_WhenJsonIsMalformed()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(user);
         using var requestBody = new StringContent(
             "{\"content\":\"Valid content\"",

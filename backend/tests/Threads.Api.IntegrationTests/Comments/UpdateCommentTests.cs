@@ -9,7 +9,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Comments;
 
-public class UpdateCommentTests : CommentIntegrationTestBase
+public class UpdateCommentTests : IntegrationTestBase
 {
     public UpdateCommentTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -18,12 +18,11 @@ public class UpdateCommentTests : CommentIntegrationTestBase
     public async Task UpdateComment_ShouldUpdateContentAndTimestamp_WhenRequesterIsOwner()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
-        var comment = await commentSeeder.CreateCommentAsync(
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent
@@ -55,15 +54,13 @@ public class UpdateCommentTests : CommentIntegrationTestBase
     public async Task UpdateComment_ShouldReturnForbidden_WhenRequesterIsNotOwner()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
+        var userSeeder = Seeders.Users;
         var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.HenryUsername
         );
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
-        var comment = await commentSeeder.CreateCommentAsync(
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent
@@ -91,10 +88,10 @@ public class UpdateCommentTests : CommentIntegrationTestBase
     public async Task UpdateComment_ShouldReturnNotFound_WhenCommentDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(owner);
         var requestBody = CreateUpdateCommentRequest(IntegrationTestData.OtherValidContent);
 
@@ -112,16 +109,16 @@ public class UpdateCommentTests : CommentIntegrationTestBase
     public async Task UpdateComment_ShouldReturnNotFound_WhenCommentBelongsToDifferentPost()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var postSeeder = Seeders.Posts;
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
         var otherPost = await postSeeder.CreatePostAsync(
             owner,
             IntegrationTestData.OtherValidContent
         );
-        var comment = await commentSeeder.CreateCommentAsync(
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent
@@ -149,12 +146,11 @@ public class UpdateCommentTests : CommentIntegrationTestBase
     public async Task UpdateComment_ShouldReturnBadRequest_WhenRouteIdIsEmpty(bool emptyPostId)
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
-        var comment = await commentSeeder.CreateCommentAsync(
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent
@@ -303,12 +299,11 @@ public class UpdateCommentTests : CommentIntegrationTestBase
 
     private async Task<OwnedCommentSeed> CreateOwnedCommentAsync()
     {
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
-        var comment = await commentSeeder.CreateCommentAsync(
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent
