@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Likes;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 using Threads.Api.Features.Posts;
@@ -37,18 +38,18 @@ public class LikePost : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
 
         var post = await db
             .Posts.Where(post => post.Id == request.PostId)
-            .WhereVisibleTo(currentUserId, db)
+            .WhereVisibleTo(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
         bool likeExists = await db.PostLikes.AnyAsync(
-            like => like.PostId == post.Id && like.UserId == currentUserId,
+            like => like.PostId == post.Id && like.UserId == loggedInUserId,
             cancellationToken
         );
 
@@ -58,11 +59,26 @@ public class LikePost : IEndpoint
         var postLike = new PostLike
         {
             PostId = post.Id,
-            UserId = currentUserId,
+            UserId = loggedInUserId,
             CreatedAtUtc = DateTime.UtcNow,
         };
 
         await db.PostLikes.AddAsync(postLike, cancellationToken);
+
+        if (post.UserId != loggedInUserId)
+        {
+            var notification = new Notification
+            {
+                TriggeredByUserId = loggedInUserId,
+                NotifiedUserId = post.UserId,
+                TriggeredAtUtc = postLike.CreatedAtUtc,
+                Type = NotificationType.PostLiked,
+                SubjectKind = NotificationSubjectKind.Post,
+                SubjectId = post.Id,
+            };
+            await db.Notifications.AddAsync(notification, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return TypedResults.NoContent();

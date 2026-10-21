@@ -11,7 +11,7 @@ using Threads.Api.Features.Posts;
 
 namespace Threads.Api.Features.Likes.Endpoints;
 
-public class GetPostLikes : IEndpoint
+public class GetLikes : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
@@ -21,11 +21,12 @@ public class GetPostLikes : IEndpoint
             .WithSummary("Retrieves users who liked a post");
     }
 
-    public record Request(Guid PostId, string? Cursor, int PageSize = 20);
+    public record Request(Guid PostId, string? Cursor, int PageSize = PaginationDefaults.PageSize)
+        : PagedRequest(Cursor, PageSize);
 
-    public class GetPostLikesValidator : AbstractValidator<Request>
+    public class GetLikesValidator : AbstractValidator<Request>
     {
-        public GetPostLikesValidator()
+        public GetLikesValidator()
         {
             RuleFor(x => x.PostId).NotEmpty();
         }
@@ -38,22 +39,21 @@ public class GetPostLikes : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
 
         var post = await db
             .Posts.Where(post => post.Id == request.PostId)
-            .WhereVisibleTo(currentUserId, db)
+            .WhereVisibleTo(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
         var response = await db
             .PostLikes.Where(like => like.PostId == post.Id)
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
-            .ToPostLikeUserDto()
-            .ToPagedResponse(pagedRequest, cancellationToken);
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
+            .ToDto()
+            .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(response);
     }
