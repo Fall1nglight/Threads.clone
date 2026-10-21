@@ -1,7 +1,6 @@
 using FluentAssertions;
-using Threads.Api.Data.Tokens;
 
-namespace Threads.Api.UnitTests.Auth;
+namespace Threads.Api.UnitTests.Auth.RefreshToken;
 
 public class RefreshTokenStateTests
 {
@@ -9,7 +8,7 @@ public class RefreshTokenStateTests
     public void IsActive_ShouldBeTrue_WhenTokenIsNotExpiredAndNotRevoked()
     {
         // Arrange
-        var token = CreateToken(expiresAtUtc: DateTime.UtcNow.AddDays(1));
+        var token = RefreshTokenStateFactory.CreateToken(expiresAtUtc: DateTime.UtcNow.AddDays(1));
 
         // Act
         var isExpired = token.IsExpired;
@@ -26,7 +25,7 @@ public class RefreshTokenStateTests
     public void IsActive_ShouldBeFalse_WhenTokenIsExpired()
     {
         // Arrange
-        var token = CreateToken(expiresAtUtc: DateTime.UtcNow.AddDays(-1));
+        var token = RefreshTokenStateFactory.CreateToken(expiresAtUtc: DateTime.UtcNow.AddDays(-1));
 
         // Act
         var isExpired = token.IsExpired;
@@ -43,7 +42,7 @@ public class RefreshTokenStateTests
     public void IsActive_ShouldBeFalse_WhenTokenIsRevoked()
     {
         // Arrange
-        var token = CreateToken(
+        var token = RefreshTokenStateFactory.CreateToken(
             expiresAtUtc: DateTime.UtcNow.AddDays(1),
             revokedAtUtc: DateTime.UtcNow
         );
@@ -63,7 +62,7 @@ public class RefreshTokenStateTests
     public void IsActive_ShouldBeFalse_WhenTokenIsExpiredAndRevoked()
     {
         // Arrange
-        var token = CreateToken(
+        var token = RefreshTokenStateFactory.CreateToken(
             expiresAtUtc: DateTime.UtcNow.AddDays(-1),
             revokedAtUtc: DateTime.UtcNow
         );
@@ -77,17 +76,5 @@ public class RefreshTokenStateTests
         isExpired.Should().BeTrue();
         isRevoked.Should().BeTrue();
         isActive.Should().BeFalse();
-    }
-
-    private static RefreshToken CreateToken(DateTime expiresAtUtc, DateTime? revokedAtUtc = null)
-    {
-        return new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = Guid.NewGuid(),
-            TokenHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            ExpiresAtUtc = expiresAtUtc,
-            RevokedAtUtc = revokedAtUtc,
-        };
     }
 }

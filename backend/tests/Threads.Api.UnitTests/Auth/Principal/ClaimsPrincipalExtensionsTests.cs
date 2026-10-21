@@ -49,4 +49,44 @@ public class ClaimsPrincipalExtensionsTests
             .Throw<Exception>()
             .WithMessage(ClaimsPrincipalTestFactory.GetUserIdErrorMessage);
     }
+
+    [Fact]
+    public void TryGetUserId_ShouldReturnUserId_WhenClaimIsValid()
+    {
+        // Arrange
+        Guid userId = Guid.NewGuid();
+        ClaimsPrincipal principal = ClaimsPrincipalTestFactory.CreateWithUserId(userId);
+
+        // Act
+        Guid? result = principal.TryGetUserId();
+
+        // Assert
+        result.Should().Be(userId);
+    }
+
+    [Fact]
+    public void TryGetUserId_ShouldReturnNull_WhenClaimIsMissing()
+    {
+        // Arrange
+        ClaimsPrincipal principal = ClaimsPrincipalTestFactory.CreateWithoutUserId();
+
+        // Act
+        Guid? result = principal.TryGetUserId();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void TryGetUserId_ShouldReturnNull_WhenClaimIsMalformed()
+    {
+        // Arrange
+        ClaimsPrincipal principal = ClaimsPrincipalTestFactory.CreateWithMalformedUserId();
+
+        // Act
+        Guid? result = principal.TryGetUserId();
+
+        // Assert
+        result.Should().BeNull();
+    }
 }

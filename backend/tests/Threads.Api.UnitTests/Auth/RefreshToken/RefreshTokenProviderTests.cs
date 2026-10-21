@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Threads.Api.Features.Auth.Services.RefreshToken;
 
-namespace Threads.Api.UnitTests.Auth;
+namespace Threads.Api.UnitTests.Auth.RefreshToken;
 
 public class RefreshTokenProviderTests
 {
@@ -37,11 +37,10 @@ public class RefreshTokenProviderTests
     {
         // Arrange
         var provider = new RefreshTokenProvider();
-        const string plainToken = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
         // Act
-        var firstHash = provider.Hash(plainToken);
-        var secondHash = provider.Hash(plainToken);
+        var firstHash = provider.Hash(RefreshTokenTestData.PlainToken);
+        var secondHash = provider.Hash(RefreshTokenTestData.PlainToken);
 
         // Assert
         secondHash.Should().Be(firstHash);
@@ -52,13 +51,12 @@ public class RefreshTokenProviderTests
     {
         // Arrange
         var provider = new RefreshTokenProvider();
-        const string plainToken = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
         // Act
-        var hash = provider.Hash(plainToken);
+        var hash = provider.Hash(RefreshTokenTestData.PlainToken);
 
         // Assert
-        hash.Should().NotBe(plainToken);
+        hash.Should().NotBe(RefreshTokenTestData.PlainToken);
         hash.Should().HaveLength(44);
     }
 }

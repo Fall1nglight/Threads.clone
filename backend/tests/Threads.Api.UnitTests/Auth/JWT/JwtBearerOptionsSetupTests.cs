@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Threads.Api.Features.Auth.Services.JwtProvider;
 
-namespace Threads.Api.UnitTests.Auth;
+namespace Threads.Api.UnitTests.Auth.JWT;
 
 public class JwtBearerOptionsSetupTests
 {
@@ -13,7 +13,7 @@ public class JwtBearerOptionsSetupTests
     public void Configure_ShouldConfigureBearerTokenValidationParameters()
     {
         // Arrange
-        var jwtOptions = OptionsTestFactory.CreateJwtOptions();
+        var jwtOptions = JwtOptionsFactory.CreateJwtOptions();
         var setup = new JwtBearerOptionsSetup(Options.Create(jwtOptions));
         var options = new JwtBearerOptions();
 
@@ -42,7 +42,7 @@ public class JwtBearerOptionsSetupTests
     public void Configure_ShouldNotConfigureNonBearerSchemes()
     {
         // Arrange
-        var jwtOptions = OptionsTestFactory.CreateJwtOptions();
+        var jwtOptions = JwtOptionsFactory.CreateJwtOptions();
         var setup = new JwtBearerOptionsSetup(Options.Create(jwtOptions));
         var options = new JwtBearerOptions();
 
