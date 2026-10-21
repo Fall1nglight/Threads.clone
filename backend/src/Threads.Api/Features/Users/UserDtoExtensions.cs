@@ -6,9 +6,9 @@ namespace Threads.Api.Features.Users;
 
 public static class UserDtoExtensions
 {
-    public static IQueryable<UserProfileDto> ToUserProfileDto(
+    public static IQueryable<UserProfileDto> ToDto(
         this IQueryable<User> users,
-        Guid? currentUserId,
+        Guid? loggedInUserId,
         AppDbContext db
     )
     {
@@ -28,10 +28,10 @@ public static class UserDtoExtensions
                 follow.FollowerId == user.Id && follow.Status == FollowStatus.Accepted
             ),
 
-            FollowStatusWithCurrentUser = currentUserId.HasValue
+            FollowStatusWithCurrentUser = loggedInUserId.HasValue
                 ? db
                     .Follows.Where(f =>
-                        f.FollowerId == currentUserId.Value && f.FollowedId == user.Id
+                        f.FollowerId == loggedInUserId.Value && f.FollowedId == user.Id
                     )
                     .Select(f => (FollowStatus?)f.Status)
                     .FirstOrDefault()

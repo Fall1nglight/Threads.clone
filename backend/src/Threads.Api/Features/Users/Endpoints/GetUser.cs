@@ -35,17 +35,12 @@ public class GetUser : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var usersQuery = db.Users.Where(user => user.Id == request.UserId);
-        Guid? currentUserId = null;
+        var loggedInUserId = claimsPrincipal.TryGetUserId();
 
-        if (claimsPrincipal.Identity?.IsAuthenticated == true)
-        {
-            currentUserId = claimsPrincipal.GetUserId();
-            usersQuery = usersQuery.WhereVisibleTo(currentUserId.Value, db);
-        }
-
-        var user = await usersQuery
-            .ToUserProfileDto(currentUserId, db)
+        var user = await db
+            .Users.Where(user => user.Id == request.UserId)
+            .WhereVisibleTo(loggedInUserId, db)
+            .ToDto(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (user == null)
