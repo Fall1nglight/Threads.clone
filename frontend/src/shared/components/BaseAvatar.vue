@@ -6,6 +6,7 @@ withDefaults(
     size?: 'small' | 'medium' | 'large'
   }>(),
   {
+    initials: 'NA',
     size: 'medium',
   },
 )

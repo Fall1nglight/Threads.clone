@@ -11,6 +11,7 @@ withDefaults(
     placeholder?: string
     autocomplete?: string
     errorMessage?: string | null
+    disabled?: boolean
   }>(),
   {
     type: 'text',
@@ -19,6 +20,7 @@ withDefaults(
     placeholder: '',
     autocomplete: 'off',
     errorMessage: null,
+    disabled: false,
   },
 )
 </script>
@@ -33,6 +35,7 @@ withDefaults(
     <span class="base-field__control">
       <input
         v-model="content"
+        :disabled="disabled"
         :id="id"
         :class="['base-field__input', { 'base-field__input--invalid': errorMessage }]"
         :type="type"

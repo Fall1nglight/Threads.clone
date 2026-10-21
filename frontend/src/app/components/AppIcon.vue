@@ -13,7 +13,13 @@ defineProps<{
     | 'send'
     | 'back'
     | 'more'
+    | 'check'
+    | 'close'
     | 'verified'
+    | 'user-add'
+    | 'user-pending'
+    | 'user-accepted'
+    | 'chevron-down'
 }>()
 </script>
 
@@ -48,6 +54,18 @@ defineProps<{
       v-else-if="name === 'user'"
       d="M20 21a8 8 0 0 0-16 0m12-13a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
     />
+    <template v-else-if="name === 'user-add'">
+      <path d="M14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM2.5 21a7.5 7.5 0 0 1 12.8-5.3" />
+      <path d="M18.5 14.5v7M15 18h7" />
+    </template>
+    <template v-else-if="name === 'user-pending'">
+      <path d="M14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM2.5 21a7.5 7.5 0 0 1 12.8-5.3" />
+      <path d="M16.3 16.7a2.3 2.3 0 1 1 3.1 2.2c-.6.3-.9.6-.9 1.1M18.5 22h.01" />
+    </template>
+    <template v-else-if="name === 'user-accepted'">
+      <path d="M14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM2.5 21a7.5 7.5 0 0 1 12.8-5.3" />
+      <path d="m15.2 18.5 2.2 2.2 4.3-5" />
+    </template>
     <path v-else-if="name === 'menu'" d="M4 7h16M4 12h16M4 17h16" />
     <path
       v-else-if="name === 'reply'"
@@ -59,7 +77,10 @@ defineProps<{
     />
     <path v-else-if="name === 'send'" d="m22 2-7 20-4-9-9-4 20-7Zm-11 11L22 2" />
     <path v-else-if="name === 'back'" d="m15 18-6-6 6-6" />
+    <path v-else-if="name === 'chevron-down'" d="m6 9 6 6 6-6" />
     <path v-else-if="name === 'more'" d="M5 12h.01M12 12h.01M19 12h.01" />
+    <path v-else-if="name === 'check'" d="m5 12 4.5 4.5L19 7" />
+    <path v-else-if="name === 'close'" d="M6 6l12 12M18 6 6 18" />
     <path
       v-else
       d="m12 2 2.2 2 3-.2.7 2.9 2.6 1.5-1.1 2.8 1.1 2.8-2.6 1.5-.7 2.9-3-.2-2.2 2-2.2-2-3 .2-.7-2.9-2.6-1.5L4.6 11 3.5 8.2l2.6-1.5.7-2.9 3 .2L12 2Zm-2.1 10.1 1.4 1.4 3.2-3.2"
