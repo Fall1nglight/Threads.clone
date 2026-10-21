@@ -8,9 +8,8 @@ public class BlockRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        var authorizedBlockRoute = builder.MapGroup("/blocks").RequireAuthorization();
-
-        authorizedBlockRoute
+        var protectedGroup = builder.MapGroup("/blocks").RequireAuthorization();
+        protectedGroup
             .MapEndpoint<BlockUser>()
             .MapEndpoint<UnblockUser>()
             .MapEndpoint<GetBlockedUsers>();
