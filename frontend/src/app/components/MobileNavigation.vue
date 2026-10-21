@@ -1,33 +1,33 @@
 <script setup lang="ts">
 import NavigationLink from '@/app/components/NavigationLink.vue'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
+import ActivityNavigationLink from '@/features/activity/components/ActivityNavigationLink.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 const authStore = useAuthStore()
-const { isAuthenticated, currentUserId } = storeToRefs(authStore)
+const { isLoggedIn, loggedInUserId } = storeToRefs(authStore)
 
-const profileLink = computed(() => {
-  if (isAuthenticated.value) return `/users/${currentUserId.value}`
-  return '/auth/login'
-})
+const loggedInUserPage = computed(() => ({
+  name: 'user-profile',
+  params: { userId: loggedInUserId.value },
+}))
 </script>
 
 <template>
   <nav aria-label="Mobile primary" class="mobile-navigation">
     <NavigationLink icon="home" label="Home" to="/" />
-
     <NavigationLink icon="search" label="Search" to="/search" />
 
     <BaseIconButton disabled label="Create a thread — coming later">
       <AppIcon name="plus" />
     </BaseIconButton>
 
-    <NavigationLink icon="heart" label="Activity" to="/activity" />
-
-    <NavigationLink icon="user" label="Profile" :to="profileLink" />
+    <ActivityNavigationLink />
+    <NavigationLink v-if="isLoggedIn" icon="user" label="Profile" :to="loggedInUserPage" />
+    <NavigationLink v-else icon="user" label="Login" to="/auth/login" />
   </nav>
 </template>
 

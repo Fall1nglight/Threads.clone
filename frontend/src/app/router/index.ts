@@ -1,7 +1,30 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/features/auth/stores/authStore.ts'
+import { storeToRefs } from 'pinia'
+import { useModalStore } from '@/shared/modal/modalStore.ts'
+
+const metaOptions = {
+  requiresAuth: 'requiresAuth',
+  guestOnly: 'guestOnly',
+  showLoginPrompt: 'showLoginPrompt',
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, _from, savedPosition) {
+    if (
+      to.name === 'home' ||
+      to.name === 'post-detail' ||
+      to.name === 'user-profile' ||
+      to.name === 'user-followers' ||
+      to.name === 'user-following' ||
+      to.name === 'blocked-users'
+    ) {
+      return { left: 0, top: 0, behavior: 'instant' }
+    }
+
+    return savedPosition ?? false
+  },
   routes: [
     {
       path: '/',
@@ -21,6 +44,10 @@ const router = createRouter({
           path: 'activity',
           name: 'activity',
           component: () => import('@/features/activity/views/ActivityView.vue'),
+          meta: {
+            [metaOptions.requiresAuth]: true,
+            [metaOptions.showLoginPrompt]: true,
+          },
         },
         {
           path: 'users/:userId',
@@ -43,6 +70,9 @@ const router = createRouter({
           path: 'blocked-users',
           name: 'blocked-users',
           component: () => import('@/features/block/views/BlockedUsersView.vue'),
+          meta: {
+            [metaOptions.requiresAuth]: true,
+          },
         },
         {
           path: 'posts/:postId',
@@ -53,6 +83,9 @@ const router = createRouter({
           path: 'posts/:postId/edit',
           name: 'post-edit',
           component: () => import('@/features/posts/views/PostEditView.vue'),
+          meta: {
+            [metaOptions.requiresAuth]: true,
+          },
         },
       ],
     },
@@ -66,11 +99,17 @@ const router = createRouter({
           path: 'login',
           name: 'login',
           component: () => import('@/features/auth/views/LoginView.vue'),
+          meta: {
+            [metaOptions.guestOnly]: true,
+          },
         },
         {
           path: 'signup',
           name: 'signup',
           component: () => import('@/features/auth/views/SignupView.vue'),
+          meta: {
+            [metaOptions.guestOnly]: true,
+          },
         },
       ],
     },
@@ -81,6 +120,28 @@ const router = createRouter({
       component: () => import('@/app/views/NotFoundView.vue'),
     },
   ],
+})
+
+router.beforeEach(async (to, from) => {
+  const authStore = useAuthStore()
+  const modalStore = useModalStore()
+  const { isLoggedIn } = storeToRefs(authStore)
+
+  // this makes sure the auth-flow is completed
+  await authStore.ensureSessionReady()
+
+  if (to.meta[metaOptions.requiresAuth] === true && !isLoggedIn.value) {
+    if (to.meta[metaOptions.showLoginPrompt] === true) {
+      modalStore.openLoginForm()
+      return false
+    }
+
+    return { name: 'login' }
+  }
+
+  if (to.meta[metaOptions.guestOnly] === true && isLoggedIn.value) {
+    return { name: from.name ?? 'home' }
+  }
 })
 
 export default router

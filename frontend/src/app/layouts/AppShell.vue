@@ -3,6 +3,9 @@ import { RouterView } from 'vue-router'
 import DesktopNavigation from '@/app/components/DesktopNavigation.vue'
 import MobileNavigation from '@/app/components/MobileNavigation.vue'
 import MobileTopBar from '@/app/components/MobileTopBar.vue'
+import { provideNotificationCount } from '@/features/activity/composables/useNotificationCount.ts'
+
+provideNotificationCount()
 </script>
 
 <template>
