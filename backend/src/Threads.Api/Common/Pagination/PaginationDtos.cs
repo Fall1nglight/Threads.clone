@@ -7,7 +7,7 @@ public record PagedRequest
     public string? Cursor { get; init; }
     public int PageSize { get; init; }
 
-    public PagedRequest(string? cursor, int pageSize = 20)
+    public PagedRequest(string? cursor, int pageSize = PaginationDefaults.PageSize)
     {
         Cursor = cursor;
         PageSize = int.Clamp(pageSize, 1, 100);

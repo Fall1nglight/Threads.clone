@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Threads.Api.Common;
 
-public static class CustomResults
+public static class HttpResultFactory
 {
     public static ProblemHttpResult Unauthorized(string? detail)
     {

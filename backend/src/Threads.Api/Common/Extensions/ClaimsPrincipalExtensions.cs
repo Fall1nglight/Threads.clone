@@ -12,4 +12,13 @@ public static class ClaimsPrincipalExtensions
 
         return userId;
     }
+
+    public static Guid? TryGetUserId(this ClaimsPrincipal claimsPrincipal)
+    {
+        var claim = claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (claim == null || !Guid.TryParse(claim, out var userId))
+            return null;
+
+        return userId;
+    }
 }
