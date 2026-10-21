@@ -1,72 +1,77 @@
-﻿import axios from 'axios'
+﻿import type {
+  AccessTokenProvider,
+  RetryableAxiosRequest,
+  InitOptions,
+  SessionRenewer,
+} from '@/shared/api/baseApiTypes.ts'
 
-import type { InternalAxiosRequestConfig } from 'axios'
+import axios from 'axios'
+import type { PagedRequest } from '@/shared/types/paginationTypes.ts'
 
-const baseUrl = '/api'
-const pahts = {
-  baseUrl,
+// see vite.config.ts for more info
+const BASE_PATH = '/api'
+const DEFAULT_ACCESS_TOKEN_PREFIX = 'Bearer '
+let requestAccessToken: AccessTokenProvider = () => null
+
+let renewSession: SessionRenewer = async () => {
+  throw new Error('Session renewer not set')
 }
 
-export type TokenProvider = () => string | null
-export type SessionRenewal = () => Promise<boolean>
-
-export type AuthApiConfiguration = {
-  accessTokenProvider: TokenProvider
-  renewSession: SessionRenewal
+export function setAccessTokenProvider(provider: AccessTokenProvider) {
+  requestAccessToken = provider
 }
 
-export type ApiOptions = {
-  retryUnauthorized?: boolean
+export function setSessionRenewer(renewer: SessionRenewer) {
+  renewSession = renewer
 }
 
-type RetryableRequestConfig = InternalAxiosRequestConfig & {
-  _retry?: boolean
-}
+export function getApi(path: string, options: InitOptions = {}) {
+  const {
+    retryOnUnauthorized = true,
+    includeCredentials = true,
+    accessTokenPrefix = DEFAULT_ACCESS_TOKEN_PREFIX,
+    timeout = 10000,
+  } = options
 
-let getAccessToken: TokenProvider = () => null
-let renewSession: SessionRenewal = async () => false
-
-export function configureAuthApi(configuration: AuthApiConfiguration) {
-  getAccessToken = configuration.accessTokenProvider
-  renewSession = configuration.renewSession
-}
-
-function getApi(endpointPath: string, options: ApiOptions = {}) {
-  const { retryUnauthorized = true } = options
-  const apiInstance = axios.create({
-    baseURL: baseUrl + endpointPath,
-    timeout: 7500,
+  const api = axios.create({
+    baseURL: BASE_PATH + path,
+    timeout,
   })
 
-  apiInstance.interceptors.request.use((config) => {
-    const accessToken = getAccessToken()
-    if (accessToken) config.headers.set('Authorization', `Bearer ${accessToken}`)
-    return config
-  })
+  // include access token for authentication if desired
+  if (includeCredentials) {
+    api.interceptors.request.use((config) => {
+      const accessToken = requestAccessToken()
+      if (accessToken) {
+        config.headers.Authorization = accessTokenPrefix + accessToken
+      }
+      return config
+    })
+  }
 
-  if (retryUnauthorized) {
-    apiInstance.interceptors.response.use(
+  // retry failed 401 requests
+  if (retryOnUnauthorized) {
+    api.interceptors.response.use(
       (response) => response,
-      async (error: unknown) => {
-        if (!axios.isAxiosError(error) || error.response?.status !== 401 || !error.config) {
-          return Promise.reject(error)
-        }
+      async (error) => {
+        if (!axios.isAxiosError(error)) throw error
+        if (error.response?.status !== 401) throw error
+        if (!error.config) throw error
 
-        const originalRequest = error.config as RetryableRequestConfig
+        const request = error.config as RetryableAxiosRequest
+        if (request.hasRetried) throw error
+        request.hasRetried = true
 
-        if (originalRequest._retry) return Promise.reject(error)
-
-        originalRequest._retry = true
-
-        const renewed = await renewSession()
-        if (!renewed) return Promise.reject(error)
-
-        return apiInstance(originalRequest)
+        await renewSession()
+        return api(request)
       },
     )
   }
 
-  return apiInstance
+  return api
 }
 
-export { pahts, getApi }
+export function getPaginatedUrl(path: string, paginationDetails: PagedRequest) {
+  const separator = path.includes('?') ? '&' : '?'
+  return `${path}${separator}pageSize=${paginationDetails.pageSize}&cursor=${paginationDetails.cursor}`
+}

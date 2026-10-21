@@ -250,6 +250,56 @@ namespace Threads.Api.Migrations
                     b.ToTable("PostLikes", "social");
                 });
 
+            modelBuilder.Entity("Threads.Api.Data.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("NotifiedUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("SeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubjectKind")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTime>("TriggeredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TriggeredByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TriggeredByUserId");
+
+                    b.HasIndex("NotifiedUserId", "TriggeredAtUtc", "Id")
+                        .IsDescending(false, true, true);
+
+                    b.HasIndex("NotifiedUserId", "Type", "TriggeredAtUtc", "Id")
+                        .IsDescending(false, false, true, true);
+
+                    b.ToTable("Notifications", "social", t =>
+                        {
+                            t.HasCheckConstraint("CK_Notifications_SeenAtUtc_NotBeforeTriggeredAtUtc", "\"SeenAtUtc\" IS NULL OR \"SeenAtUtc\" >= \"TriggeredAtUtc\"");
+
+                            t.HasCheckConstraint("CK_Notifications_SubjectKind_SubjectId", "(\"SubjectKind\" IS NULL AND \"SubjectId\" IS NULL) OR (\"SubjectKind\" IS NOT NULL AND \"SubjectId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_Notifications_TriggeredByUserId_NotNotifiedUserId", "\"TriggeredByUserId\" <> \"NotifiedUserId\"");
+                        });
+                });
+
             modelBuilder.Entity("Threads.Api.Data.Posts.Post", b =>
                 {
                     b.Property<Guid>("Id")
@@ -529,6 +579,25 @@ namespace Threads.Api.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Threads.Api.Data.Notifications.Notification", b =>
+                {
+                    b.HasOne("Threads.Api.Data.Users.User", "NotifiedUser")
+                        .WithMany()
+                        .HasForeignKey("NotifiedUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Threads.Api.Data.Users.User", "TriggeredByUser")
+                        .WithMany()
+                        .HasForeignKey("TriggeredByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("NotifiedUser");
+
+                    b.Navigation("TriggeredByUser");
                 });
 
             modelBuilder.Entity("Threads.Api.Data.Posts.Post", b =>

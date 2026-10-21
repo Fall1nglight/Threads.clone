@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+
+// todo | rethink summary display (do we want to display falsy values as well?)
 
 withDefaults(
   defineProps<{
@@ -10,7 +12,7 @@ withDefaults(
     name: string
     username: string
     initials: string
-    summary: string
+    summary: string | null
     verified?: boolean
   }>(),
   {

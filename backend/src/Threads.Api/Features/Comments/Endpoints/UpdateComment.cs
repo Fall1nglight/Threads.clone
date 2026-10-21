@@ -48,8 +48,8 @@ public class UpdateComment : IEndpoint
         if (comment == null)
             return TypedResults.NotFound();
 
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (comment.UserId != currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (comment.UserId != loggedInUserId)
             return TypedResults.Forbid();
 
         comment.Content = request.Body.Content;

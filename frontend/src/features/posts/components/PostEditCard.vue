@@ -1,20 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
-import { formatDistanceToNow } from 'date-fns'
+import { computed, ref, toRefs } from 'vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
 import type { PostDto } from '@/features/posts/postTypes.ts'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+import BaseTextAreaField from '@/shared/components/BaseTextAreaField.vue'
 import PostActionBar from '@/features/posts/components/PostActionBar.vue'
+import { useDateFormatter } from '@/shared/composables/useDateFormatter.ts'
+import { getInitials } from '@/shared/helpers/profileInitials.ts'
 
-const { post } = defineProps<{
+const { post, isSubmitting } = defineProps<{
   post: PostDto
   isSubmitting: boolean
   validationErrorMessage: string | null
 }>()
 
+// post related getters
+const postPage = computed<RouteLocationRaw>(() => ({
+  name: 'post-detail',
+  params: { postId: post.id },
+}))
+
+// author related getters
+const authorPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-profile',
+  params: { userId: post.user.id },
+}))
+const authorName = computed(() => post.user.username)
+const authorPageDesc = computed(() => `View ${authorName.value}'s profile`)
+const authorAvatarDesc = computed(() => `${authorName.value}'s avatar`)
+const authorInitials = computed(() => getInitials(authorName.value))
+
 const content = ref(post.content)
+const isSaveDisabled = computed(() => isSubmitting || content.value === post.content)
+
+const { createdAtUtc, updatedAtUtc } = toRefs(post)
+const { formattedDate: formattedCreatedAtUtc } = useDateFormatter(createdAtUtc)
+const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 
 const emit = defineEmits<{
   handleSave: [content: string]
@@ -24,56 +46,59 @@ const emit = defineEmits<{
 <template>
   <article class="post-edit-card">
     <div class="post-edit-card__avatar-column">
-      <RouterLink
-        :aria-label="`View ${post.user.username}'s profile`"
-        :to="`/users/${post.user.id}`"
-      >
-        <BaseAvatar
-          :initials="post.user.username.slice(0, 2)"
-          :label="`${post.user.username}'s avatar`"
-        />
+      <RouterLink :to="authorPage" :aria-label="authorPageDesc">
+        <BaseAvatar :initials="authorInitials" :label="authorAvatarDesc" />
       </RouterLink>
     </div>
 
     <form class="post-edit-card__form" @submit.prevent="emit('handleSave', content)">
       <header class="post-edit-card__header">
         <div class="post-edit-card__identity">
-          <RouterLink class="post-edit-card__author" :to="`/users/${post.user.id}`">
-            {{ post.user.username }}
+          <RouterLink :to="postPage" class="post-edit-card__author">
+            {{ authorName }}
           </RouterLink>
-          <span class="post-edit-card__username">@{{ post.user.username }}</span>
+
           <span aria-hidden="true">·</span>
-          <RouterLink class="post-edit-card__timestamp" :to="`/posts/${post.id}`">
-            {{ formatDistanceToNow(post.createdAtUtc, { addSuffix: true }) }}
+
+          <RouterLink v-if="formattedCreatedAtUtc" :to="postPage" class="post-edit-card__timestamp">
+            {{ formattedCreatedAtUtc }}
           </RouterLink>
-          <template v-if="post.updatedAtUtc">
-            <span aria-hidden="true">·</span>
-            <span>{{ formatDistanceToNow(post.updatedAtUtc, { addSuffix: true }) }}</span>
-          </template>
         </div>
       </header>
 
-      <BaseTextField
+      <BaseTextAreaField
         v-model="content"
+        @keydown.ctrl.enter.prevent="emit('handleSave', content)"
         :id="`post-edit-content-${post.id}`"
+        :disabled="isSubmitting"
         :error-message="validationErrorMessage"
+        class="post-edit-card__field"
         label="Post content"
-        type="text"
-        variant="bare"
         visually-hidden-label
       />
 
-      <PostActionBar
-        disabled
-        :comment-count="post.commentCount"
-        :is-liked-by-current-user="post.isLikedByCurrentUser"
-        :like-count="post.likeCount"
-      />
+      <BaseButton
+        class="post-edit-card__submit"
+        :disabled="isSaveDisabled"
+        :is-loading="isSubmitting"
+        loading-text="Saving..."
+        type="submit"
+      >
+        Save
+      </BaseButton>
 
       <div class="post-edit-card__footer">
-        <BaseButton :is-loading="isSubmitting" loading-text="Saving..." type="submit"
-          >Save</BaseButton
-        >
+        <PostActionBar
+          class="post-edit-card__actions"
+          disabled
+          :comment-count="post.commentCount"
+          :is-liked-by-current-user="post.isLikedByCurrentUser"
+          :like-count="post.likeCount"
+        />
+
+        <time v-if="formattedUpdatedAtUtc" class="post-edit-card__updated-at">
+          Updated {{ formattedUpdatedAtUtc }}
+        </time>
       </div>
     </form>
   </article>
@@ -82,7 +107,7 @@ const emit = defineEmits<{
 <style scoped>
 .post-edit-card {
   display: grid;
-  padding: var(--space-6) var(--space-4) var(--space-4);
+  padding: var(--space-6) var(--space-4) var(--space-2);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
   border-block-end: 1px solid var(--color-border);
@@ -104,13 +129,15 @@ const emit = defineEmits<{
 .post-edit-card__form {
   display: grid;
   min-width: 0;
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-3);
 }
 
 .post-edit-card__header {
   display: flex;
   min-height: 2.75rem;
   margin-block-start: calc(var(--space-1) * -1);
+  grid-column: 1 / -1;
   align-items: center;
 }
 
@@ -157,14 +184,66 @@ const emit = defineEmits<{
   text-decoration: none;
 }
 
+.post-edit-card__field {
+  min-width: 0;
+  grid-column: 1;
+}
+
+.post-edit-card__submit {
+  grid-column: 2;
+  align-self: end;
+}
+
 .post-edit-card__footer {
   display: flex;
-  padding-block-start: var(--space-2);
-  justify-content: flex-end;
+  grid-column: 1;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.post-edit-card__updated-at {
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-support);
+  text-align: end;
+  white-space: nowrap;
 }
 
 @media (max-width: 28rem) {
   .post-edit-card__username {
+    display: none;
+  }
+}
+
+@media (max-width: 47.999rem) {
+  .post-edit-card__form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .post-edit-card__header,
+  .post-edit-card__field {
+    grid-column: 1 / -1;
+  }
+
+  .post-edit-card__submit {
+    margin-block-start: var(--space-2);
+    grid-column: 2;
+    grid-row: 3;
+    align-self: center;
+    justify-self: end;
+  }
+
+  .post-edit-card__footer {
+    display: contents;
+  }
+
+  .post-edit-card__actions {
+    margin-block-start: var(--space-2);
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .post-edit-card__updated-at {
     display: none;
   }
 }

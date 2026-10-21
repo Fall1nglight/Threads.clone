@@ -6,7 +6,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Comments;
 
-public class DeleteCommentTests : CommentIntegrationTestBase
+public class DeleteCommentTests : IntegrationTestBase
 {
     public DeleteCommentTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -36,8 +36,7 @@ public class DeleteCommentTests : CommentIntegrationTestBase
     {
         // Arrange
         var seed = await CreateCommentAsync();
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.HenryUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -74,8 +73,7 @@ public class DeleteCommentTests : CommentIntegrationTestBase
     {
         // Arrange
         var seed = await CreateCommentAsync();
-        var postSeeder = CreatePostSeeder();
-        var otherPost = await postSeeder.CreatePostAsync(
+        var otherPost = await Seeders.Posts.CreatePostAsync(
             seed.Owner,
             IntegrationTestData.OtherValidContent
         );
@@ -115,12 +113,11 @@ public class DeleteCommentTests : CommentIntegrationTestBase
 
     private async Task<CommentSeed> CreateCommentAsync()
     {
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var commentSeeder = CreateCommentSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
-        var comment = await commentSeeder.CreateCommentAsync(
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var comment = await Seeders.Comments.CreateCommentAsync(
             owner,
             post,
             IntegrationTestData.ValidContent

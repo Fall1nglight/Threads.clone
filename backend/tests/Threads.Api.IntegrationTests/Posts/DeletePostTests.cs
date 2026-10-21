@@ -8,7 +8,7 @@ using Threads.Api.IntegrationTests.Posts.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Posts;
 
-public class DeletePostTests : PostIntegrationTestBase
+public class DeletePostTests : IntegrationTestBase
 {
     public DeletePostTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -17,17 +17,17 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldSoftDeletePost_WhenRequesterIsOwner()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(
             owner: alice,
             content: IntegrationTestData.ValidContent
         );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{post.Id}");
+        var response = await client.DeleteAsync($"posts/{post.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -42,18 +42,18 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldHideDeletedPostFromFeedsAndSingleRead()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(
             owner: alice,
             content: IntegrationTestData.ValidContent
         );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
-        var deleteResponse = await client.DeleteAsync($"/posts/{post.Id}");
-        var getResponse = await client.GetAsync($"/posts/{post.Id}");
+        var deleteResponse = await client.DeleteAsync($"posts/{post.Id}");
+        var getResponse = await client.GetAsync($"posts/{post.Id}");
         var feedResponse = await client.GetAsync(PostTestRoutes.GlobalFeed);
 
         // Assert
@@ -69,18 +69,17 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldForbidDelete_WhenRequesterIsNotOwner()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
+        var userSeeder = Seeders.Users;
         var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var henry = await userSeeder.CreateUserAsync(username: IntegrationTestData.HenryUsername);
-        var post = await postSeeder.CreatePostAsync(
+        var post = await Seeders.Posts.CreatePostAsync(
             owner: alice,
             content: IntegrationTestData.ValidContent
         );
         var client = await CreateAuthenticatedClientAsync(henry);
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{post.Id}");
+        var response = await client.DeleteAsync($"posts/{post.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -95,13 +94,13 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldReturnNoContent_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{Guid.NewGuid()}");
+        var response = await client.DeleteAsync($"posts/{Guid.NewGuid()}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -111,10 +110,10 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldReturnNoContent_WhenPostIsAlreadyDeleted()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(
             owner: alice,
             content: IntegrationTestData.ValidContent,
             isDeleted: true
@@ -122,7 +121,7 @@ public class DeletePostTests : PostIntegrationTestBase
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{post.Id}");
+        var response = await client.DeleteAsync($"posts/{post.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -137,13 +136,13 @@ public class DeletePostTests : PostIntegrationTestBase
     public async Task DeletePost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = await CreateAuthenticatedClientAsync(alice);
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{Guid.Empty}");
+        var response = await client.DeleteAsync($"posts/{Guid.Empty}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

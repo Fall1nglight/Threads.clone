@@ -6,21 +6,20 @@ using Threads.Api.IntegrationTests.Posts.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Posts;
 
-public class GetPostTests : PostIntegrationTestBase
+public class GetPostTests : IntegrationTestBase
 {
     public GetPostTests(CustomWebApplicationFactory factory)
         : base(factory) { }
 
     [Fact]
-    public async Task GetPost_ShouldReturnPublicPost_WhenUserIsAuthenticated()
+    public async Task GetPost_ShouldReturnPublicPost_WhenRequesterIsAnonymous()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
-        var client = await CreateAuthenticatedClientAsync(seed.Alice);
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        var client = CreateAnonymousClient();
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.BobPublicPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.BobPublicPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -31,20 +30,34 @@ public class GetPostTests : PostIntegrationTestBase
         responseBody.User.Id.Should().Be(seed.BobPublic.Id);
         responseBody.User.Username.Should().Be(seed.BobPublic.UserName);
         responseBody.Content.Should().Be(seed.BobPublicPost.Content);
+        responseBody.IsLikedByCurrentUser.Should().BeFalse();
         responseBody.CreatedAtUtc.Should().Be(seed.BobPublicPost.CreatedAtUtc);
         responseBody.UpdatedAtUtc.Should().Be(seed.BobPublicPost.UpdatedAtUtc);
+    }
+
+    [Fact]
+    public async Task GetPost_ShouldReturnNotFound_WhenRequesterIsAnonymousAndPostIsPrivate()
+    {
+        // Arrange
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        var client = CreateAnonymousClient();
+
+        // Act
+        var response = await client.GetAsync($"posts/{seed.DinaPrivateFollowedPost.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetPost_ShouldReturnPrivatePost_WhenRequesterIsOwner()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.AlicePrivate);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.AlicePrivateOwnPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.AlicePrivateOwnPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -54,12 +67,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnPrivatePost_WhenRequesterIsAcceptedFollower()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.DinaPrivateFollowedPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.DinaPrivateFollowedPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -69,12 +81,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnNotFound_WhenRequesterIsPendingFollower()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.ErinPrivatePendingPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.ErinPrivatePendingPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -84,12 +95,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnNotFound_WhenRequesterIsStranger()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Henry);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.DinaPrivateFollowedPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.DinaPrivateFollowedPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -103,11 +113,9 @@ public class GetPostTests : PostIntegrationTestBase
     )
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
 
-        await blockSeeder.CreateUserBlockAsync(
+        await Seeders.Blocks.CreateUserBlockAsync(
             blocker: requesterBlocksOwner ? seed.Alice : seed.BobPublic,
             blocked: requesterBlocksOwner ? seed.BobPublic : seed.Alice
         );
@@ -115,7 +123,7 @@ public class GetPostTests : PostIntegrationTestBase
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.BobPublicPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.BobPublicPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -125,12 +133,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldExcludeBlockedUsersFromLikeAndCommentCounts()
     {
         // Arrange
-        var scenarioSeeder = CreatePostEngagementVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostEngagementVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.TargetPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.TargetPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -146,12 +153,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{Guid.NewGuid()}");
+        var response = await client.GetAsync($"posts/{Guid.NewGuid()}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -161,12 +167,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnNotFound_WhenPostIsSoftDeleted()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{seed.DeletedPublicPost.Id}");
+        var response = await client.GetAsync($"posts/{seed.DeletedPublicPost.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -176,12 +181,11 @@ public class GetPostTests : PostIntegrationTestBase
     public async Task GetPost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
-        var response = await client.GetAsync($"/posts/{Guid.Empty}");
+        var response = await client.GetAsync($"posts/{Guid.Empty}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

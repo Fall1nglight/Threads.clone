@@ -6,6 +6,15 @@ namespace Threads.Api.Features.Posts;
 
 public static class PostDtoExtensions
 {
+    public static IQueryable<PostDto> ToDto(
+        this IQueryable<Post> posts,
+        Guid? loggedInUserId,
+        AppDbContext db
+    )
+    {
+        return loggedInUserId.HasValue ? posts.ToDto(loggedInUserId.Value, db) : posts.ToDto(db);
+    }
+
     public static IQueryable<PostDto> ToDto(this IQueryable<Post> posts, AppDbContext db)
     {
         return posts.Select(post => new PostDto
@@ -21,7 +30,7 @@ public static class PostDtoExtensions
         });
     }
 
-    public static IQueryable<PostDto> ToDto(
+    private static IQueryable<PostDto> ToDto(
         this IQueryable<Post> posts,
         Guid currentUserId,
         AppDbContext db

@@ -4,7 +4,7 @@ namespace Threads.Api.Features.Likes;
 
 public static class LikeDtoExtensions
 {
-    public static IQueryable<PostLikeUserDto> ToPostLikeUserDto(this IQueryable<PostLike> likes)
+    public static IQueryable<PostLikeUserDto> ToDto(this IQueryable<PostLike> likes)
     {
         return likes.Select(like => new PostLikeUserDto
         {

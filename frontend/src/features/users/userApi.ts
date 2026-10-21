@@ -1,23 +1,27 @@
 ﻿import { getApi } from '@/shared/api/baseApi.ts'
-import type { FollowStatus } from '@/features/follow/followTypes.ts'
+import type { PagedRequest, PagedResponse } from '@/shared/types/paginationTypes.ts'
+import type { UserProfileDto } from '@/features/users/userTypes.ts'
+import { getPaginatedUrl } from '@/shared/api/baseApi.ts'
 
 const api = getApi('/users')
 
-export type UserProfileDto = {
-  id: string
-  username: string
-  isPrivate: boolean
-  createdAtUtc: string
-  updatedAtUtc: string | null
-  bio: string | null
-  followerCount: number
-  followingCount: number
-  followStatusWithCurrentUser: FollowStatus | null
-}
+const paths = {
+  getUser: (userId: string) => `/${userId}`,
+  searchUsers: (username: string) => `/search?username=${username}`,
+} as const
 
-export async function getUser(userId: string): Promise<UserProfileDto> {
-  const response = await api.get<UserProfileDto>('/' + userId)
+async function getUser(userId: string) {
+  const response = await api.get<UserProfileDto>(paths.getUser(userId))
   return response.data
 }
 
-export default { getUser }
+async function searchUsers(
+  username: string,
+  paginationDetails: PagedRequest = { pageSize: 5, cursor: null },
+) {
+  const url = getPaginatedUrl(paths.searchUsers(username), paginationDetails)
+  const response = await api.get<PagedResponse<UserProfileDto>>(url)
+  return response.data
+}
+
+export default { getUser, searchUsers }

@@ -8,10 +8,10 @@ public class AuthRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        var anonymousAuthRoute = builder.MapGroup("/auth").AllowAnonymous();
-        anonymousAuthRoute.MapEndpoint<Login>().MapEndpoint<Signup>().MapEndpoint<RenewToken>();
+        var anonGroup = builder.MapGroup("/auth").AllowAnonymous();
+        anonGroup.MapEndpoint<Login>().MapEndpoint<Signup>().MapEndpoint<RenewToken>();
 
-        var authorizedAuthRoute = builder.MapGroup("/auth").RequireAuthorization();
-        authorizedAuthRoute.MapEndpoint<Logout>().MapEndpoint<LogoutAll>();
+        var protectedGroup = builder.MapGroup("/auth").RequireAuthorization();
+        protectedGroup.MapEndpoint<Logout>().MapEndpoint<LogoutAll>();
     }
 }

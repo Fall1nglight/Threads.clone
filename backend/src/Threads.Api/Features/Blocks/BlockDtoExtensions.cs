@@ -4,7 +4,7 @@ namespace Threads.Api.Features.Blocks;
 
 public static class BlockDtoExtensions
 {
-    public static IQueryable<BlockedUserDto> ToBlockedUserDto(this IQueryable<UserBlock> blocks)
+    public static IQueryable<BlockedUserDto> ToDto(this IQueryable<UserBlock> blocks)
     {
         return blocks.Select(block => new BlockedUserDto
         {

@@ -91,8 +91,7 @@ public class SignupTests : AuthIntegrationTestBase
     public async Task Signup_ShouldReturnBadRequest_WhenEmailAlreadyExists()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername,
             email: IntegrationTestData.AliceEmail
         );
@@ -117,8 +116,9 @@ public class SignupTests : AuthIntegrationTestBase
     public async Task Signup_ShouldReturnBadRequest_WhenUsernameAlreadyExists()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var alice = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
         var client = CreateAnonymousClient();
         var requestBody = CreateSignupRequest(username: alice.UserName!);
 

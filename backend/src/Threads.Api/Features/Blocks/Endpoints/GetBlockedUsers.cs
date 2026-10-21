@@ -21,10 +21,10 @@ public class GetBlockedUsers : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var users = await db
-            .UserBlocks.Where(block => block.BlockerId == currentUserId)
-            .ToBlockedUserDto()
+            .UserBlocks.Where(block => block.BlockerId == loggedInUserId)
+            .ToDto()
             .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(users);

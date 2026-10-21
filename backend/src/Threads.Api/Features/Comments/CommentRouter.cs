@@ -8,11 +8,12 @@ public class CommentRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        var authorizedCommentRoute = builder.MapGroup("/posts").RequireAuthorization();
+        var anonGroup = builder.MapGroup("/posts").AllowAnonymous();
+        anonGroup.MapEndpoint<GetComments>();
 
-        authorizedCommentRoute
+        var protectedGroup = builder.MapGroup("/posts").RequireAuthorization();
+        protectedGroup
             .MapEndpoint<CreateComment>()
-            .MapEndpoint<GetPostComments>()
             .MapEndpoint<UpdateComment>()
             .MapEndpoint<DeleteComment>();
     }

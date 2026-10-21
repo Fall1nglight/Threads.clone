@@ -25,18 +25,18 @@ public class GetMyFeedPosts : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var posts = await db
             .Posts.Where(post =>
-                post.UserId == currentUserId
+                post.UserId == loggedInUserId
                 || db.Follows.Any(follow =>
-                    follow.FollowerId == currentUserId
+                    follow.FollowerId == loggedInUserId
                     && follow.FollowedId == post.UserId
                     && follow.Status == FollowStatus.Accepted
                 )
             )
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
-            .ToDto(currentUserId, db)
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
+            .ToDto(loggedInUserId, db)
             .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(posts);

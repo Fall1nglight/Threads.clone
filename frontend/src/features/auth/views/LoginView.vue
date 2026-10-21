@@ -1,55 +1,59 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
 import AuthCard from '@/features/auth/components/AuthCard.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+import BaseTextField from '@/shared/components/BaseTextField.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { usePayloadValidator } from '@/shared/composables/usePayloadValidator.ts'
 import loginSchema from '@/features/auth/schemas/loginSchema.ts'
-import type { LoginRequestDto } from '@/features/auth/authTypes.ts'
+import type { LoginRequestDto } from '@/features/auth/authApiTypes.ts'
 import AuthErrorAlert from '@/features/auth/components/AuthErrorAlert.vue'
 import { useErrorHandler } from '@/shared/composables/useErrorHandler.ts'
 
 const router = useRouter()
 
 const authStore = useAuthStore()
-const { isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 
-const initialPayload: LoginRequestDto = { email: '', password: '' }
-
-const {
-  payload,
-  errors: validationError,
-  submit,
-  isSubmitting,
-} = usePayloadValidator<LoginRequestDto>(initialPayload, loginSchema, handleValidSubmit)
-
-const { error, errorMessage, clearError } = useErrorHandler()
+const initialLoginForm: LoginRequestDto = { email: '', password: '' }
 const fallbackErrorMessage: string = 'Something went wrong during login. Please try again later.'
 
-async function handleValidSubmit(validPayload: LoginRequestDto) {
+const {
+  payload: loginForm,
+  errors: loginValidationErrors,
+  submit: submitLogin,
+  isSubmitting: isSubmittingLogin,
+} = usePayloadValidator(initialLoginForm, loginSchema, performLogin)
+
+const {
+  error: loginApiError,
+  errorMessage: loginApiErrorMsg,
+  clearError: clearApiError,
+} = useErrorHandler()
+
+async function performLogin(validPayload: LoginRequestDto) {
   try {
     await authStore.login(validPayload)
 
-    if (!isAuthenticated.value) {
-      error.value = new Error(fallbackErrorMessage)
+    if (!isLoggedIn.value) {
+      loginApiError.value = new Error(fallbackErrorMessage)
       return
     }
 
-    await router.push('/')
+    await router.replace({ name: 'home' })
   } catch (err) {
-    error.value = err as Error
+    loginApiError.value = err as Error
   }
 }
 </script>
 
 <template>
   <AuthCard subtitle="Welcome back to the conversation." title="Log in">
-    <form aria-label="Login details" class="auth-form" @submit.prevent="submit">
+    <form aria-label="Login details" class="auth-form" @submit.prevent="submitLogin">
       <BaseTextField
-        v-model="payload.email"
-        :error-message="validationError.email"
+        v-model="loginForm.email"
+        :error-message="loginValidationErrors.email"
         id="login-identity"
         label="Email"
         placeholder="name@example.com"
@@ -58,8 +62,8 @@ async function handleValidSubmit(validPayload: LoginRequestDto) {
       />
 
       <BaseTextField
-        v-model="payload.password"
-        :error-message="validationError.password"
+        v-model="loginForm.password"
+        :error-message="loginValidationErrors.password"
         id="login-password"
         label="Password"
         placeholder="Enter your password"
@@ -67,10 +71,10 @@ async function handleValidSubmit(validPayload: LoginRequestDto) {
         variant="subtle"
       />
 
-      <AuthErrorAlert :message="errorMessage" @close-alert="clearError" />
+      <AuthErrorAlert :message="loginApiErrorMsg" @close-alert="clearApiError" />
 
       <BaseButton
-        :is-loading="isSubmitting"
+        :is-loading="isSubmittingLogin"
         loading-text="Logging in..."
         class="auth-form__submit"
         type="submit"

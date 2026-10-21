@@ -1,22 +1,18 @@
 using FluentAssertions;
 using FluentValidation.Results;
 using Threads.Api.Features.Posts.Endpoints;
+using Threads.Api.UnitTests.TestSupport;
 
 namespace Threads.Api.UnitTests.Posts;
 
 public class PostValidatorTests
 {
-    private const string ValidContent = "Valid content";
-    private const int MaxContentLength = 600;
-
-    private static readonly Guid ValidPostId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
     [Fact]
     public void CreatePostValidator_ShouldPass_WhenContentIsValid()
     {
         // Arrange
         var validator = new CreatePost.CreatePostValidator();
-        var request = CreatePostRequest(content: ValidContent);
+        var request = PostRequestFactory.CreatePostRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -30,7 +26,9 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new CreatePost.CreatePostValidator();
-        var request = CreatePostRequest(content: new string('a', MaxContentLength));
+        var request = PostRequestFactory.CreatePostRequest(
+            content: new string('a', ValidatorTestData.MaxContentLength)
+        );
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -40,12 +38,15 @@ public class PostValidatorTests
     }
 
     [Theory]
-    [MemberData(nameof(EmptyContentValues))]
+    [MemberData(
+        nameof(ValidatorTestData.EmptyContentValues),
+        MemberType = typeof(ValidatorTestData)
+    )]
     public void CreatePostValidator_ShouldFail_WhenContentIsEmpty(string? content)
     {
         // Arrange
         var validator = new CreatePost.CreatePostValidator();
-        var request = CreatePostRequest(content: content);
+        var request = PostRequestFactory.CreatePostRequest(content: content);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -56,12 +57,15 @@ public class PostValidatorTests
     }
 
     [Theory]
-    [MemberData(nameof(TooLongContentLengths))]
+    [MemberData(
+        nameof(ValidatorTestData.TooLongContentLengths),
+        MemberType = typeof(ValidatorTestData)
+    )]
     public void CreatePostValidator_ShouldFail_WhenContentIsTooLong(int length)
     {
         // Arrange
         var validator = new CreatePost.CreatePostValidator();
-        var request = CreatePostRequest(content: new string('a', length));
+        var request = PostRequestFactory.CreatePostRequest(content: new string('a', length));
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -76,7 +80,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(postId: ValidPostId, content: ValidContent);
+        var request = PostRequestFactory.CreateUpdateRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -90,9 +94,8 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(
-            postId: ValidPostId,
-            content: new string('a', MaxContentLength)
+        var request = PostRequestFactory.CreateUpdateRequest(
+            content: new string('a', ValidatorTestData.MaxContentLength)
         );
 
         // Act
@@ -107,7 +110,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(postId: Guid.Empty, content: ValidContent);
+        var request = PostRequestFactory.CreateUpdateRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -118,12 +121,15 @@ public class PostValidatorTests
     }
 
     [Theory]
-    [MemberData(nameof(EmptyContentValues))]
+    [MemberData(
+        nameof(ValidatorTestData.EmptyContentValues),
+        MemberType = typeof(ValidatorTestData)
+    )]
     public void UpdatePostValidator_ShouldFail_WhenContentIsEmpty(string? content)
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(postId: ValidPostId, content: content);
+        var request = PostRequestFactory.CreateUpdateRequest(content: content);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -139,12 +145,15 @@ public class PostValidatorTests
     }
 
     [Theory]
-    [MemberData(nameof(TooLongContentLengths))]
+    [MemberData(
+        nameof(ValidatorTestData.TooLongContentLengths),
+        MemberType = typeof(ValidatorTestData)
+    )]
     public void UpdatePostValidator_ShouldFail_WhenContentIsTooLong(int length)
     {
         // Arrange
         var validator = new UpdatePost.UpdatePostValidator();
-        var request = CreateUpdateRequest(postId: ValidPostId, content: new string('a', length));
+        var request = PostRequestFactory.CreateUpdateRequest(content: new string('a', length));
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -164,7 +173,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new GetPost.GetPostValidator();
-        var request = CreateGetRequest(postId: ValidPostId);
+        var request = PostRequestFactory.CreateGetRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -178,7 +187,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new GetPost.GetPostValidator();
-        var request = CreateGetRequest(postId: Guid.Empty);
+        var request = PostRequestFactory.CreateGetRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -193,7 +202,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new DeletePost.DeletePostValidator();
-        var request = CreateDeleteRequest(postId: ValidPostId);
+        var request = PostRequestFactory.CreateDeleteRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -207,7 +216,7 @@ public class PostValidatorTests
     {
         // Arrange
         var validator = new DeletePost.DeletePostValidator();
-        var request = CreateDeleteRequest(postId: Guid.Empty);
+        var request = PostRequestFactory.CreateDeleteRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -217,24 +226,32 @@ public class PostValidatorTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
 
-    public static TheoryData<string?> EmptyContentValues => [null, string.Empty, " "];
+    [Fact]
+    public void GetUserPostsValidator_ShouldPass_WhenUserIdIsNotEmpty()
+    {
+        // Arrange
+        var validator = new GetUserPosts.GetUserPostsValidator();
+        var request = PostRequestFactory.CreateGetUserPostsRequest();
 
-    public static TheoryData<int> TooLongContentLengths => [601, 666, 999];
+        // Act
+        ValidationResult result = validator.Validate(request);
 
-    private static CreatePost.Request CreatePostRequest(string? content = ValidContent) =>
-        new(content!);
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
 
-    private static UpdatePost.Request CreateUpdateRequest(
-        Guid? postId = null,
-        string? content = ValidContent
-    ) => new(postId ?? ValidPostId, CreateUpdateBody(content: content));
+    [Fact]
+    public void GetUserPostsValidator_ShouldFail_WhenUserIdIsEmpty()
+    {
+        // Arrange
+        var validator = new GetUserPosts.GetUserPostsValidator();
+        var request = PostRequestFactory.CreateGetUserPostsRequest(userId: Guid.Empty);
 
-    private static UpdatePost.Body CreateUpdateBody(string? content = ValidContent) =>
-        new(content!);
+        // Act
+        ValidationResult result = validator.Validate(request);
 
-    private static GetPost.Request CreateGetRequest(Guid? postId = null) =>
-        new(postId ?? ValidPostId);
-
-    private static DeletePost.Request CreateDeleteRequest(Guid? postId = null) =>
-        new(postId ?? ValidPostId);
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.UserId));
+    }
 }

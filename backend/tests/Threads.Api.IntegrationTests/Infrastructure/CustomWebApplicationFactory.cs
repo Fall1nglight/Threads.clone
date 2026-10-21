@@ -10,6 +10,7 @@ namespace Threads.Api.IntegrationTests.Infrastructure;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private const string PrefixedBaseAddress = "http://localhost/api/";
     private const string PostgresImage = "postgres:18.4";
 
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder(PostgresImage)
@@ -17,6 +18,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         .WithUsername("test-user")
         .WithPassword("test-pwd")
         .Build();
+
+    public CustomWebApplicationFactory()
+    {
+        ClientOptions.BaseAddress = new Uri(PrefixedBaseAddress);
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -65,6 +71,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        await _dbContainer.DisposeAsync();
+        await _dbContainer.DisposeAsync().AsTask();
     }
 }

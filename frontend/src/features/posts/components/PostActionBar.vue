@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import AppIcon from '@/shared/icons/AppIcon.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
 import { useLoginPrompt } from '@/features/auth/composables/useLoginPrompt.ts'
+import { computed } from 'vue'
 
 const {
   commentCount,
@@ -16,26 +17,29 @@ const {
 
 const emit = defineEmits<{
   showComments: []
-  toggleLike: [nextLikeState: boolean]
+  toggleLike: []
 }>()
 
 const { runOrShowLoginForm } = useLoginPrompt()
+
+const commentButtonAriaLabel = computed(() => `Comment, ${commentCount} comments`)
+const likeButtonAriaLabel = computed(() => `Like, ${likeCount} likes`)
+const likeButtonIconName = computed(() => (isLikedByCurrentUser ? 'heart-filled' : 'heart'))
 
 function handleCommentButtonClick() {
   emit('showComments')
 }
 
 function handleLikeButtonClick() {
-  emit('toggleLike', !isLikedByCurrentUser)
+  emit('toggleLike')
 }
-
 </script>
 
 <template>
   <div aria-label="Thread actions" class="post-actions">
     <button
-      @click="runOrShowLoginForm(handleCommentButtonClick)"
-      :aria-label="`Comment, ${commentCount} comments`"
+      @click="handleCommentButtonClick"
+      :aria-label="commentButtonAriaLabel"
       class="post-actions__button"
       :disabled="disabled"
       type="button"
@@ -46,12 +50,12 @@ function handleLikeButtonClick() {
 
     <button
       @click="runOrShowLoginForm(handleLikeButtonClick)"
-      :aria-label="`Like, ${likeCount} likes`"
+      :aria-label="likeButtonAriaLabel"
       class="post-actions__button"
       :disabled="disabled"
       type="button"
     >
-      <AppIcon :name="isLikedByCurrentUser ? 'heart-filled' : 'heart'" />
+      <AppIcon :name="likeButtonIconName" />
       <span>{{ likeCount }}</span>
     </button>
   </div>

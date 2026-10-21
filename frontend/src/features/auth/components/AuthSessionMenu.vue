@@ -1,32 +1,30 @@
 <script setup lang="ts">
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-type PendingAction = 'logout' | 'logout-all'
+type LogoutActions = 'logout' | 'logout-all'
 
 const props = defineProps<{
   placement: 'desktop' | 'mobile'
 }>()
 
 const authStore = useAuthStore()
-const { isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 const route = useRoute()
 const router = useRouter()
 
-const isOpen = ref(false)
-const pendingAction = ref<PendingAction | null>(null)
-const errorMessage = ref<string | null>(null)
+const isOpen = ref<boolean>(false)
+const pendingAction = ref<LogoutActions | null>(null)
 const menuRoot = useTemplateRef<HTMLElement>('menuRoot')
 const panelId = `auth-session-menu-${props.placement}`
 
 function toggleMenu() {
-  if (!isAuthenticated.value || pendingAction.value) return
+  if (!isLoggedIn.value || pendingAction.value) return
 
-  errorMessage.value = null
   isOpen.value = !isOpen.value
 }
 
@@ -34,13 +32,33 @@ function closeMenu(restoreFocus = false) {
   if (!isOpen.value) return
 
   isOpen.value = false
-  errorMessage.value = null
 
-  if (restoreFocus) {
+  // restores focus to the button that opened the menu
+  if (restoreFocus)
     menuRoot.value?.querySelector<HTMLButtonElement>('button[aria-expanded]')?.focus()
+}
+
+async function handleLogout(action: LogoutActions) {
+  if (pendingAction.value) return
+
+  pendingAction.value = action
+
+  try {
+    if (action === 'logout') {
+      await authStore.logoutSingle()
+    } else {
+      await authStore.logoutAll()
+    }
+
+    closeMenu()
+  } finally {
+    pendingAction.value = null
+    await router.replace({ name: 'home' })
   }
 }
 
+// ========= EVENTS =========
+// closes menu when clicking outside of it
 function handleDocumentPointerDown(event: PointerEvent) {
   if (!isOpen.value || !(event.target instanceof Node)) return
   if (menuRoot.value?.contains(event.target)) return
@@ -48,6 +66,7 @@ function handleDocumentPointerDown(event: PointerEvent) {
   closeMenu()
 }
 
+// closes menu when navigating outside it with tab
 function handleDocumentFocusIn(event: FocusEvent) {
   if (!isOpen.value || !(event.target instanceof Node)) return
   if (menuRoot.value?.contains(event.target)) return
@@ -55,39 +74,9 @@ function handleDocumentFocusIn(event: FocusEvent) {
   closeMenu()
 }
 
+// closes menu when resizing the viewport
 function handleViewportResize() {
   closeMenu()
-}
-
-async function handleLogout(action: PendingAction) {
-  if (pendingAction.value) return
-
-  pendingAction.value = action
-  errorMessage.value = null
-
-  try {
-    if (action === 'logout') {
-      await authStore.logout()
-    } else {
-      await authStore.logoutAll()
-    }
-  } catch (error) {
-    console.error('Logout request failed', error)
-
-    if (!authStore.isAuthenticated) {
-      closeMenu()
-      await router.replace({ name: 'home' })
-      return
-    }
-
-    errorMessage.value = "Couldn't log out. Please try again."
-    return
-  } finally {
-    pendingAction.value = null
-  }
-
-  closeMenu()
-  await router.replace({ name: 'home' })
 }
 
 onMounted(() => {
@@ -102,13 +91,15 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleViewportResize)
 })
 
+// close menu on navigation
 watch(
   () => route.fullPath,
   () => closeMenu(),
 )
 
-watch(isAuthenticated, (authenticated) => {
-  if (!authenticated) closeMenu()
+// close menu when the user logs out
+watch(isLoggedIn, (loggedIn) => {
+  if (!loggedIn) closeMenu()
 })
 </script>
 
@@ -122,15 +113,15 @@ watch(isAuthenticated, (authenticated) => {
       :aria-controls="panelId"
       :aria-expanded="isOpen"
       :active="isOpen"
-      :disabled="!isAuthenticated || pendingAction !== null"
-      :label="isAuthenticated ? 'More options' : 'More options — log in to use'"
+      :disabled="!isLoggedIn || pendingAction !== null"
+      :label="isLoggedIn ? 'More options' : 'More options — log in to use'"
       @click="toggleMenu"
     >
       <AppIcon name="menu" />
     </BaseIconButton>
 
     <div
-      v-if="isOpen && isAuthenticated"
+      v-if="isOpen && isLoggedIn"
       :id="panelId"
       :aria-busy="pendingAction !== null"
       aria-label="Session actions"
@@ -158,10 +149,6 @@ watch(isAuthenticated, (authenticated) => {
             : 'Log out from all devices'
         }}
       </button>
-
-      <p v-if="errorMessage" class="auth-session-menu__error" role="alert">
-        {{ errorMessage }}
-      </p>
     </div>
   </div>
 </template>
@@ -235,13 +222,5 @@ watch(isAuthenticated, (authenticated) => {
 .auth-session-menu__item:disabled {
   cursor: wait;
   opacity: 0.72;
-}
-
-.auth-session-menu__error {
-  max-width: 15rem;
-  padding: 0 var(--space-3) var(--space-2);
-  color: var(--color-danger);
-  font-size: var(--font-size-support);
-  line-height: 1.4;
 }
 </style>

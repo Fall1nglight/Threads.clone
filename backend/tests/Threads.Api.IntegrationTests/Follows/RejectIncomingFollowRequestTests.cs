@@ -2,13 +2,14 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Follows;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Users;
 using Threads.Api.IntegrationTests.Follows.TestSupport;
 using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Follows;
 
-public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
+public class RejectIncomingFollowRequestTests : IntegrationTestBase
 {
     public RejectIncomingFollowRequestTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -18,6 +19,11 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
     {
         // Arrange
         var seed = await CreateRelationshipAsync(FollowStatus.Pending);
+        await Seeders.Notifications.CreateNotificationAsync(
+            seed.OtherUser,
+            seed.Requester,
+            NotificationType.FollowRequestReceived
+        );
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -32,13 +38,14 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
         Db.ChangeTracker.Clear();
 
         (await Db.Follows.CountAsync()).Should().Be(0);
+        (await Db.Notifications.CountAsync()).Should().Be(0);
     }
 
     [Fact]
     public async Task RejectIncomingFollowRequest_ShouldReturnNotFound_WhenRelationshipDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
@@ -56,13 +63,12 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
     public async Task RejectIncomingFollowRequest_ShouldReturnNotFound_WhenRelationshipIsReversed()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var followSeeder = CreateFollowSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var otherUser = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
-        await followSeeder.CreateFollowAsync(requester, otherUser, FollowStatus.Pending);
+        await Seeders.Follows.CreateFollowAsync(requester, otherUser, FollowStatus.Pending);
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
@@ -100,8 +106,7 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
     {
         // Arrange
         var seed = await CreateRelationshipAsync(FollowStatus.Pending);
-        var blockSeeder = CreateBlockSeeder();
-        await blockSeeder.CreateUserBlockAsync(
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksFollower ? seed.Requester : seed.OtherUser,
             requesterBlocksFollower ? seed.OtherUser : seed.Requester
         );
@@ -122,8 +127,7 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
     public async Task RejectIncomingFollowRequest_ShouldReturnBadRequest_WhenFollowerIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -137,13 +141,12 @@ public class RejectIncomingFollowRequestTests : FollowIntegrationTestBase
 
     private async Task<IncomingRelationshipSeed> CreateRelationshipAsync(FollowStatus status)
     {
-        var userSeeder = CreateUserSeeder();
-        var followSeeder = CreateFollowSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var otherUser = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
-        await followSeeder.CreateFollowAsync(otherUser, requester, status);
+        await Seeders.Follows.CreateFollowAsync(otherUser, requester, status);
 
         return new(requester, otherUser);
     }

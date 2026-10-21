@@ -2,14 +2,21 @@
 import { RouterLink } from 'vue-router'
 import AppLogo from '@/app/components/AppLogo.vue'
 import NavigationLink from '@/app/components/NavigationLink.vue'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
+import ActivityNavigationLink from '@/features/activity/components/ActivityNavigationLink.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import AuthSessionMenu from '@/features/auth/components/AuthSessionMenu.vue'
 import { storeToRefs } from 'pinia'
+import { computed } from 'vue'
 
 const authStore = useAuthStore()
-const { isAuthenticated, currentUserId } = storeToRefs(authStore)
+const { isLoggedIn, loggedInUserId } = storeToRefs(authStore)
+
+const loggedInUserPage = computed(() => ({
+  name: 'user-profile',
+  params: { userId: loggedInUserId.value },
+}))
 </script>
 
 <template>
@@ -20,23 +27,15 @@ const { isAuthenticated, currentUserId } = storeToRefs(authStore)
 
     <nav aria-label="Primary" class="desktop-navigation__links">
       <NavigationLink icon="home" label="Home" to="/" />
-
       <NavigationLink icon="search" label="Search" to="/search" />
 
       <BaseIconButton disabled label="Create a thread — coming later">
         <AppIcon name="plus" />
       </BaseIconButton>
 
-      <NavigationLink icon="heart" label="Activity" to="/activity" />
-
-      <NavigationLink
-        v-if="isAuthenticated"
-        icon="user"
-        label="Profile"
-        :to="'/users/' + currentUserId"
-      />
-
-      <NavigationLink v-if="!isAuthenticated" icon="user" label="Login" to="/auth/login" />
+      <ActivityNavigationLink />
+      <NavigationLink v-if="isLoggedIn" icon="user" label="Profile" :to="loggedInUserPage" />
+      <NavigationLink v-else icon="user" label="Login" to="/auth/login" />
     </nav>
 
     <AuthSessionMenu placement="desktop" />

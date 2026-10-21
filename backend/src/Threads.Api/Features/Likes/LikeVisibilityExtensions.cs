@@ -9,14 +9,14 @@ public static class LikeVisibilityExtensions
 {
     public static IQueryable<PostLike> WhereVisibleTo(
         this IQueryable<PostLike> likes,
-        Guid currentUserId,
+        Guid loggedInUserId,
         AppDbContext db
     )
     {
-        var visiblePosts = db.Posts.WhereVisibleTo(currentUserId, db);
+        var visiblePosts = db.Posts.WhereVisibleTo(loggedInUserId, db);
 
         return likes
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
             .Where(like => visiblePosts.Any(post => post.Id == like.PostId));
     }
 }

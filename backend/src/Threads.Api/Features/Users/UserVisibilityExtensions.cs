@@ -5,19 +5,25 @@ namespace Threads.Api.Features.Users;
 
 public static class UserVisibilityExtensions
 {
-    // visibility rules:
-    //  - current user can't see blocked users
-    //  - current user can't see users who blocked them
     public static IQueryable<User> WhereVisibleTo(
         this IQueryable<User> users,
-        Guid currentUserId,
+        Guid? loggedInUserId,
+        AppDbContext db
+    )
+    {
+        return loggedInUserId.HasValue ? users.WhereVisibleTo(loggedInUserId.Value, db) : users;
+    }
+
+    private static IQueryable<User> WhereVisibleTo(
+        this IQueryable<User> users,
+        Guid loggedInUserId,
         AppDbContext db
     )
     {
         return users.Where(user =>
             !db.UserBlocks.Any(block =>
-                block.BlockerId == currentUserId && block.BlockedId == user.Id
-                || block.BlockerId == user.Id && block.BlockedId == currentUserId
+                block.BlockerId == loggedInUserId && block.BlockedId == user.Id
+                || block.BlockerId == user.Id && block.BlockedId == loggedInUserId
             )
         );
     }

@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
 
 defineProps<{
-  to: string
+  to: RouteLocationRaw
   label: string
+  accessibleLabel?: string
   icon: 'home' | 'search' | 'heart' | 'user'
 }>()
 </script>
 
 <template>
-  <RouterLink :aria-label="label" class="navigation-link" :to="to">
-    <AppIcon :name="icon" />
+  <RouterLink :aria-label="accessibleLabel ?? label" class="navigation-link" :to="to">
+    <span class="navigation-link__icon">
+      <AppIcon :name="icon" />
+      <slot name="badge" />
+    </span>
     <span class="navigation-link__label">{{ label }}</span>
   </RouterLink>
 </template>
@@ -54,6 +58,13 @@ defineProps<{
   border-radius: var(--radius-full);
   background: currentColor;
   content: '';
+}
+
+.navigation-link__icon {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
 }
 
 .navigation-link__label {

@@ -3,6 +3,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
+using Threads.Api.Data.Follows;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 
@@ -15,7 +17,7 @@ public class DeleteFollowing : IEndpoint
         builder
             .MapDelete("/following/{followedId}", Handle)
             .WithValidation<Request>()
-            .WithSummary("Deletes an outgoing follow relationship");
+            .WithSummary("Removes a following user");
     }
 
     public record Request(Guid FollowedId);
@@ -35,9 +37,12 @@ public class DeleteFollowing : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var follow = await db.Follows.FirstOrDefaultAsync(
-            follow => follow.FollowerId == currentUserId && follow.FollowedId == request.FollowedId,
+            follow =>
+                follow.FollowerId == loggedInUserId
+                && follow.FollowedId == request.FollowedId
+                && follow.Status == FollowStatus.Accepted,
             cancellationToken
         );
 

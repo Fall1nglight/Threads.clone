@@ -35,9 +35,9 @@ public class UnblockUser : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var block = await db.UserBlocks.FirstOrDefaultAsync(
-            block => block.BlockerId == currentUserId && block.BlockedId == request.TargetUserId,
+            block => block.BlockerId == loggedInUserId && block.BlockedId == request.TargetUserId,
             cancellationToken
         );
 

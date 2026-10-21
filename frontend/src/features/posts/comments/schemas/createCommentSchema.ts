@@ -1,9 +1,9 @@
 import Joi from 'joi'
-import { postContentSchema } from '@/features/posts/schemas/postFieldSchemas.ts'
 import type { CreateCommentDto } from '@/features/posts/comments/commentTypes.ts'
+import { commentContentSchema } from '@/features/posts/comments/schemas/commentFieldSchemas.ts'
 
 const createCommentSchema = Joi.object<CreateCommentDto, true>({
-  content: postContentSchema,
+  content: commentContentSchema,
 })
 
 export default createCommentSchema

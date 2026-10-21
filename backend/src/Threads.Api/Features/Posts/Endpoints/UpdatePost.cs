@@ -43,8 +43,8 @@ public class UpdatePost : IEndpoint
         if (post == null)
             return TypedResults.NotFound();
 
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (post.UserId != currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (post.UserId != loggedInUserId)
             return TypedResults.Forbid();
 
         post.Content = request.Body.Content;

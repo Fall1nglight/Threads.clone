@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
 
 defineProps<{
   title: string
-  backTo?: string
+  backTo?: RouteLocationRaw
 }>()
 </script>
 

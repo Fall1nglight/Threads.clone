@@ -8,11 +8,7 @@ public class LikeRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        var authorizedLikeRoute = builder.MapGroup("/posts").RequireAuthorization();
-
-        authorizedLikeRoute
-            .MapEndpoint<LikePost>()
-            .MapEndpoint<UnlikePost>()
-            .MapEndpoint<GetPostLikes>();
+        var protectedGroup = builder.MapGroup("/posts").RequireAuthorization();
+        protectedGroup.MapEndpoint<LikePost>().MapEndpoint<UnlikePost>().MapEndpoint<GetLikes>();
     }
 }

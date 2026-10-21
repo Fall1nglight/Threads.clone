@@ -18,3 +18,7 @@ Desktop.ini
 
 .codex/
 .agents/
+
+.playwright-cli/
+.codex-tmp/
+/node_modules/

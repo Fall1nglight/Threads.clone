@@ -49,6 +49,7 @@
   --desktop-nav-width: 5.5rem;
   --mobile-top-height: 3.5rem;
   --mobile-bottom-height: 4rem;
+  --async-fade-duration: 150ms;
   --transition-fast: 120ms ease-out;
 }
 

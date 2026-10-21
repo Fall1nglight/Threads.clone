@@ -7,16 +7,18 @@ public static class BlockVisibilityExtensions
 {
     public static IQueryable<TEntity> WhereOwnerHasNoBlockRelationshipWith<TEntity>(
         this IQueryable<TEntity> query,
-        Guid currentUserId,
+        Guid? loggedInUserId,
         AppDbContext db
     )
         where TEntity : class, IOwnedEntity
     {
-        return query.Where(entity =>
-            !db.UserBlocks.Any(block =>
-                (block.BlockerId == currentUserId && block.BlockedId == entity.UserId)
-                || (block.BlockerId == entity.UserId && block.BlockedId == currentUserId)
+        return loggedInUserId.HasValue
+            ? query.Where(entity =>
+                !db.UserBlocks.Any(block =>
+                    (block.BlockerId == loggedInUserId && block.BlockedId == entity.UserId)
+                    || (block.BlockerId == entity.UserId && block.BlockedId == loggedInUserId)
+                )
             )
-        );
+            : query;
     }
 }

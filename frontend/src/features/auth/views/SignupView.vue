@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
 import AuthCard from '@/features/auth/components/AuthCard.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
+import BaseTextField from '@/shared/components/BaseTextField.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
-import type { SignupRequestDto } from '@/features/auth/authTypes.ts'
+import type { SignupRequestDto } from '@/features/auth/authApiTypes.ts'
 import { usePayloadValidator } from '@/shared/composables/usePayloadValidator.ts'
 import signupSchema from '@/features/auth/schemas/signupSchema.ts'
 import { useErrorHandler } from '@/shared/composables/useErrorHandler.ts'
@@ -14,9 +14,9 @@ import AuthErrorAlert from '@/features/auth/components/AuthErrorAlert.vue'
 const router = useRouter()
 
 const authStore = useAuthStore()
-const { isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 
-const initialPayload: SignupRequestDto = {
+const initialSignupForm: SignupRequestDto = {
   username: '',
   email: '',
   password: '',
@@ -25,27 +25,32 @@ const initialPayload: SignupRequestDto = {
 }
 
 const {
-  payload,
-  errors: validationError,
-  submit,
-  isSubmitting,
-} = usePayloadValidator<SignupRequestDto>(initialPayload, signupSchema, handleSubmit)
+  payload: signupForm,
+  errors: signupValidationErrors,
+  submit: submitSignup,
+  isSubmitting: isSubmittingSignup,
+} = usePayloadValidator(initialSignupForm, signupSchema, performSignup)
 
-const { error, errorMessage, clearError } = useErrorHandler()
+const {
+  error: signupApiError,
+  errorMessage: signupApiErrorMsg,
+  clearError: clearApiError,
+} = useErrorHandler()
+
 const fallbackErrorMessage: string = 'Something went wrong during signup. Please try again later.'
 
-async function handleSubmit(validPayload: SignupRequestDto) {
+async function performSignup(validPayload: SignupRequestDto) {
   try {
     await authStore.signup(validPayload)
 
-    if (!isAuthenticated.value) {
-      error.value = new Error(fallbackErrorMessage)
+    if (!isLoggedIn.value) {
+      signupApiError.value = new Error(fallbackErrorMessage)
       return
     }
 
-    router.push('/')
+    await router.replace({ name: 'home' })
   } catch (err) {
-    error.value = err as Error
+    signupApiError.value = err as Error
   }
 }
 </script>
@@ -55,10 +60,10 @@ async function handleSubmit(validPayload: SignupRequestDto) {
     subtitle="Join a place built for thoughtful, public conversation."
     title="Create an account"
   >
-    <form aria-label="Signup details" class="auth-form" @submit.prevent="submit">
+    <form aria-label="Signup details" class="auth-form" @submit.prevent="submitSignup">
       <BaseTextField
-        v-model="payload.username"
-        :error-message="validationError.username"
+        v-model="signupForm.username"
+        :error-message="signupValidationErrors.username"
         id="signup-username"
         autocomplete="username"
         label="Username"
@@ -67,8 +72,8 @@ async function handleSubmit(validPayload: SignupRequestDto) {
       />
 
       <BaseTextField
-        v-model="payload.email"
-        :error-message="validationError.email"
+        v-model="signupForm.email"
+        :error-message="signupValidationErrors.email"
         id="signup-email"
         autocomplete="email"
         label="Email"
@@ -78,8 +83,8 @@ async function handleSubmit(validPayload: SignupRequestDto) {
       />
 
       <BaseTextField
-        v-model="payload.password"
-        :error-message="validationError.password"
+        v-model="signupForm.password"
+        :error-message="signupValidationErrors.password"
         id="signup-password"
         autocomplete="new-password"
         label="Password"
@@ -89,8 +94,8 @@ async function handleSubmit(validPayload: SignupRequestDto) {
       />
 
       <BaseTextField
-        v-model="payload.bio"
-        :error-message="validationError.bio"
+        v-model="signupForm.bio"
+        :error-message="signupValidationErrors.bio"
         id="signup-bio"
         label="Bio"
         placeholder="Short introduction"
@@ -98,10 +103,10 @@ async function handleSubmit(validPayload: SignupRequestDto) {
         variant="subtle"
       />
 
-      <AuthErrorAlert :message="errorMessage" @close-alert="clearError" />
+      <AuthErrorAlert :message="signupApiErrorMsg" @close-alert="clearApiError" />
 
       <BaseButton
-        :is-loading="isSubmitting"
+        :is-loading="isSubmittingSignup"
         loading-text="Creating account..."
         class="auth-form__submit"
         type="submit"

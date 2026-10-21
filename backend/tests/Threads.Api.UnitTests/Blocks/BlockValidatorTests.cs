@@ -12,7 +12,7 @@ public class BlockValidatorTests
     {
         // Arrange
         var validator = new BlockUser.BlockUserValidator();
-        var request = CreateBlockUserRequest(targetUserId: ValidatorTestData.PrimaryId);
+        var request = BlockRequestFactory.CreateBlockUserRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -26,7 +26,7 @@ public class BlockValidatorTests
     {
         // Arrange
         var validator = new BlockUser.BlockUserValidator();
-        var request = CreateBlockUserRequest(targetUserId: Guid.Empty);
+        var request = BlockRequestFactory.CreateBlockUserRequest(targetUserId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -41,7 +41,7 @@ public class BlockValidatorTests
     {
         // Arrange
         var validator = new UnblockUser.UnblockUserValidator();
-        var request = CreateUnblockUserRequest(targetUserId: ValidatorTestData.PrimaryId);
+        var request = BlockRequestFactory.CreateUnblockUserRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -55,7 +55,7 @@ public class BlockValidatorTests
     {
         // Arrange
         var validator = new UnblockUser.UnblockUserValidator();
-        var request = CreateUnblockUserRequest(targetUserId: Guid.Empty);
+        var request = BlockRequestFactory.CreateUnblockUserRequest(targetUserId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -64,10 +64,4 @@ public class BlockValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.TargetUserId));
     }
-
-    private static BlockUser.Request CreateBlockUserRequest(Guid? targetUserId = null) =>
-        new(targetUserId ?? ValidatorTestData.PrimaryId);
-
-    private static UnblockUser.Request CreateUnblockUserRequest(Guid? targetUserId = null) =>
-        new(targetUserId ?? ValidatorTestData.PrimaryId);
 }

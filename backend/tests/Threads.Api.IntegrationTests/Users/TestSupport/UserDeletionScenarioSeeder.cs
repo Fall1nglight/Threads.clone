@@ -1,4 +1,5 @@
 using Threads.Api.Data.Comments;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Posts;
 using Threads.Api.Data.Users;
 using Threads.Api.IntegrationTests.Auth.TestSupport;
@@ -7,6 +8,7 @@ using Threads.Api.IntegrationTests.Comments.TestSupport;
 using Threads.Api.IntegrationTests.Follows.TestSupport;
 using Threads.Api.IntegrationTests.Infrastructure;
 using Threads.Api.IntegrationTests.Likes.TestSupport;
+using Threads.Api.IntegrationTests.Notifications.TestSupport;
 using Threads.Api.IntegrationTests.Posts.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Users.TestSupport;
@@ -17,6 +19,7 @@ public sealed class UserDeletionScenarioSeeder
     private readonly CommentTestSeeder _commentSeeder;
     private readonly FollowTestSeeder _followSeeder;
     private readonly LikeTestSeeder _likeSeeder;
+    private readonly NotificationTestSeeder _notificationSeeder;
     private readonly PostTestSeeder _postSeeder;
     private readonly RefreshTokenTestSeeder _refreshTokenSeeder;
     private readonly UserTestSeeder _userSeeder;
@@ -28,6 +31,7 @@ public sealed class UserDeletionScenarioSeeder
         BlockTestSeeder blockSeeder,
         LikeTestSeeder likeSeeder,
         CommentTestSeeder commentSeeder,
+        NotificationTestSeeder notificationSeeder,
         RefreshTokenTestSeeder refreshTokenSeeder
     )
     {
@@ -37,6 +41,7 @@ public sealed class UserDeletionScenarioSeeder
         _blockSeeder = blockSeeder;
         _likeSeeder = likeSeeder;
         _commentSeeder = commentSeeder;
+        _notificationSeeder = notificationSeeder;
         _refreshTokenSeeder = refreshTokenSeeder;
     }
 
@@ -69,6 +74,23 @@ public sealed class UserDeletionScenarioSeeder
             alicePost,
             UserTestData.CommentContent
         );
+        var aliceTriggeredNotification = await _notificationSeeder.CreateNotificationAsync(
+            alice,
+            bob,
+            NotificationType.Followed
+        );
+        var aliceReceivedNotification = await _notificationSeeder.CreateNotificationAsync(
+            bob,
+            alice,
+            NotificationType.FollowRequestAccepted,
+            IntegrationTestData.BaseTime.AddMinutes(1)
+        );
+        var unrelatedNotification = await _notificationSeeder.CreateNotificationAsync(
+            bob,
+            carol,
+            NotificationType.Followed,
+            IntegrationTestData.BaseTime.AddMinutes(2)
+        );
         var tokenChain = await _refreshTokenSeeder.CreateTokenChainAsync(alice);
 
         return new UserDeletionSeed(
@@ -79,6 +101,9 @@ public sealed class UserDeletionScenarioSeeder
             bobPost,
             aliceComment,
             bobComment,
+            aliceTriggeredNotification,
+            aliceReceivedNotification,
+            unrelatedNotification,
             tokenChain
         );
     }
@@ -92,5 +117,8 @@ public sealed record UserDeletionSeed(
     Post BobPost,
     Comment AliceComment,
     Comment BobComment,
+    Notification AliceTriggeredNotification,
+    Notification AliceReceivedNotification,
+    Notification UnrelatedNotification,
     RefreshTokenChainSeed TokenChain
 );

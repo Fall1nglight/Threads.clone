@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Follows;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 using Threads.Api.Features.Users;
@@ -15,7 +16,7 @@ public class SendFollowRequest : IEndpoint
     public static void Map(IEndpointRouteBuilder builder)
     {
         builder
-            .MapPost("/{targetUserId}", Handle)
+            .MapPost("/following/{targetUserId}", Handle)
             .WithValidation<Request>()
             .WithSummary("Sends a follow request");
     }
@@ -37,33 +38,46 @@ public class SendFollowRequest : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (request.TargetUserId == currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (request.TargetUserId == loggedInUserId)
             return TypedResults.BadRequest();
 
         var targetUser = await db
-            .Users.WhereVisibleTo(currentUserId, db)
+            .Users.WhereVisibleTo(loggedInUserId, db)
             .FirstOrDefaultAsync(user => user.Id == request.TargetUserId, cancellationToken);
 
         if (targetUser == null)
             return TypedResults.NotFound();
 
         var follow = await db.Follows.FirstOrDefaultAsync(
-            follow => follow.FollowerId == currentUserId && follow.FollowedId == targetUser.Id,
+            follow => follow.FollowerId == loggedInUserId && follow.FollowedId == targetUser.Id,
             cancellationToken
         );
 
         if (follow == null)
         {
+            var createdAtUtc = DateTime.UtcNow;
             follow = new Follow
             {
-                FollowerId = currentUserId,
+                FollowerId = loggedInUserId,
                 FollowedId = targetUser.Id,
                 Status = targetUser.IsPrivate ? FollowStatus.Pending : FollowStatus.Accepted,
-                CreatedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = createdAtUtc,
             };
 
             await db.Follows.AddAsync(follow, cancellationToken);
+
+            var notification = new Notification
+            {
+                TriggeredByUserId = loggedInUserId,
+                NotifiedUserId = targetUser.Id,
+                TriggeredAtUtc = createdAtUtc,
+                Type = targetUser.IsPrivate
+                    ? NotificationType.FollowRequestReceived
+                    : NotificationType.Followed,
+            };
+
+            await db.Notifications.AddAsync(notification, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
         }
 

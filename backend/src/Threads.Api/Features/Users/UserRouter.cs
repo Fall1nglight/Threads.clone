@@ -8,12 +8,10 @@ public class UserRouter : IEndpointRouter
 {
     public static void MapRouter(IEndpointRouteBuilder builder)
     {
-        var anonymousUsersRoute = builder.MapGroup("/users").AllowAnonymous();
+        var anonGroup = builder.MapGroup("/users").AllowAnonymous();
+        anonGroup.MapEndpoint<GetUser>().MapEndpoint<SearchUsers>();
 
-        anonymousUsersRoute.MapEndpoint<GetUsers>().MapEndpoint<GetUser>();
-
-        var authorizedUsersRoute = builder.MapGroup("/users").RequireAuthorization();
-
-        authorizedUsersRoute.MapEndpoint<DeleteUser>();
+        var protectedGroup = builder.MapGroup("/users").RequireAuthorization();
+        protectedGroup.MapEndpoint<DeleteUser>();
     }
 }

@@ -35,12 +35,12 @@ public class DeleteUser : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (request.UserId != currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (request.UserId != loggedInUserId)
             return TypedResults.Forbid();
 
         var user = await db.Users.FirstOrDefaultAsync(
-            user => user.Id == currentUserId,
+            user => user.Id == loggedInUserId,
             cancellationToken
         );
 
@@ -50,7 +50,7 @@ public class DeleteUser : IEndpoint
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
         await db
-            .RefreshTokens.Where(token => token.UserId == currentUserId)
+            .RefreshTokens.Where(token => token.UserId == loggedInUserId)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(token => token.ReplacedByTokenId, (Guid?)null),
                 cancellationToken
@@ -58,26 +58,26 @@ public class DeleteUser : IEndpoint
 
         await db
             .Follows.Where(follow =>
-                follow.FollowerId == currentUserId || follow.FollowedId == currentUserId
+                follow.FollowerId == loggedInUserId || follow.FollowedId == loggedInUserId
             )
             .ExecuteDeleteAsync(cancellationToken);
 
         await db
             .UserBlocks.Where(block =>
-                block.BlockerId == currentUserId || block.BlockedId == currentUserId
+                block.BlockerId == loggedInUserId || block.BlockedId == loggedInUserId
             )
             .ExecuteDeleteAsync(cancellationToken);
 
         await db
-            .PostLikes.Where(like => like.UserId == currentUserId)
+            .PostLikes.Where(like => like.UserId == loggedInUserId)
             .ExecuteDeleteAsync(cancellationToken);
 
         await db
-            .Comments.Where(comment => comment.UserId == currentUserId)
+            .Comments.Where(comment => comment.UserId == loggedInUserId)
             .ExecuteDeleteAsync(cancellationToken);
 
         await db
-            .RefreshTokens.Where(token => token.UserId == currentUserId)
+            .RefreshTokens.Where(token => token.UserId == loggedInUserId)
             .ExecuteDeleteAsync(cancellationToken);
 
         db.Users.Remove(user);

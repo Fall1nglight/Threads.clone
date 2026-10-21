@@ -1,13 +1,14 @@
 using System.Net;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Features.Posts;
 using Threads.Api.IntegrationTests.Infrastructure;
 using Threads.Api.IntegrationTests.Likes.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Likes;
 
-public class LikePostTests : LikeIntegrationTestBase
+public class LikePostTests : IntegrationTestBase
 {
     public LikePostTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -16,8 +17,7 @@ public class LikePostTests : LikeIntegrationTestBase
     public async Task LikePost_ShouldCreateLikeAndUpdatePostDto_WhenPostIsPublic()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
         var before = DateTime.UtcNow;
 
@@ -35,7 +35,14 @@ public class LikePostTests : LikeIntegrationTestBase
         persistedLike.UserId.Should().Be(seed.Alice.Id);
         persistedLike.CreatedAtUtc.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
 
-        var getResponse = await client.GetAsync($"/posts/{seed.BobPublicPost.Id}");
+        var notification = await Db.Notifications.SingleAsync();
+        notification.TriggeredByUserId.Should().Be(seed.Alice.Id);
+        notification.NotifiedUserId.Should().Be(seed.BobPublic.Id);
+        notification.Type.Should().Be(NotificationType.PostLiked);
+        notification.SubjectKind.Should().Be(NotificationSubjectKind.Post);
+        notification.SubjectId.Should().Be(seed.BobPublicPost.Id);
+
+        var getResponse = await client.GetAsync($"posts/{seed.BobPublicPost.Id}");
         var responseBody = await ReadJsonAsync<PostDto>(getResponse);
         responseBody.LikeCount.Should().Be(1);
         responseBody.IsLikedByCurrentUser.Should().BeTrue();
@@ -45,8 +52,7 @@ public class LikePostTests : LikeIntegrationTestBase
     public async Task LikePost_ShouldCreateLike_WhenRequesterOwnsPrivatePost()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.AlicePrivate);
 
         // Act
@@ -58,14 +64,14 @@ public class LikePostTests : LikeIntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await Db.PostLikes.CountAsync()).Should().Be(1);
+        (await Db.Notifications.CountAsync()).Should().Be(0);
     }
 
     [Fact]
     public async Task LikePost_ShouldCreateLike_WhenPrivateOwnerIsAcceptedFollowed()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -83,8 +89,7 @@ public class LikePostTests : LikeIntegrationTestBase
     public async Task LikePost_ShouldBeIdempotent_WhenLikeAlreadyExists()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -101,14 +106,14 @@ public class LikePostTests : LikeIntegrationTestBase
         firstResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
         secondResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
         (await Db.PostLikes.CountAsync()).Should().Be(1);
+        (await Db.Notifications.CountAsync()).Should().Be(1);
     }
 
     [Fact]
     public async Task LikePost_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -125,8 +130,7 @@ public class LikePostTests : LikeIntegrationTestBase
     public async Task LikePost_ShouldReturnNotFound_WhenPostIsNotVisible()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -158,10 +162,8 @@ public class LikePostTests : LikeIntegrationTestBase
     )
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
-        await blockSeeder.CreateUserBlockAsync(
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksOwner ? seed.Alice : seed.BobPublic,
             requesterBlocksOwner ? seed.BobPublic : seed.Alice
         );
@@ -179,8 +181,7 @@ public class LikePostTests : LikeIntegrationTestBase
     public async Task LikePost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);

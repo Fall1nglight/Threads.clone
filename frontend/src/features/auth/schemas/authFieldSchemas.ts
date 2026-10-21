@@ -1,6 +1,6 @@
 import Joi from 'joi'
 
-export const emailSchema = Joi.string().email().max(256).required().messages({
+const emailSchema = Joi.string().email().max(256).required().messages({
   'any.required': 'Email is required.',
   'string.empty': 'Email is required.',
   'string.email': 'Enter a valid email address.',
@@ -8,7 +8,7 @@ export const emailSchema = Joi.string().email().max(256).required().messages({
   '*': 'Email is invalid.',
 })
 
-export const passwordSchema = Joi.string()
+const passwordSchema = Joi.string()
   .min(8)
   .required()
   .messages({
@@ -24,3 +24,5 @@ export const passwordSchema = Joi.string()
   .message('Password must contain at least one number.')
   .pattern(/[^a-zA-Z0-9]/)
   .message('Password must contain at least one special character.')
+
+export { emailSchema, passwordSchema }

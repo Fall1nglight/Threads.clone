@@ -4,86 +4,137 @@ import PostCard from '@/features/posts/components/PostCard.vue'
 import PostComposerPreview from '@/features/posts/components/PostComposerPreview.vue'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
-import { type FeedState, type FeedStatus, useFeedStore } from '@/features/posts/feed/feedStore.ts'
+import { useFeedStore } from '@/features/posts/feed/feedStore.ts'
 import { storeToRefs } from 'pinia'
 import type { FeedKind, SelectableFeedKind } from '@/features/posts/feed/feedTypes.ts'
-import FeedLoadMoreTrigger from '@/features/posts/components/FeedLoadMoreTrigger.vue'
+import PaginationObserver from '@/shared/components/PaginationObserver.vue'
 import { useRouter } from 'vue-router'
+import type { PostDto } from '@/features/posts/postTypes.ts'
+import { useModalStore } from '@/shared/modal/modalStore.ts'
+import BaseLoader from '@/shared/components/BaseLoader.vue'
+import BaseErrorMessage from '@/shared/components/BaseErrorMessage.vue'
+import BaseEmptyMessage from '@/shared/components/BaseEmptyMessage.vue'
+import { getInitials } from '@/shared/helpers/profileInitials.ts'
 
 const router = useRouter()
 
 const authStore = useAuthStore()
+const modalStore = useModalStore()
 const feedStore = useFeedStore()
-const { sessionStatus, isAuthenticated } = storeToRefs(authStore)
+const { isLoggedIn } = storeToRefs(authStore)
 
-const selectedFeed = ref<SelectableFeedKind>('global')
+const selectedFeedKind = ref<SelectableFeedKind>('global')
+const actualFeedKind = computed<FeedKind>(() =>
+  isLoggedIn.value ? selectedFeedKind.value : 'anonymous',
+)
 
-const kind = computed<FeedKind | null>(() => {
-  if (sessionStatus.value == 'uninitialized') return null
-  if (sessionStatus.value == 'restoring') return null
-  if (isAuthenticated.value) return selectedFeed.value
+const postsState = computed(() => feedStore.feeds[actualFeedKind.value])
+const posts = computed(() => postsState.value.items)
+const canLoadMorePosts = computed(
+  () =>
+    postsState.value.status === 'success' && postsState.value.hasMore && postsState.value.cursor,
+)
 
-  return 'anonymous'
-})
+function loadMorePosts() {
+  return feedStore.fetchMoreFeed(actualFeedKind.value)
+}
 
 watch(
-  kind,
-  async (newKind: FeedKind | null) => {
-    if (!newKind) return
-
-    await feedStore.fetchInitialFeed(newKind)
+  actualFeedKind,
+  (newFeedKind) => {
+    // Reset before replacing the list so its load-more trigger cannot inherit the previous position.
+    window.scrollTo({ left: 0, top: 0, behavior: 'instant' })
+    return feedStore.fetchInitialFeed(newFeedKind)
   },
   { immediate: true },
 )
 
-const feed = computed<FeedState | null>(() => {
-  if (!kind.value) return null
-  return feedStore.feeds[kind.value]
-})
+function navigateToPost(postId: string) {
+  router.replace({ name: 'post-detail', params: { postId } })
+}
 
-const feedStatus = computed<FeedStatus>(() => {
-  if (!kind.value) return 'idle'
-  return feedStore.feeds[kind.value].status
-})
+async function handleToggleLike(post: PostDto) {
+  try {
+    await feedStore.toggleLike(post)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (err) {
+    modalStore.openAlertModal(
+      post.isLikedByCurrentUser
+        ? 'Failed to unlike this post. Please try again later!'
+        : 'Failed to like this post. Please try again later!',
+    )
+  }
+}
 
-async function loadMore() {
-  if (!kind.value) return
-  await feedStore.fetchMoreFeed(kind.value)
+async function handleDeletePost(postId: string) {
+  try {
+    await feedStore.deletePost(postId)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (err) {
+    modalStore.openAlertModal('Failed to delete post. Please try again later!')
+  }
 }
 </script>
 
 <template>
-  <div>
-    <FeedHeader v-model:selected-feed="selectedFeed" />
+  <FeedHeader v-model:selected-feed="selectedFeedKind" />
 
-    <PostComposerPreview />
+  <PostComposerPreview />
 
-    <section aria-label="For you feed">
-      <div v-if="feed">
-        <PostCard
-          v-for="post in feed.items"
-          :key="post.id"
-          :content="post.content"
-          :post-id="post.id"
-          :user-id="post.user.id"
-          :author-name="post.user.username"
-          :username="post.user.username"
-          :avatar-initials="post.user.username.slice(0, 2)"
-          :createdAtUtc="post.createdAtUtc"
-          :updated-at-utc="post.updatedAtUtc"
-          :comment-count="post.commentCount"
-          :like-count="post.likeCount"
-          :is-liked-by-current-user="post.isLikedByCurrentUser"
-          @toggle-like="feedStore.setLike"
-          @delete-post="feedStore.deletePost"
-          @show-comments="router.push({ name: 'post-detail', params: { postId: post.id } })"
-        />
+  <section class="home-feed" aria-label="For you feed">
+    <Transition name="async-fade" mode="out-in">
+      <BaseLoader
+        v-if="postsState.status === 'initial-loading'"
+        key="initial-loader"
+        message="Loading posts..."
+      />
+
+      <BaseErrorMessage
+        v-else-if="postsState.status === 'initial-error'"
+        key="initial-error"
+        message="Failed to load posts. Please try again later!"
+      />
+
+      <div v-else key="feed-content">
+        <TransitionGroup name="async-list-fade">
+          <PostCard
+            v-for="post in posts"
+            :key="post.id"
+            :content="post.content"
+            :post-id="post.id"
+            :user-id="post.user.id"
+            :author-name="post.user.username"
+            :username="post.user.username"
+            :avatar-initials="getInitials(post.user.username)"
+            :createdAtUtc="post.createdAtUtc"
+            :updated-at-utc="post.updatedAtUtc"
+            :comment-count="post.commentCount"
+            :like-count="post.likeCount"
+            :is-liked-by-current-user="post.isLikedByCurrentUser"
+            @toggle-like="handleToggleLike(post)"
+            @delete-post="handleDeletePost(post.id)"
+            @show-comments="navigateToPost(post.id)"
+          />
+        </TransitionGroup>
+
+        <BaseEmptyMessage v-if="!posts.length" message="There are no posts yet." />
+
+        <PaginationObserver v-if="canLoadMorePosts" @visible="loadMorePosts" />
+
+        <Transition name="async-fade" mode="out-in">
+          <BaseLoader
+            v-if="postsState.status === 'more-loading'"
+            key="more-loader"
+            message="Loading more posts..."
+          />
+
+          <BaseErrorMessage
+            v-else-if="postsState.status === 'more-error'"
+            key="more-error"
+            message="Failed to load more posts. Please try again later!"
+          />
+        </Transition>
       </div>
-
-      <FeedLoadMoreTrigger v-if="feed?.hasMore && feed?.cursor" @visible="loadMore" />
-
-      <p v-if="feedStatus == 'loading'">Loading...</p>
-      <p v-else-if="feedStatus == 'error'">Error...</p>
-    </section>
-  </div>
+    </Transition>
+  </section>
 </template>

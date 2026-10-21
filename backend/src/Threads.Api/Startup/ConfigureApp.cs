@@ -6,6 +6,8 @@ namespace Threads.Api.Startup;
 
 public static class ConfigureApp
 {
+    private const string ApiPrefix = "/api";
+
     public static IApplicationBuilder UseMiddlewares(this IApplicationBuilder app)
     {
         app.UseSerilogRequestLogging();
@@ -19,6 +21,8 @@ public static class ConfigureApp
 
     public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder builder)
     {
+        builder = builder.MapGroup(ApiPrefix);
+
         var assembly = typeof(Program).Assembly;
 
         var routers = assembly

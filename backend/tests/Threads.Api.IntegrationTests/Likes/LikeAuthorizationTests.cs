@@ -5,7 +5,7 @@ using Threads.Api.IntegrationTests.Likes.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Likes;
 
-public class LikeAuthorizationTests : LikeIntegrationTestBase
+public class LikeAuthorizationTests : IntegrationTestBase
 {
     private const string PostId = "11111111-1111-1111-1111-111111111111";
 
@@ -20,10 +20,7 @@ public class LikeAuthorizationTests : LikeIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        using var request = new HttpRequestMessage(
-            new HttpMethod(method),
-            $"/posts/{PostId}/likes"
-        );
+        using var request = new HttpRequestMessage(new HttpMethod(method), $"posts/{PostId}/likes");
 
         // Act
         var response = await client.SendAsync(request);

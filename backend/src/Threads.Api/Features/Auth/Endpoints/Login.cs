@@ -31,6 +31,7 @@ public class Login : IEndpoint
             RuleFor(x => x.Password)
                 .NotEmpty()
                 .MinimumLength(8)
+                .MaximumLength(100)
                 .Matches("[A-Z]")
                 .Matches("[a-z]")
                 .Matches("[0-9]")
@@ -48,11 +49,11 @@ public class Login : IEndpoint
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return CustomResults.Unauthorized("The provided email is incorrect");
+            return HttpResultFactory.Unauthorized("The provided email is incorrect");
 
         var isValidPassword = await userManager.CheckPasswordAsync(user, request.Password);
         if (!isValidPassword)
-            return CustomResults.Unauthorized("The provided password is incorrect");
+            return HttpResultFactory.Unauthorized("The provided password is incorrect");
 
         var accessToken = await jwtProvider.GenerateAsync(user);
         var refreshToken = await rtManager.GenerateAsync(user.Id, cancellationToken);

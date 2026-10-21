@@ -23,8 +23,7 @@ public class LoginTests : AuthIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername,
             email: IntegrationTestData.AliceEmail
         );
@@ -56,8 +55,7 @@ public class LoginTests : AuthIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername,
             email: IntegrationTestData.AliceEmail
         );
@@ -102,8 +100,7 @@ public class LoginTests : AuthIntegrationTestBase
     {
         // Arrange
         var client = CreateAnonymousClient();
-        var userSeeder = CreateUserSeeder();
-        var alice = await userSeeder.CreateUserAsync(
+        var alice = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername,
             email: IntegrationTestData.AliceEmail
         );

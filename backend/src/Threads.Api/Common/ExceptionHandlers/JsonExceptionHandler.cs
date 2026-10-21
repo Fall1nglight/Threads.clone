@@ -79,7 +79,7 @@ public class JsonExceptionHandler : IExceptionHandler
     )
     {
         _logger.LogWarning(
-            "Malformed JSON request recieved, at: {RequestPath}. Reason: {Reason}",
+            "Malformed JSON request received, at: {RequestPath}. Reason: {Reason}",
             requestPath,
             jsonException.Message
         );
