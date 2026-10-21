@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { RouterLink, useRouter } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
+import { type RouteLocationRaw, RouterLink, useRouter } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
 import PostActionBar from '@/features/posts/components/PostActionBar.vue'
 import { computed, onBeforeUnmount, ref, toRefs, useTemplateRef, watch } from 'vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
@@ -28,6 +28,7 @@ const props = withDefaults(
     isLikedByCurrentUser: boolean
   }>(),
   {
+    avatarInitials: 'NA',
     mediaLabel: '',
     threaded: false,
     detail: false,
@@ -36,63 +37,77 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  toggleLike: [postId: string, nextLikeState: boolean]
-  deletePost: [postId: string]
-  showComments: [postId: string]
+  toggleLike: []
+  deletePost: []
+  showComments: []
 }>()
 
-const router = useRouter()
-const authStore = useAuthStore()
 const { createdAtUtc, updatedAtUtc } = toRefs(props)
 const { formattedDate: formattedCreatedAtUtc } = useDateFormatter(createdAtUtc)
 const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
-const { currentUserId } = storeToRefs(authStore)
-const isPostOwner = computed(() => currentUserId.value === props.userId)
-const isPostActionsOpen = ref(false)
-const postActions = useTemplateRef<HTMLElement>('postActions')
-const postActionsPanelId = `post-actions-${props.postId}`
 
-function togglePostActions() {
-  isPostActionsOpen.value = !isPostActionsOpen.value
+const router = useRouter()
+const authStore = useAuthStore()
+const { loggedInUserId } = storeToRefs(authStore)
+
+const isPostOwner = computed(() => loggedInUserId.value === props.userId)
+const isPostActionsMenuOpen = ref(false)
+const postActionsMenu = useTemplateRef<HTMLElement>('postActionsMenu')
+const postActionsMenuPanelId = `post-actions-${props.postId}`
+
+const postPage = computed<RouteLocationRaw>(() => ({
+  name: 'post-detail',
+  params: { postId: props.postId },
+}))
+
+const authorPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-profile',
+  params: { userId: props.userId },
+}))
+const authorPageDesc = computed(() => `View ${props.authorName}'s profile`)
+const authorAvatarDesc = computed(() => `${props.authorName}'s avatar`)
+
+function togglePostActionsMenu() {
+  isPostActionsMenuOpen.value = !isPostActionsMenuOpen.value
 }
 
-function closePostActions(restoreFocus = false) {
-  if (!isPostActionsOpen.value) return
+function closePostActionsMenu(restoreFocus = false) {
+  if (!isPostActionsMenuOpen.value) return
 
-  isPostActionsOpen.value = false
+  isPostActionsMenuOpen.value = false
 
   if (restoreFocus) {
-    postActions.value?.querySelector<HTMLButtonElement>('button[aria-expanded]')?.focus()
+    postActionsMenu.value?.querySelector<HTMLButtonElement>('button[aria-expanded]')?.focus()
   }
 }
 
 function handleDocumentPointerDown(event: PointerEvent) {
-  if (!isPostActionsOpen.value || !(event.target instanceof Node)) return
-  if (postActions.value?.contains(event.target)) return
+  if (!isPostActionsMenuOpen.value || !(event.target instanceof Node)) return
+  if (postActionsMenu.value?.contains(event.target)) return
 
-  closePostActions()
+  closePostActionsMenu()
 }
 
 function handleDocumentFocusIn(event: FocusEvent) {
-  if (!isPostActionsOpen.value || !(event.target instanceof Node)) return
-  if (postActions.value?.contains(event.target)) return
+  if (!isPostActionsMenuOpen.value || !(event.target instanceof Node)) return
+  if (postActionsMenu.value?.contains(event.target)) return
 
-  closePostActions()
+  closePostActionsMenu()
 }
 
 function handleViewportResize() {
-  closePostActions()
+  closePostActionsMenu()
 }
 
 function handleEditPost() {
-  closePostActions()
-  void router.push({ name: 'post-edit', params: { postId: props.postId } })
+  closePostActionsMenu()
+  void router.replace({ name: 'post-edit', params: { postId: props.postId } })
 }
 
-function handleDeletePost(postId: string) {
-  closePostActions()
+function handleDeletePost() {
+  closePostActionsMenu()
   if (!confirm('Are you sure you want to delete this post?')) return
-  emit('deletePost', postId)
+  emit('deletePost')
 }
 
 function removeOpenMenuListeners() {
@@ -101,7 +116,7 @@ function removeOpenMenuListeners() {
   window.removeEventListener('resize', handleViewportResize)
 }
 
-watch(isPostActionsOpen, (isOpen) => {
+watch(isPostActionsMenuOpen, (isOpen) => {
   if (!isOpen) {
     removeOpenMenuListeners()
     return
@@ -113,7 +128,7 @@ watch(isPostActionsOpen, (isOpen) => {
 })
 
 watch(isPostOwner, (isOwner) => {
-  if (!isOwner) closePostActions()
+  if (!isOwner) closePostActionsMenu()
 })
 
 onBeforeUnmount(removeOpenMenuListeners)
@@ -122,8 +137,8 @@ onBeforeUnmount(removeOpenMenuListeners)
 <template>
   <article :class="['post-card', { 'post-card--detail': detail }]">
     <div class="post-card__avatar-column">
-      <RouterLink :aria-label="`View ${authorName}'s profile`" :to="`/users/${userId}`">
-        <BaseAvatar :initials="avatarInitials" :label="`${authorName}'s avatar`" />
+      <RouterLink :to="authorPage" :aria-label="authorPageDesc">
+        <BaseAvatar :initials="avatarInitials" :label="authorAvatarDesc" />
       </RouterLink>
       <span v-if="threaded" aria-hidden="true" class="post-card__thread-line" />
     </div>
@@ -131,38 +146,38 @@ onBeforeUnmount(removeOpenMenuListeners)
     <div class="post-card__body">
       <header class="post-card__header">
         <div class="post-card__identity">
-          <RouterLink class="post-card__author" :to="`/users/${userId}`">
+          <RouterLink class="post-card__author" :to="authorPage" :aria-label="authorPageDesc">
             {{ authorName }}
           </RouterLink>
+
           <AppIcon v-if="verified" class="post-card__verified" name="verified" />
+
           <span aria-hidden="true">·</span>
-          <RouterLink
-            v-if="formattedCreatedAtUtc"
-            class="post-card__timestamp"
-            :to="`/posts/${postId}`"
-          >
+
+          <RouterLink v-if="formattedCreatedAtUtc" :to="postPage" class="post-card__timestamp">
             {{ formattedCreatedAtUtc }}
           </RouterLink>
         </div>
+
         <div
           v-if="isPostOwner"
-          ref="postActions"
+          ref="postActionsMenu"
           class="post-card__actions"
-          @keydown.esc.stop.prevent="closePostActions(true)"
+          @keydown.esc.stop.prevent="closePostActionsMenu(true)"
         >
           <BaseIconButton
-            :aria-controls="postActionsPanelId"
-            :aria-expanded="isPostActionsOpen"
-            :active="isPostActionsOpen"
+            :aria-controls="postActionsMenuPanelId"
+            :aria-expanded="isPostActionsMenuOpen"
+            :active="isPostActionsMenuOpen"
             label="More thread options"
-            @click="togglePostActions"
+            @click="togglePostActionsMenu"
           >
             <AppIcon name="more" />
           </BaseIconButton>
 
           <div
-            v-if="isPostActionsOpen"
-            :id="postActionsPanelId"
+            v-if="isPostActionsMenuOpen"
+            :id="postActionsMenuPanelId"
             aria-label="Post actions"
             class="post-card__actions-panel"
             role="group"
@@ -170,10 +185,11 @@ onBeforeUnmount(removeOpenMenuListeners)
             <button class="post-card__action-item" type="button" @click="handleEditPost">
               Edit
             </button>
+
             <button
               class="post-card__action-item post-card__action-item--danger"
               type="button"
-              @click="handleDeletePost(postId)"
+              @click="handleDeletePost"
             >
               Delete
             </button>
@@ -200,8 +216,8 @@ onBeforeUnmount(removeOpenMenuListeners)
           :is-liked-by-current-user="isLikedByCurrentUser"
           :like-count="likeCount"
           :comment-count="commentCount"
-          @show-comments="emit('showComments', postId)"
-          @toggle-like="(nextLikeState: boolean) => emit('toggleLike', postId, nextLikeState)"
+          @show-comments="emit('showComments')"
+          @toggle-like="emit('toggleLike')"
         />
         <time v-if="formattedUpdatedAtUtc" class="post-card__updated-at">
           Updated {{ formattedUpdatedAtUtc }}
@@ -214,14 +230,17 @@ onBeforeUnmount(removeOpenMenuListeners)
 <style scoped>
 .post-card {
   display: grid;
+  height: 12.5rem;
   padding: var(--space-4);
+  padding-block-end: var(--space-2);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
   border-block-end: 1px solid var(--color-border);
 }
 
 .post-card--detail {
-  padding-block-start: var(--space-6);
+  height: 15.625rem;
+  padding-block: var(--space-6) var(--space-2);
 }
 
 .post-card__avatar-column {
@@ -246,7 +265,9 @@ onBeforeUnmount(removeOpenMenuListeners)
 }
 
 .post-card__body {
+  display: grid;
   min-width: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .post-card__header {
@@ -358,7 +379,6 @@ onBeforeUnmount(removeOpenMenuListeners)
 
 .post-card__footer {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -372,11 +392,14 @@ onBeforeUnmount(removeOpenMenuListeners)
 }
 
 .post-card__content {
+  display: flex;
+  min-height: 0;
   max-width: 65ch;
-  margin-block-end: var(--space-2);
+  align-items: center;
   overflow-wrap: anywhere;
   line-height: 1.5;
   text-wrap: pretty;
+  white-space: pre-wrap;
 }
 
 .post-card__media {
