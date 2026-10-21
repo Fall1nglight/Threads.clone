@@ -1,7 +1,6 @@
 using FluentAssertions;
 using FluentValidation.Results;
 using Threads.Api.Features.Users.Endpoints;
-using Threads.Api.UnitTests.TestSupport;
 
 namespace Threads.Api.UnitTests.Users;
 
@@ -12,7 +11,7 @@ public class UserValidatorTests
     {
         // Arrange
         var validator = new GetUser.GetUserValidator();
-        var request = CreateGetUserRequest(userId: ValidatorTestData.PrimaryId);
+        var request = UserRequestFactory.CreateGetUserRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -26,7 +25,7 @@ public class UserValidatorTests
     {
         // Arrange
         var validator = new GetUser.GetUserValidator();
-        var request = CreateGetUserRequest(userId: Guid.Empty);
+        var request = UserRequestFactory.CreateGetUserRequest(userId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -41,7 +40,7 @@ public class UserValidatorTests
     {
         // Arrange
         var validator = new DeleteUser.DeleteUserValidator();
-        var request = CreateDeleteUserRequest(userId: ValidatorTestData.PrimaryId);
+        var request = UserRequestFactory.CreateDeleteUserRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -55,7 +54,7 @@ public class UserValidatorTests
     {
         // Arrange
         var validator = new DeleteUser.DeleteUserValidator();
-        var request = CreateDeleteUserRequest(userId: Guid.Empty);
+        var request = UserRequestFactory.CreateDeleteUserRequest(userId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -65,9 +64,51 @@ public class UserValidatorTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.UserId));
     }
 
-    private static GetUser.Request CreateGetUserRequest(Guid? userId = null) =>
-        new(userId ?? ValidatorTestData.PrimaryId);
+    [Fact]
+    public void SearchUsersValidator_ShouldPass_WhenUsernameIsValid()
+    {
+        // Arrange
+        var validator = new SearchUsers.SearchUsersValidator();
+        var request = UserRequestFactory.CreateSearchUsersRequest();
 
-    private static DeleteUser.Request CreateDeleteUserRequest(Guid? userId = null) =>
-        new(userId ?? ValidatorTestData.PrimaryId);
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("ab")]
+    [InlineData("bad-name")]
+    public void SearchUsersValidator_ShouldFail_WhenUsernameIsInvalid(string? username)
+    {
+        // Arrange
+        var validator = new SearchUsers.SearchUsersValidator();
+        var request = UserRequestFactory.CreateSearchUsersRequest(username);
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Username));
+    }
+
+    [Fact]
+    public void SearchUsersValidator_ShouldFail_WhenUsernameIsTooLong()
+    {
+        // Arrange
+        var validator = new SearchUsers.SearchUsersValidator();
+        var request = UserRequestFactory.CreateSearchUsersRequest(new string('a', 31));
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.Username));
+    }
 }
