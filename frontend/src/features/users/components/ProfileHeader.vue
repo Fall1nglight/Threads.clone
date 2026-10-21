@@ -1,27 +1,60 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
-import { type FollowStatus } from '@/features/follow/followTypes.ts'
+import { computed } from 'vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
+import { FollowStatus } from '@/features/follow/followTypes.ts'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     userId: string
     username: string
     initials: string
-    bio: string
-    followerCount: string
-    followingCount: string
+    bio: string | null
+    followerCount: number
+    followingCount: number
     verified?: boolean
-    showFollowButton: boolean
-    followStatus: FollowStatus | null
+    showButton: boolean
+    followStatusWithCurrentUser: FollowStatus | null
   }>(),
   {
+    initials: 'NA',
+    bio: '',
     verified: false,
-    showFollowButton: false,
+    showButton: false,
   },
 )
+
+// user-related computed properties
+const userAvatarDesc = computed(() => `${props.username}'s avatar`)
+
+// follow related computed properties
+const followersPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-followers',
+  params: { userId: props.userId },
+}))
+const followersPageDesc = computed(() => `View ${props.username}'s followers`)
+
+const followingPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-following',
+  params: { userId: props.userId },
+}))
+const followingPageDesc = computed(() => `View users followed by ${props.username}`)
+
+const followButtonTitle = computed(() => {
+  if (props.followStatusWithCurrentUser === null) return 'Follow user'
+  return props.followStatusWithCurrentUser === FollowStatus.Pending
+    ? 'Cancel follow request'
+    : 'Unfollow user'
+})
+
+const followButtonIcon = computed<'user-add' | 'user-pending' | 'user-accepted'>(() => {
+  if (props.followStatusWithCurrentUser === null) return 'user-add'
+  return props.followStatusWithCurrentUser === FollowStatus.Pending
+    ? 'user-pending'
+    : 'user-accepted'
+})
 
 const emit = defineEmits<{
   handleFollow: []
@@ -30,87 +63,88 @@ const emit = defineEmits<{
 
 <template>
   <header class="profile-header">
-    <div class="profile-header__top">
+    <div v-if="$slots.actions" class="profile-header__actions">
+      <slot name="actions" />
+    </div>
+
+    <BaseAvatar
+      :initials="initials"
+      :label="userAvatarDesc"
+      class="profile-header__avatar"
+      size="large"
+    />
+
+    <div class="profile-header__name-row">
       <div class="profile-header__identity">
-        <div class="profile-header__name-row">
-          <h1>{{ username }}</h1>
-          <AppIcon v-if="verified" class="profile-header__verified" name="verified" />
-        </div>
+        <h1>{{ username }}</h1>
       </div>
-      <BaseAvatar
-        class="profile-header__avatar"
-        :initials="initials"
-        :label="`${username}'s avatar`"
-        size="large"
-      />
-    </div>
 
-    <p class="profile-header__bio">{{ bio }}</p>
+      <div v-if="verified || showButton" class="profile-header__name-adornments">
+        <AppIcon v-if="verified" class="profile-header__verified" name="verified" />
 
-    <div class="profile-header__footer">
-      <nav aria-label="Profile connections" class="profile-header__stats">
-        <RouterLink
-          class="profile-header__connection"
-          :to="{ name: 'user-followers', params: { userId } }"
+        <BaseIconButton
+          v-if="showButton"
+          :label="followButtonTitle"
+          :title="followButtonTitle"
+          @click="emit('handleFollow')"
         >
-          {{ followerCount }} followers
-        </RouterLink>
-        <RouterLink
-          class="profile-header__connection"
-          :to="{ name: 'user-following', params: { userId } }"
-        >
-          {{ followingCount }} following
-        </RouterLink>
-      </nav>
-
-      <div v-if="showFollowButton || $slots.actions" class="profile-header__actions">
-        <BaseButton v-if="showFollowButton" @click="emit('handleFollow')" variant="secondary">
-          {{ followStatus == null ? 'Follow' : followStatus == 0 ? 'Pending' : 'Following' }}
-        </BaseButton>
-
-        <slot name="actions" />
+          <AppIcon :name="followButtonIcon" />
+        </BaseIconButton>
       </div>
     </div>
+
+    <p v-if="bio" class="profile-header__bio">{{ bio }}</p>
+
+    <nav aria-label="Profile connections" class="profile-header__stats">
+      <RouterLink
+        :to="followersPage"
+        :aria-label="followersPageDesc"
+        class="profile-header__connection"
+      >
+        {{ followerCount }} followers
+      </RouterLink>
+
+      <RouterLink
+        :to="followingPage"
+        :aria-label="followingPageDesc"
+        class="profile-header__connection"
+      >
+        {{ followingCount }} following
+      </RouterLink>
+    </nav>
   </header>
 </template>
 
 <style scoped>
 .profile-header {
-  display: grid;
-  padding: var(--space-6) var(--space-4) var(--space-4);
-  gap: var(--space-4);
-}
-
-.profile-header__top,
-.profile-header__footer {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
-}
-
-.profile-header__top {
-  justify-content: space-between;
-}
-
-.profile-header__footer {
-  justify-content: space-between;
-  flex-wrap: wrap;
-  row-gap: var(--space-2);
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  gap: var(--space-1);
+  text-align: center;
 }
 
 .profile-header__identity {
-  flex: 1 1 auto;
+  grid-column: 2;
   min-width: 0;
 }
 
 .profile-header__avatar {
-  flex: 0 0 auto;
+  align-self: center;
 }
 
 .profile-header__name-row {
-  display: flex;
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--control-height);
+  grid-template-columns: minmax(var(--control-height), 1fr) minmax(0, auto) minmax(
+      var(--control-height),
+      1fr
+    );
   align-items: center;
-  gap: var(--space-1);
 }
 
 h1 {
@@ -128,9 +162,10 @@ h1 {
 
 .profile-header__stats {
   display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-2);
 }
 
@@ -150,11 +185,20 @@ h1 {
 }
 
 .profile-header__actions {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
   display: flex;
-  flex: 0 0 auto;
   align-items: center;
-  margin-inline-start: auto;
-  gap: var(--space-2);
+}
+
+.profile-header__name-adornments {
+  display: flex;
+  grid-column: 3;
+  align-items: center;
+  justify-self: start;
+  margin-inline-start: var(--space-2);
+  gap: var(--space-1);
 }
 
 .profile-header__verified {
@@ -163,18 +207,10 @@ h1 {
 }
 
 .profile-header__bio {
+  width: 100%;
   max-width: 65ch;
   overflow-wrap: anywhere;
+  text-align: center;
   text-wrap: pretty;
-}
-
-@media (max-width: 24rem) {
-  .profile-header__stats {
-    flex-basis: 100%;
-  }
-
-  .profile-header__actions {
-    margin-inline-start: auto;
-  }
 }
 </style>
