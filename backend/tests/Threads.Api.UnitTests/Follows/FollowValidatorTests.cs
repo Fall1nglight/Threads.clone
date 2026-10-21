@@ -1,7 +1,8 @@
 using FluentAssertions;
 using FluentValidation.Results;
 using Threads.Api.Features.Follows.Endpoints;
-using Threads.Api.UnitTests.TestSupport;
+using Threads.Api.Features.Follows.Endpoints.Incoming;
+using Threads.Api.Features.Follows.Endpoints.Outgoing;
 
 namespace Threads.Api.UnitTests.Follows;
 
@@ -12,7 +13,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new SendFollowRequest.SendFollowRequestValidator();
-        var request = CreateSendFollowRequest(targetUserId: ValidatorTestData.PrimaryId);
+        var request = FollowRequestFactory.CreateSendFollowRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -26,7 +27,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new SendFollowRequest.SendFollowRequestValidator();
-        var request = CreateSendFollowRequest(targetUserId: Guid.Empty);
+        var request = FollowRequestFactory.CreateSendFollowRequest(targetUserId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -41,7 +42,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new AcceptIncomingFollowRequest.AcceptIncomingFollowRequestValidator();
-        var request = CreateAcceptIncomingFollowRequest(followerId: ValidatorTestData.PrimaryId);
+        var request = FollowRequestFactory.CreateAcceptIncomingFollowRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -55,7 +56,9 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new AcceptIncomingFollowRequest.AcceptIncomingFollowRequestValidator();
-        var request = CreateAcceptIncomingFollowRequest(followerId: Guid.Empty);
+        var request = FollowRequestFactory.CreateAcceptIncomingFollowRequest(
+            followerId: Guid.Empty
+        );
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -70,7 +73,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new RejectIncomingFollowRequest.RejectIncomingFollowRequestValidator();
-        var request = CreateRejectIncomingFollowRequest(followerId: ValidatorTestData.PrimaryId);
+        var request = FollowRequestFactory.CreateRejectIncomingFollowRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -84,7 +87,9 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new RejectIncomingFollowRequest.RejectIncomingFollowRequestValidator();
-        var request = CreateRejectIncomingFollowRequest(followerId: Guid.Empty);
+        var request = FollowRequestFactory.CreateRejectIncomingFollowRequest(
+            followerId: Guid.Empty
+        );
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -99,7 +104,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new DeleteFollowing.DeleteFollowingValidator();
-        var request = CreateDeleteFollowingRequest(followedId: ValidatorTestData.PrimaryId);
+        var request = FollowRequestFactory.CreateDeleteFollowingRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -113,7 +118,7 @@ public class FollowValidatorTests
     {
         // Arrange
         var validator = new DeleteFollowing.DeleteFollowingValidator();
-        var request = CreateDeleteFollowingRequest(followedId: Guid.Empty);
+        var request = FollowRequestFactory.CreateDeleteFollowingRequest(followedId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -124,11 +129,11 @@ public class FollowValidatorTests
     }
 
     [Fact]
-    public void RemoveFollowerValidator_ShouldPass_WhenFollowerIdIsNotEmpty()
+    public void DeleteFollowerValidator_ShouldPass_WhenFollowerIdIsNotEmpty()
     {
         // Arrange
-        var validator = new RemoveFollower.RemoveFollowerValidator();
-        var request = CreateRemoveFollowerRequest(followerId: ValidatorTestData.PrimaryId);
+        var validator = new DeleteFollower.DeleteFollowerValidator();
+        var request = FollowRequestFactory.CreateDeleteFollowerRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -138,11 +143,11 @@ public class FollowValidatorTests
     }
 
     [Fact]
-    public void RemoveFollowerValidator_ShouldFail_WhenFollowerIdIsEmpty()
+    public void DeleteFollowerValidator_ShouldFail_WhenFollowerIdIsEmpty()
     {
         // Arrange
-        var validator = new RemoveFollower.RemoveFollowerValidator();
-        var request = CreateRemoveFollowerRequest(followerId: Guid.Empty);
+        var validator = new DeleteFollower.DeleteFollowerValidator();
+        var request = FollowRequestFactory.CreateDeleteFollowerRequest(followerId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -152,20 +157,92 @@ public class FollowValidatorTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.FollowerId));
     }
 
-    private static SendFollowRequest.Request CreateSendFollowRequest(Guid? targetUserId = null) =>
-        new(targetUserId ?? ValidatorTestData.PrimaryId);
+    [Fact]
+    public void GetFollowersValidator_ShouldPass_WhenUserIdIsNotEmpty()
+    {
+        // Arrange
+        var validator = new GetFollowers.GetFollowersValidator();
+        var request = FollowRequestFactory.CreateGetFollowersRequest();
 
-    private static AcceptIncomingFollowRequest.Request CreateAcceptIncomingFollowRequest(
-        Guid? followerId = null
-    ) => new(followerId ?? ValidatorTestData.PrimaryId);
+        // Act
+        ValidationResult result = validator.Validate(request);
 
-    private static RejectIncomingFollowRequest.Request CreateRejectIncomingFollowRequest(
-        Guid? followerId = null
-    ) => new(followerId ?? ValidatorTestData.PrimaryId);
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
 
-    private static DeleteFollowing.Request CreateDeleteFollowingRequest(Guid? followedId = null) =>
-        new(followedId ?? ValidatorTestData.PrimaryId);
+    [Fact]
+    public void GetFollowersValidator_ShouldFail_WhenUserIdIsEmpty()
+    {
+        // Arrange
+        var validator = new GetFollowers.GetFollowersValidator();
+        var request = FollowRequestFactory.CreateGetFollowersRequest(userId: Guid.Empty);
 
-    private static RemoveFollower.Request CreateRemoveFollowerRequest(Guid? followerId = null) =>
-        new(followerId ?? ValidatorTestData.PrimaryId);
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.UserId));
+    }
+
+    [Fact]
+    public void GetFollowingValidator_ShouldPass_WhenUserIdIsNotEmpty()
+    {
+        // Arrange
+        var validator = new GetFollowing.GetFollowingValidator();
+        var request = FollowRequestFactory.CreateGetFollowingRequest();
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GetFollowingValidator_ShouldFail_WhenUserIdIsEmpty()
+    {
+        // Arrange
+        var validator = new GetFollowing.GetFollowingValidator();
+        var request = FollowRequestFactory.CreateGetFollowingRequest(userId: Guid.Empty);
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.UserId));
+    }
+
+    [Fact]
+    public void CancelOutgoingFollowRequestValidator_ShouldPass_WhenFollowedIdIsNotEmpty()
+    {
+        // Arrange
+        var validator = new CancelOutgoingFollowRequest.CancelOutgoingFollowRequestValidator();
+        var request = FollowRequestFactory.CreateCancelOutgoingFollowRequest();
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CancelOutgoingFollowRequestValidator_ShouldFail_WhenFollowedIdIsEmpty()
+    {
+        // Arrange
+        var validator = new CancelOutgoingFollowRequest.CancelOutgoingFollowRequestValidator();
+        var request = FollowRequestFactory.CreateCancelOutgoingFollowRequest(
+            followedId: Guid.Empty
+        );
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(request.FollowedId));
+    }
 }
