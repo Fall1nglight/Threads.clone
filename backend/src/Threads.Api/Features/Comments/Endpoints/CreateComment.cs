@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Comments;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 using Threads.Api.Features.Posts;
@@ -41,11 +42,11 @@ public class CreateComment : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
 
         var post = await db
             .Posts.Where(post => post.Id == request.PostId)
-            .WhereVisibleTo(currentUserId, db)
+            .WhereVisibleTo(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
@@ -54,17 +55,32 @@ public class CreateComment : IEndpoint
         var comment = new Comment
         {
             PostId = post.Id,
-            UserId = currentUserId,
+            UserId = loggedInUserId,
             Content = request.Body.Content,
             CreatedAtUtc = DateTime.UtcNow,
         };
 
         await db.Comments.AddAsync(comment, cancellationToken);
+
+        if (post.UserId != loggedInUserId)
+        {
+            var notification = new Notification
+            {
+                TriggeredByUserId = loggedInUserId,
+                NotifiedUserId = post.UserId,
+                TriggeredAtUtc = comment.CreatedAtUtc,
+                Type = NotificationType.PostCommented,
+                SubjectKind = NotificationSubjectKind.Post,
+                SubjectId = post.Id,
+            };
+            await db.Notifications.AddAsync(notification, cancellationToken);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         CommentDto response = await db
             .Comments.Where(createdComment => createdComment.Id == comment.Id)
-            .ToCommentDto()
+            .ToDto()
             .FirstAsync(cancellationToken);
 
         return TypedResults.Created($"/posts/{post.Id}/comments/{comment.Id}", response);

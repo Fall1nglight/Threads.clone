@@ -11,7 +11,7 @@ using Threads.Api.Features.Posts;
 
 namespace Threads.Api.Features.Comments.Endpoints;
 
-public class GetPostComments : IEndpoint
+public class GetComments : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
@@ -21,11 +21,12 @@ public class GetPostComments : IEndpoint
             .WithSummary("Retrieves comments on a post");
     }
 
-    public record Request(Guid PostId, string? Cursor, int PageSize = 20);
+    public record Request(Guid PostId, string? Cursor, int PageSize = PaginationDefaults.PageSize)
+        : PagedRequest(Cursor, PageSize);
 
-    public class GetPostCommentsValidator : AbstractValidator<Request>
+    public class GetCommentsValidator : AbstractValidator<Request>
     {
-        public GetPostCommentsValidator()
+        public GetCommentsValidator()
         {
             RuleFor(x => x.PostId).NotEmpty();
         }
@@ -38,22 +39,21 @@ public class GetPostComments : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.TryGetUserId();
 
         var post = await db
             .Posts.Where(post => post.Id == request.PostId)
-            .WhereVisibleTo(currentUserId, db)
+            .WhereVisibleTo(loggedInUserId, db)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (post == null)
             return TypedResults.NotFound();
 
-        var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
         var response = await db
             .Comments.Where(comment => comment.PostId == post.Id)
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
-            .ToCommentDto()
-            .ToPagedResponse(pagedRequest, cancellationToken);
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
+            .ToDto()
+            .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(response);
     }

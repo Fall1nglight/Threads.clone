@@ -44,8 +44,8 @@ public class DeleteComment : IEndpoint
         if (comment == null)
             return TypedResults.NoContent();
 
-        var currentUserId = claimsPrincipal.GetUserId();
-        if (comment.UserId != currentUserId)
+        var loggedInUserId = claimsPrincipal.GetUserId();
+        if (comment.UserId != loggedInUserId)
             return TypedResults.Forbid();
 
         db.Comments.Remove(comment);

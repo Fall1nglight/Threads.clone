@@ -9,14 +9,14 @@ public static class CommentVisibilityExtensions
 {
     public static IQueryable<Comment> WhereVisibleTo(
         this IQueryable<Comment> comments,
-        Guid currentUserId,
+        Guid loggedInUserId,
         AppDbContext db
     )
     {
-        var visiblePosts = db.Posts.WhereVisibleTo(currentUserId, db);
+        var visiblePosts = db.Posts.WhereVisibleTo(loggedInUserId, db);
 
         return comments
-            .WhereOwnerHasNoBlockRelationshipWith(currentUserId, db)
+            .WhereOwnerHasNoBlockRelationshipWith(loggedInUserId, db)
             .Where(comment => visiblePosts.Any(post => post.Id == comment.PostId));
     }
 }
