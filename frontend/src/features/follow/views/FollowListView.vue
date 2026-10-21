@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { type RouteLocationRaw, useRoute } from 'vue-router'
 import PageHeader from '@/app/components/PageHeader.vue'
 import UserResultItem from '@/features/search/components/UserResultItem.vue'
-import { FollowStatus, type FollowUserDto } from '@/features/follow/followTypes.ts'
-import { useFetch } from '@/shared/composables/fetch.ts'
+import type { FollowUserDto } from '@/features/follow/followTypes.ts'
+import { useFetch } from '@/shared/composables/useFetch.ts'
 import followApi from '@/features/follow/followApi.ts'
-import FeedLoadMoreTrigger from '@/features/posts/components/FeedLoadMoreTrigger.vue'
-import type { PagedResponse } from '@/shared/types/paginationTypes.ts'
+import PaginationObserver from '@/shared/components/PaginationObserver.vue'
 import userApi from '@/features/users/userApi.ts'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
+import { useToggleFollow } from '@/features/follow/composables/useToggleFollow.ts'
+import { usePaginatedFetch } from '@/shared/composables/usePaginatedFetch.ts'
+import BaseLoader from '@/shared/components/BaseLoader.vue'
+import BaseErrorMessage from '@/shared/components/BaseErrorMessage.vue'
+import BaseEmptyMessage from '@/shared/components/BaseEmptyMessage.vue'
+import { getInitials } from '@/shared/helpers/profileInitials.ts'
 
 const props = defineProps<{
   listType: 'followers' | 'following'
@@ -18,84 +23,56 @@ const props = defineProps<{
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { currentUserId } = storeToRefs(authStore)
-const userId = computed(() => String(route.params.userId))
-const backTo = computed(() => `/users/${userId.value}`)
+const { loggedInUserId } = storeToRefs(authStore)
 
-const {
-  status,
-  data: users,
-  error,
-} = useFetch(() =>
-  props.listType == 'followers'
-    ? followApi.getFollowers(userId.value)
-    : followApi.getFollowing(userId.value),
+const visitedUserId = computed(() => String(route.params.userId))
+const visitedUserPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-profile',
+  params: { userId: visitedUserId.value },
+}))
+
+const { state: userState } = useFetch(visitedUserId, (currentUserId) =>
+  userApi.getUser(currentUserId),
+)
+const user = computed(() => (userState.value.status === 'success' ? userState.value.item : null))
+const visitedUserPageDesc = computed(() =>
+  user.value ? `${user.value.username}'s ${props.listType}` : props.listType,
 )
 
+const usersSource = computed(() => ({
+  userId: visitedUserId.value,
+  listType: props.listType,
+}))
+
 const {
-  status: profileStatus,
-  data: profile,
-  error: profileError,
-} = useFetch(() => userApi.getUser(userId.value))
+  state: usersState,
+  canLoadMore: canLoadMoreUsers,
+  loadMore: loadMoreUsers,
+} = usePaginatedFetch(usersSource, (source, request) =>
+  source.listType === 'followers'
+    ? followApi.getFollowers(source.userId, request)
+    : followApi.getFollowing(source.userId, request),
+)
 
-const title = computed(() => `${profile.value?.username}'s ${props.listType}`)
+const users = computed(() => ('items' in usersState.value ? usersState.value.items : null))
 
-async function loadMore() {
-  if (!users.value?.hasMore) return
-  if (!users.value?.cursor) return
-  try {
-    let response: PagedResponse<FollowUserDto>
+const isOwnProfile = computed(() => loggedInUserId.value === visitedUserId.value)
 
-    if (props.listType == 'followers') {
-      response = await followApi.getFollowers(userId.value, {
-        pageSize: 5,
-        cursor: users.value.cursor,
-      })
-    } else {
-      response = await followApi.getFollowing(userId.value, {
-        pageSize: 5,
-        cursor: users.value.cursor,
-      })
-    }
-
-    users.value.items.push(...response.items)
-    users.value.hasMore = response.hasMore
-    users.value.cursor = response.cursor ?? null
-  } catch (err) {
-    console.error(err)
+const messageIfEmpty = computed(() => {
+  if (isOwnProfile.value) {
+    return `You have ${props.listType === 'followers' ? 'no followers' : 'not followed anyone'} yet.`
+  } else {
+    return `This user has ${props.listType === 'followers' ? 'no followers' : 'not followed anyone'} yet.`
   }
-}
+})
 
-async function handleFollow(targetUserId: string) {
-  const profile = users.value?.items.find((user) => user.id === targetUserId)
-
-  if (!profile) return
-
-  try {
-    switch (profile.followStatusWithCurrentUser) {
-      // Pending => already sent follow request
-      // action => remove outgoing Pending follow request
-      case FollowStatus.Pending:
-        await followApi.removeFollowedUser(profile.id)
-        profile.followStatusWithCurrentUser = null
-        if (!users.value?.items) return
-        users.value.items = users.value?.items.filter((u) => u.id != profile.id) || []
-        break
-
-      case FollowStatus.Accepted:
-        await followApi.removeFollowedUser(profile.id)
-        profile.followStatusWithCurrentUser = null
-        if (!users.value?.items) return
-        users.value.items = users.value?.items.filter((u) => u.id != profile.id) || []
-        break
-
-      case null:
-        const result = await followApi.sendFollowRequest(profile.id)
-        profile.followStatusWithCurrentUser = result.status
-        break
-    }
-  } catch (err) {
-    console.error(err)
+const { toggleFollow } = useToggleFollow()
+async function handleFollow(targetUser: FollowUserDto) {
+  const followResult = await toggleFollow(targetUser)
+  if (!followResult) return
+  if (usersState.value.status !== 'success') return
+  if (isOwnProfile.value && props.listType === 'following' && followResult.action === 'removed') {
+    usersState.value.items = usersState.value.items.filter((u) => u.id !== targetUser.id)
   }
 }
 
@@ -110,28 +87,60 @@ function getUserSummary(user: FollowUserDto) {
 </script>
 
 <template>
-  <div>
-    <PageHeader :back-to="backTo" :title="title" />
+  <Transition name="async-fade" mode="out-in">
+    <BaseLoader
+      v-if="userState.status === 'loading' || usersState.status === 'initial-loading'"
+      key="follow-list-loader"
+      message="Loading...."
+    />
 
-    <section :aria-label="title" class="follow-list">
-      <div v-if="users?.items">
-        <UserResultItem
-          v-for="user in users.items"
-          :key="user.id"
-          :initials="user.username.slice(0, 2).toUpperCase()"
-          :name="user.username"
-          :summary="getUserSummary(user)"
-          :user-id="user.id"
-          :username="user.username"
-          :follow-status="user.followStatusWithCurrentUser ?? null"
-          :show-follow-button="currentUserId != user.id"
-          @handle-follow="handleFollow(user.id)"
-        />
-      </div>
+    <div v-else>
+      <PageHeader
+        key="follow-list-header"
+        :back-to="visitedUserPage"
+        :title="visitedUserPageDesc"
+      />
 
-      <FeedLoadMoreTrigger v-if="users?.hasMore && users?.cursor" @visible="loadMore" />
-    </section>
-  </div>
+      <BaseErrorMessage
+        v-if="userState.status === 'error' || usersState.status === 'initial-error'"
+        key="follow-list-error"
+        :message="`Failed to load ${listType}. Please try again later!`"
+      />
+
+      <section v-if="user" :aria-label="visitedUserPageDesc" class="follow-list">
+        <div v-if="users">
+          <TransitionGroup name="async-list-fade" appear>
+            <UserResultItem
+              v-for="user in users"
+              :key="user.id"
+              :initials="getInitials(user.username)"
+              :name="user.username"
+              :summary="getUserSummary(user)"
+              :user-id="user.id"
+              :username="user.username"
+              :follow-status="user.followStatusWithCurrentUser"
+              :show-follow-button="loggedInUserId !== null && loggedInUserId !== user.id"
+              @handle-follow="handleFollow(user)"
+            />
+          </TransitionGroup>
+
+          <BaseEmptyMessage
+            v-if="!users.length"
+            key="follow-list-empty"
+            :message="messageIfEmpty"
+          />
+
+          <PaginationObserver v-if="canLoadMoreUsers" @visible="loadMoreUsers" />
+
+          <BaseLoader
+            v-if="usersState.status === 'more-loading'"
+            key="follow-list-more-loader"
+            :message="`Loading more ${listType}...`"
+          />
+        </div>
+      </section>
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
