@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 # src/src/Threads.Api
 WORKDIR "/src"
+COPY ["Directory.Packages.props","src/Threads.Api/"]
 COPY ["src/Threads.Api/Threads.Api.csproj", "src/Threads.Api/"]
 RUN dotnet restore "./src/Threads.Api/Threads.Api.csproj"
 COPY [".", "."]
