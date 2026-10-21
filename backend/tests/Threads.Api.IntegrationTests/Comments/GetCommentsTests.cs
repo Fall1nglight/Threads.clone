@@ -7,20 +7,18 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Comments;
 
-public class GetPostCommentsTests : CommentIntegrationTestBase
+public class GetCommentsTests : IntegrationTestBase
 {
-    public GetPostCommentsTests(CustomWebApplicationFactory factory)
+    public GetCommentsTests(CustomWebApplicationFactory factory)
         : base(factory) { }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnEmptyPage_WhenPostHasNoComments()
+    public async Task GetComments_ShouldReturnEmptyPage_WhenPostHasNoComments()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(user, IntegrationTestData.ValidContent);
-        var client = await CreateAuthenticatedClientAsync(user);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
+        var client = CreateAnonymousClient();
 
         // Act
         var response = await client.GetAsync(CommentTestRoutes.ForPost(post.Id));
@@ -35,11 +33,26 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnVisibleAuthorsAndTargetPostCommentsOnly()
+    public async Task GetComments_ShouldReturnNotFound_WhenRequesterIsAnonymousAndPostIsPrivate()
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        var client = CreateAnonymousClient();
+
+        // Act
+        var response = await client.GetAsync(
+            CommentTestRoutes.ForPost(seed.DinaPrivateFollowedPost.Id)
+        );
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetComments_ShouldReturnVisibleAuthorsAndTargetPostCommentsOnly()
+    {
+        // Arrange
+        var seed = await Scenarios.CommentList.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -66,11 +79,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnNextPage_WhenCursorIsProvided()
+    public async Task GetComments_ShouldReturnNextPage_WhenCursorIsProvided()
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkCommentsAsync(5);
+        var seed = await Scenarios.CommentList.SeedBulkCommentsAsync(5);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
         var route = CommentTestRoutes.ForPost(seed.Post.Id);
 
@@ -95,11 +107,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnNotFound_WhenPostDoesNotExist()
+    public async Task GetComments_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(user);
 
         // Act
@@ -110,11 +121,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnNotFound_WhenPostIsNotVisible()
+    public async Task GetComments_ShouldReturnNotFound_WhenPostIsNotVisible()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -137,15 +147,13 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task GetPostComments_ShouldReturnNotFound_WhenRequesterAndOwnerAreBlocked(
+    public async Task GetComments_ShouldReturnNotFound_WhenRequesterAndOwnerAreBlocked(
         bool requesterBlocksOwner
     )
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
-        await blockSeeder.CreateUserBlockAsync(
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksOwner ? seed.Alice : seed.BobPublic,
             requesterBlocksOwner ? seed.BobPublic : seed.Alice
         );
@@ -159,11 +167,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldReturnBadRequest_WhenPostIdIsEmpty()
+    public async Task GetComments_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var user = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
         var client = await CreateAuthenticatedClientAsync(user);
 
         // Act
@@ -174,11 +181,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldUseDefaultPageSize()
+    public async Task GetComments_ShouldUseDefaultPageSize()
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkCommentsAsync(21);
+        var seed = await Scenarios.CommentList.SeedBulkCommentsAsync(21);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -196,11 +202,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]
-    public async Task GetPostComments_ShouldClampPageSizeToMinimum(int pageSize)
+    public async Task GetComments_ShouldClampPageSizeToMinimum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkCommentsAsync(2);
+        var seed = await Scenarios.CommentList.SeedBulkCommentsAsync(2);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -219,11 +224,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     [Theory]
     [InlineData(101)]
     [InlineData(500)]
-    public async Task GetPostComments_ShouldClampPageSizeToMaximum(int pageSize)
+    public async Task GetComments_ShouldClampPageSizeToMaximum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkCommentsAsync(101);
+        var seed = await Scenarios.CommentList.SeedBulkCommentsAsync(101);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -240,11 +244,10 @@ public class GetPostCommentsTests : CommentIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostComments_ShouldTreatInvalidCursorAsFirstPage()
+    public async Task GetComments_ShouldTreatInvalidCursorAsFirstPage()
     {
         // Arrange
-        var scenarioSeeder = CreateCommentListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkCommentsAsync(3);
+        var seed = await Scenarios.CommentList.SeedBulkCommentsAsync(3);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
         var route = CommentTestRoutes.ForPost(seed.Post.Id);
 

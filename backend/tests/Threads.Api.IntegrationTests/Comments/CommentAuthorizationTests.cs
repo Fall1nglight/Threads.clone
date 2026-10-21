@@ -7,7 +7,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Comments;
 
-public class CommentAuthorizationTests : CommentIntegrationTestBase
+public class CommentAuthorizationTests : IntegrationTestBase
 {
     private static readonly Guid PostId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid CommentId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -24,19 +24,6 @@ public class CommentAuthorizationTests : CommentIntegrationTestBase
 
         // Act
         var response = await client.PostAsJsonAsync(CommentTestRoutes.ForPost(PostId), requestBody);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    public async Task GetPostComments_ShouldRejectAnonymousRequests()
-    {
-        // Arrange
-        var client = CreateAnonymousClient();
-
-        // Act
-        var response = await client.GetAsync(CommentTestRoutes.ForPost(PostId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
