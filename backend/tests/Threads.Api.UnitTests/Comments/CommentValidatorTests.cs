@@ -12,7 +12,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new CreateComment.CreateCommentValidator();
-        var request = CreateCreateCommentRequest();
+        var request = CommentRequestFactory.CreateCreateCommentRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -26,7 +26,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new CreateComment.CreateCommentValidator();
-        var request = CreateCreateCommentRequest(
+        var request = CommentRequestFactory.CreateCreateCommentRequest(
             content: new string('a', ValidatorTestData.MaxContentLength)
         );
 
@@ -42,7 +42,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new CreateComment.CreateCommentValidator();
-        var request = CreateCreateCommentRequest(postId: Guid.Empty);
+        var request = CommentRequestFactory.CreateCreateCommentRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -61,7 +61,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new CreateComment.CreateCommentValidator();
-        var request = CreateCreateCommentRequest(content: content);
+        var request = CommentRequestFactory.CreateCreateCommentRequest(content: content);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -82,7 +82,9 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new CreateComment.CreateCommentValidator();
-        var request = CreateCreateCommentRequest(content: new string('a', length));
+        var request = CommentRequestFactory.CreateCreateCommentRequest(
+            content: new string('a', length)
+        );
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -99,7 +101,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest();
+        var request = CommentRequestFactory.CreateUpdateCommentRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -113,7 +115,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest(
+        var request = CommentRequestFactory.CreateUpdateCommentRequest(
             content: new string('a', ValidatorTestData.MaxContentLength)
         );
 
@@ -129,7 +131,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest(postId: Guid.Empty);
+        var request = CommentRequestFactory.CreateUpdateCommentRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -144,7 +146,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest(commentId: Guid.Empty);
+        var request = CommentRequestFactory.CreateUpdateCommentRequest(commentId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -163,7 +165,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest(content: content);
+        var request = CommentRequestFactory.CreateUpdateCommentRequest(content: content);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -184,7 +186,9 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new UpdateComment.UpdateCommentValidator();
-        var request = CreateUpdateCommentRequest(content: new string('a', length));
+        var request = CommentRequestFactory.CreateUpdateCommentRequest(
+            content: new string('a', length)
+        );
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -201,7 +205,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new DeleteComment.DeleteCommentValidator();
-        var request = CreateDeleteCommentRequest();
+        var request = CommentRequestFactory.CreateDeleteCommentRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -215,7 +219,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new DeleteComment.DeleteCommentValidator();
-        var request = CreateDeleteCommentRequest(postId: Guid.Empty);
+        var request = CommentRequestFactory.CreateDeleteCommentRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -230,7 +234,7 @@ public class CommentValidatorTests
     {
         // Arrange
         var validator = new DeleteComment.DeleteCommentValidator();
-        var request = CreateDeleteCommentRequest(commentId: Guid.Empty);
+        var request = CommentRequestFactory.CreateDeleteCommentRequest(commentId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -241,11 +245,11 @@ public class CommentValidatorTests
     }
 
     [Fact]
-    public void GetPostCommentsValidator_ShouldPass_WhenPostIdIsNotEmpty()
+    public void GetCommentsValidator_ShouldPass_WhenPostIdIsNotEmpty()
     {
         // Arrange
-        var validator = new GetPostComments.GetPostCommentsValidator();
-        var request = CreateGetPostCommentsRequest(postId: ValidatorTestData.PrimaryId);
+        var validator = new GetComments.GetCommentsValidator();
+        var request = CommentRequestFactory.CreateGetCommentsRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -255,11 +259,11 @@ public class CommentValidatorTests
     }
 
     [Fact]
-    public void GetPostCommentsValidator_ShouldFail_WhenPostIdIsEmpty()
+    public void GetCommentsValidator_ShouldFail_WhenPostIdIsEmpty()
     {
         // Arrange
-        var validator = new GetPostComments.GetPostCommentsValidator();
-        var request = CreateGetPostCommentsRequest(postId: Guid.Empty);
+        var validator = new GetComments.GetCommentsValidator();
+        var request = CommentRequestFactory.CreateGetCommentsRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -268,30 +272,6 @@ public class CommentValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
-
-    private static CreateComment.Request CreateCreateCommentRequest(
-        Guid? postId = null,
-        string? content = ValidatorTestData.ValidContent
-    ) => new(postId ?? ValidatorTestData.PrimaryId, new CreateComment.Body(content!));
-
-    private static UpdateComment.Request CreateUpdateCommentRequest(
-        Guid? postId = null,
-        Guid? commentId = null,
-        string? content = ValidatorTestData.ValidContent
-    ) =>
-        new(
-            postId ?? ValidatorTestData.PrimaryId,
-            commentId ?? ValidatorTestData.SecondaryId,
-            new UpdateComment.Body(content!)
-        );
-
-    private static DeleteComment.Request CreateDeleteCommentRequest(
-        Guid? postId = null,
-        Guid? commentId = null
-    ) => new(postId ?? ValidatorTestData.PrimaryId, commentId ?? ValidatorTestData.SecondaryId);
-
-    private static GetPostComments.Request CreateGetPostCommentsRequest(Guid? postId = null) =>
-        new(postId ?? ValidatorTestData.PrimaryId, Cursor: null);
 
     private static string GetCreateCommentContentPropertyName() =>
         $"{nameof(CreateComment.Request.Body)}.{nameof(CreateComment.Body.Content)}";
