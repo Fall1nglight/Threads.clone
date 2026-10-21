@@ -5,7 +5,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Follows;
 
-public class FollowAuthorizationTests : FollowIntegrationTestBase
+public class FollowAuthorizationTests : IntegrationTestBase
 {
     private const string UserId = "11111111-1111-1111-1111-111111111111";
 
@@ -13,15 +13,14 @@ public class FollowAuthorizationTests : FollowIntegrationTestBase
         : base(factory) { }
 
     [Theory]
-    [InlineData("POST", $"{FollowTestRoutes.Base}/{UserId}")]
+    [InlineData("POST", $"{FollowTestRoutes.MeBase}/following/{UserId}")]
     [InlineData("POST", $"{FollowTestRoutes.IncomingRequests}/{UserId}/accept")]
     [InlineData("POST", $"{FollowTestRoutes.IncomingRequests}/{UserId}/reject")]
     [InlineData("GET", FollowTestRoutes.IncomingRequests)]
     [InlineData("GET", FollowTestRoutes.OutgoingRequests)]
-    [InlineData("GET", FollowTestRoutes.Followers)]
-    [InlineData("GET", FollowTestRoutes.Following)]
-    [InlineData("DELETE", $"{FollowTestRoutes.Followers}/{UserId}")]
-    [InlineData("DELETE", $"{FollowTestRoutes.Following}/{UserId}")]
+    [InlineData("POST", $"{FollowTestRoutes.OutgoingRequests}/{UserId}/cancel")]
+    [InlineData("DELETE", $"{FollowTestRoutes.MeBase}/followers/{UserId}")]
+    [InlineData("DELETE", $"{FollowTestRoutes.MeBase}/following/{UserId}")]
     public async Task FollowEndpoints_ShouldRejectAnonymousRequests(string method, string path)
     {
         // Arrange

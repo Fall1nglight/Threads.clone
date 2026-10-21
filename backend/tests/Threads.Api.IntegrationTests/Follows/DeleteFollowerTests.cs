@@ -7,20 +7,20 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Follows;
 
-public class RemoveFollowerTests : FollowIntegrationTestBase
+public class DeleteFollowerTests : IntegrationTestBase
 {
-    public RemoveFollowerTests(CustomWebApplicationFactory factory)
+    public DeleteFollowerTests(CustomWebApplicationFactory factory)
         : base(factory) { }
 
     [Fact]
-    public async Task RemoveFollower_ShouldDeleteAcceptedIncomingRelationship()
+    public async Task DeleteFollower_ShouldDeleteAcceptedIncomingRelationship()
     {
         // Arrange
         var seed = await SeedRelationshipAsync(FollowStatus.Accepted, incoming: true);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
-        var response = await client.DeleteAsync(FollowTestRoutes.RemoveFollower(seed.OtherUserId));
+        var response = await client.DeleteAsync(FollowTestRoutes.DeleteFollower(seed.OtherUserId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -28,14 +28,14 @@ public class RemoveFollowerTests : FollowIntegrationTestBase
     }
 
     [Fact]
-    public async Task RemoveFollower_ShouldKeepPendingIncomingRelationship()
+    public async Task DeleteFollower_ShouldKeepPendingIncomingRelationship()
     {
         // Arrange
         var seed = await SeedRelationshipAsync(FollowStatus.Pending, incoming: true);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
-        var response = await client.DeleteAsync(FollowTestRoutes.RemoveFollower(seed.OtherUserId));
+        var response = await client.DeleteAsync(FollowTestRoutes.DeleteFollower(seed.OtherUserId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -43,31 +43,30 @@ public class RemoveFollowerTests : FollowIntegrationTestBase
     }
 
     [Fact]
-    public async Task RemoveFollower_ShouldReturnNoContent_WhenRelationshipDoesNotExist()
+    public async Task DeleteFollower_ShouldReturnNoContent_WhenRelationshipDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.DeleteAsync(FollowTestRoutes.RemoveFollower(Guid.NewGuid()));
+        var response = await client.DeleteAsync(FollowTestRoutes.DeleteFollower(Guid.NewGuid()));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [Fact]
-    public async Task RemoveFollower_ShouldKeepReversedRelationship()
+    public async Task DeleteFollower_ShouldKeepReversedRelationship()
     {
         // Arrange
         var seed = await SeedRelationshipAsync(FollowStatus.Accepted, incoming: false);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
-        var response = await client.DeleteAsync(FollowTestRoutes.RemoveFollower(seed.OtherUserId));
+        var response = await client.DeleteAsync(FollowTestRoutes.DeleteFollower(seed.OtherUserId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -75,17 +74,16 @@ public class RemoveFollowerTests : FollowIntegrationTestBase
     }
 
     [Fact]
-    public async Task RemoveFollower_ShouldReturnBadRequest_WhenFollowerIdIsEmpty()
+    public async Task DeleteFollower_ShouldReturnBadRequest_WhenFollowerIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.DeleteAsync(FollowTestRoutes.RemoveFollower(Guid.Empty));
+        var response = await client.DeleteAsync(FollowTestRoutes.DeleteFollower(Guid.Empty));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -93,13 +91,12 @@ public class RemoveFollowerTests : FollowIntegrationTestBase
 
     private async Task<RelationshipSeed> SeedRelationshipAsync(FollowStatus status, bool incoming)
     {
-        var userSeeder = CreateUserSeeder();
-        var followSeeder = CreateFollowSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var otherUser = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
-        await followSeeder.CreateFollowAsync(
+        await Seeders.Follows.CreateFollowAsync(
             incoming ? otherUser : requester,
             incoming ? requester : otherUser,
             status

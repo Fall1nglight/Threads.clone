@@ -2,13 +2,14 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Data.Follows;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Features.Follows;
 using Threads.Api.IntegrationTests.Follows.TestSupport;
 using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Follows;
 
-public class SendFollowRequestTests : FollowIntegrationTestBase
+public class SendFollowRequestTests : IntegrationTestBase
 {
     public SendFollowRequestTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -22,7 +23,7 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
     )
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
@@ -34,7 +35,7 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
         var before = DateTime.UtcNow;
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(target.Id), null);
+        var response = await client.PostAsync(FollowTestRoutes.SendFollowRequest(target.Id), null);
         var after = DateTime.UtcNow;
 
         // Assert
@@ -50,6 +51,14 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
         persistedFollow.FollowedId.Should().Be(target.Id);
         persistedFollow.Status.Should().Be(expectedStatus);
         persistedFollow.CreatedAtUtc.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+
+        var notification = await Db.Notifications.SingleAsync();
+        notification.TriggeredByUserId.Should().Be(requester.Id);
+        notification.NotifiedUserId.Should().Be(target.Id);
+        notification
+            .Type.Should()
+            .Be(isPrivate ? NotificationType.FollowRequestReceived : NotificationType.Followed);
+        notification.TriggeredAtUtc.Should().Be(persistedFollow.CreatedAtUtc);
     }
 
     [Theory]
@@ -60,17 +69,16 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
     )
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var followSeeder = CreateFollowSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var target = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
-        await followSeeder.CreateFollowAsync(requester, target, status);
+        await Seeders.Follows.CreateFollowAsync(requester, target, status);
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(target.Id), null);
+        var response = await client.PostAsync(FollowTestRoutes.SendFollowRequest(target.Id), null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -78,20 +86,23 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
         var responseBody = await ReadJsonAsync<FollowStatusResponse>(response);
         responseBody.Status.Should().Be(status);
         (await Db.Follows.CountAsync()).Should().Be(1);
+        (await Db.Notifications.CountAsync()).Should().Be(0);
     }
 
     [Fact]
     public async Task SendFollowRequest_ShouldReturnBadRequest_WhenTargetIsRequester()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(requester.Id), null);
+        var response = await client.PostAsync(
+            FollowTestRoutes.SendFollowRequest(requester.Id),
+            null
+        );
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -102,14 +113,16 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
     public async Task SendFollowRequest_ShouldReturnNotFound_WhenTargetDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(Guid.NewGuid()), null);
+        var response = await client.PostAsync(
+            FollowTestRoutes.SendFollowRequest(Guid.NewGuid()),
+            null
+        );
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -120,14 +133,13 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
     public async Task SendFollowRequest_ShouldReturnBadRequest_WhenTargetIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(Guid.Empty), null);
+        var response = await client.PostAsync(FollowTestRoutes.SendFollowRequest(Guid.Empty), null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -142,20 +154,19 @@ public class SendFollowRequestTests : FollowIntegrationTestBase
     )
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var blockSeeder = CreateBlockSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var target = await userSeeder.CreateUserAsync(username: IntegrationTestData.BobUsername);
-        await blockSeeder.CreateUserBlockAsync(
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksTarget ? requester : target,
             requesterBlocksTarget ? target : requester
         );
         var client = await CreateAuthenticatedClientAsync(requester);
 
         // Act
-        var response = await client.PostAsync(FollowTestRoutes.ForTarget(target.Id), null);
+        var response = await client.PostAsync(FollowTestRoutes.SendFollowRequest(target.Id), null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

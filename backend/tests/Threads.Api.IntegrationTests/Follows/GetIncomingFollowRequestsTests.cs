@@ -7,7 +7,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Follows;
 
-public class GetIncomingFollowRequestsTests : FollowIntegrationTestBase
+public class GetIncomingFollowRequestsTests : IntegrationTestBase
 {
     public GetIncomingFollowRequestsTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -16,8 +16,7 @@ public class GetIncomingFollowRequestsTests : FollowIntegrationTestBase
     public async Task GetIncomingFollowRequests_ShouldReturnEmptyPage_WhenNoRequestsExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -38,8 +37,7 @@ public class GetIncomingFollowRequestsTests : FollowIntegrationTestBase
     public async Task GetIncomingFollowRequests_ShouldReturnOnlyUnblockedIncomingPendingUsers()
     {
         // Arrange
-        var scenarioSeeder = CreateFollowRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedListGraphAsync();
+        var seed = await Scenarios.FollowRelationships.SeedListGraphAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -60,8 +58,10 @@ public class GetIncomingFollowRequestsTests : FollowIntegrationTestBase
     public async Task GetIncomingFollowRequests_ShouldReturnNextPageInDescendingOrder()
     {
         // Arrange
-        var scenarioSeeder = CreateFollowRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(FollowListKind.IncomingRequests, 5);
+        var seed = await Scenarios.FollowRelationships.SeedBulkAsync(
+            FollowListKind.IncomingRequests,
+            5
+        );
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
