@@ -6,7 +6,7 @@ using Threads.Api.IntegrationTests.Likes.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Likes;
 
-public class UnlikePostTests : LikeIntegrationTestBase
+public class UnlikePostTests : IntegrationTestBase
 {
     public UnlikePostTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -15,9 +15,8 @@ public class UnlikePostTests : LikeIntegrationTestBase
     public async Task UnlikePost_ShouldRemoveRequesterLikeOnly()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var likeSeeder = CreateLikeSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var likeSeeder = Seeders.Likes;
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         await likeSeeder.CreatePostLikeAsync(seed.Alice, seed.BobPublicPost);
         await likeSeeder.CreatePostLikeAsync(seed.Henry, seed.BobPublicPost);
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
@@ -38,8 +37,7 @@ public class UnlikePostTests : LikeIntegrationTestBase
     public async Task UnlikePost_ShouldReturnNoContent_WhenRequesterHasNotLikedPost()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -54,8 +52,7 @@ public class UnlikePostTests : LikeIntegrationTestBase
     public async Task UnlikePost_ShouldReturnNoContent_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -71,8 +68,7 @@ public class UnlikePostTests : LikeIntegrationTestBase
     public async Task UnlikePost_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);

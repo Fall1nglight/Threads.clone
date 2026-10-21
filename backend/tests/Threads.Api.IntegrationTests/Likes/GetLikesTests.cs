@@ -7,19 +7,19 @@ using Threads.Api.IntegrationTests.Likes.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Likes;
 
-public class GetPostLikesTests : LikeIntegrationTestBase
+public class GetLikesTests : IntegrationTestBase
 {
-    public GetPostLikesTests(CustomWebApplicationFactory factory)
+    public GetLikesTests(CustomWebApplicationFactory factory)
         : base(factory) { }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnEmptyPage_WhenPostHasNoLikes()
+    public async Task GetLikes_ShouldReturnEmptyPage_WhenPostHasNoLikes()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var postSeeder = CreatePostSeeder();
-        var owner = await userSeeder.CreateUserAsync(username: IntegrationTestData.AliceUsername);
-        var post = await postSeeder.CreatePostAsync(owner, IntegrationTestData.ValidContent);
+        var owner = await Seeders.Users.CreateUserAsync(
+            username: IntegrationTestData.AliceUsername
+        );
+        var post = await Seeders.Posts.CreatePostAsync(owner, IntegrationTestData.ValidContent);
         var client = await CreateAuthenticatedClientAsync(owner);
 
         // Act
@@ -35,11 +35,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnVisibleLikersWithCompleteDtoInDescendingOrder()
+    public async Task GetLikes_ShouldReturnVisibleLikersWithCompleteDtoInDescendingOrder()
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.LikeList.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -63,11 +62,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnNextPage_WhenCursorIsProvided()
+    public async Task GetLikes_ShouldReturnNextPage_WhenCursorIsProvided()
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(5);
+        var seed = await Scenarios.LikeList.SeedBulkAsync(5);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
         var route = LikeTestRoutes.ForPost(seed.Post.Id);
 
@@ -88,11 +86,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnNotFound_WhenPostDoesNotExist()
+    public async Task GetLikes_ShouldReturnNotFound_WhenPostDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -105,11 +102,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnNotFound_WhenPostIsNotVisible()
+    public async Task GetLikes_ShouldReturnNotFound_WhenPostIsNotVisible()
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
+        var seed = await Scenarios.PostVisibility.SeedAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Alice);
 
         // Act
@@ -132,15 +128,13 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task GetPostLikes_ShouldReturnNotFound_WhenRequesterAndOwnerAreBlocked(
+    public async Task GetLikes_ShouldReturnNotFound_WhenRequesterAndOwnerAreBlocked(
         bool requesterBlocksOwner
     )
     {
         // Arrange
-        var scenarioSeeder = CreatePostVisibilityScenarioSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedAsync();
-        await blockSeeder.CreateUserBlockAsync(
+        var seed = await Scenarios.PostVisibility.SeedAsync();
+        await Seeders.Blocks.CreateUserBlockAsync(
             requesterBlocksOwner ? seed.Alice : seed.BobPublic,
             requesterBlocksOwner ? seed.BobPublic : seed.Alice
         );
@@ -154,11 +148,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldReturnBadRequest_WhenPostIdIsEmpty()
+    public async Task GetLikes_ShouldReturnBadRequest_WhenPostIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -171,11 +164,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldUseDefaultPageSize()
+    public async Task GetLikes_ShouldUseDefaultPageSize()
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(21);
+        var seed = await Scenarios.LikeList.SeedBulkAsync(21);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -193,11 +185,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]
-    public async Task GetPostLikes_ShouldClampPageSizeToMinimum(int pageSize)
+    public async Task GetLikes_ShouldClampPageSizeToMinimum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(2);
+        var seed = await Scenarios.LikeList.SeedBulkAsync(2);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -216,11 +207,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     [Theory]
     [InlineData(101)]
     [InlineData(500)]
-    public async Task GetPostLikes_ShouldClampPageSizeToMaximum(int pageSize)
+    public async Task GetLikes_ShouldClampPageSizeToMaximum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(101);
+        var seed = await Scenarios.LikeList.SeedBulkAsync(101);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -237,11 +227,10 @@ public class GetPostLikesTests : LikeIntegrationTestBase
     }
 
     [Fact]
-    public async Task GetPostLikes_ShouldTreatInvalidCursorAsFirstPage()
+    public async Task GetLikes_ShouldTreatInvalidCursorAsFirstPage()
     {
         // Arrange
-        var scenarioSeeder = CreateLikeListScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBulkAsync(3);
+        var seed = await Scenarios.LikeList.SeedBulkAsync(3);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
         var route = LikeTestRoutes.ForPost(seed.Post.Id);
 
