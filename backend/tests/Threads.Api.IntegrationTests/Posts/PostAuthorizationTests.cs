@@ -7,7 +7,7 @@ using Threads.Api.IntegrationTests.Posts.TestSupport;
 
 namespace Threads.Api.IntegrationTests.Posts;
 
-public class PostAuthorizationTests : PostIntegrationTestBase
+public class PostAuthorizationTests : IntegrationTestBase
 {
     public PostAuthorizationTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -41,16 +41,18 @@ public class PostAuthorizationTests : PostIntegrationTestBase
     }
 
     [Fact]
-    public async Task ProtectedGetPostEndpoint_ShouldRejectAnonymousRequests()
+    public async Task GetPost_ShouldAllowAnonymousRequests()
     {
         // Arrange
+        var user = await Seeders.Users.CreateUserAsync(username: IntegrationTestData.AliceUsername);
+        var post = await Seeders.Posts.CreatePostAsync(user, IntegrationTestData.ValidContent);
         var client = CreateAnonymousClient();
 
         // Act
-        var response = await client.GetAsync($"/posts/{PostTestData.AuthSmokePostId}");
+        var response = await client.GetAsync($"posts/{post.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -60,7 +62,7 @@ public class PostAuthorizationTests : PostIntegrationTestBase
         var client = CreateAnonymousClient();
 
         // Act
-        var response = await client.DeleteAsync($"/posts/{PostTestData.AuthSmokePostId}");
+        var response = await client.DeleteAsync($"posts/{PostTestData.AuthSmokePostId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
@@ -87,7 +89,7 @@ public class PostAuthorizationTests : PostIntegrationTestBase
         var client = CreateAnonymousClient();
 
         // Act
-        var response = await client.PutAsync($"/posts/{PostTestData.AuthSmokePostId}", null);
+        var response = await client.PutAsync($"posts/{PostTestData.AuthSmokePostId}", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
