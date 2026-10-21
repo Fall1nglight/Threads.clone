@@ -1,7 +1,6 @@
 using FluentAssertions;
 using FluentValidation.Results;
 using Threads.Api.Features.Likes.Endpoints;
-using Threads.Api.UnitTests.TestSupport;
 
 namespace Threads.Api.UnitTests.Likes;
 
@@ -12,7 +11,7 @@ public class LikeValidatorTests
     {
         // Arrange
         var validator = new LikePost.LikePostValidator();
-        var request = CreateLikePostRequest(postId: ValidatorTestData.PrimaryId);
+        var request = LikeRequestFactory.CreateLikePostRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -26,7 +25,7 @@ public class LikeValidatorTests
     {
         // Arrange
         var validator = new LikePost.LikePostValidator();
-        var request = CreateLikePostRequest(postId: Guid.Empty);
+        var request = LikeRequestFactory.CreateLikePostRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -41,7 +40,7 @@ public class LikeValidatorTests
     {
         // Arrange
         var validator = new UnlikePost.UnlikePostValidator();
-        var request = CreateUnlikePostRequest(postId: ValidatorTestData.PrimaryId);
+        var request = LikeRequestFactory.CreateUnlikePostRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -55,7 +54,7 @@ public class LikeValidatorTests
     {
         // Arrange
         var validator = new UnlikePost.UnlikePostValidator();
-        var request = CreateUnlikePostRequest(postId: Guid.Empty);
+        var request = LikeRequestFactory.CreateUnlikePostRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -66,11 +65,11 @@ public class LikeValidatorTests
     }
 
     [Fact]
-    public void GetPostLikesValidator_ShouldPass_WhenPostIdIsNotEmpty()
+    public void GetLikesValidator_ShouldPass_WhenPostIdIsNotEmpty()
     {
         // Arrange
-        var validator = new GetPostLikes.GetPostLikesValidator();
-        var request = CreateGetPostLikesRequest(postId: ValidatorTestData.PrimaryId);
+        var validator = new GetLikes.GetLikesValidator();
+        var request = LikeRequestFactory.CreateGetLikesRequest();
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -80,11 +79,11 @@ public class LikeValidatorTests
     }
 
     [Fact]
-    public void GetPostLikesValidator_ShouldFail_WhenPostIdIsEmpty()
+    public void GetLikesValidator_ShouldFail_WhenPostIdIsEmpty()
     {
         // Arrange
-        var validator = new GetPostLikes.GetPostLikesValidator();
-        var request = CreateGetPostLikesRequest(postId: Guid.Empty);
+        var validator = new GetLikes.GetLikesValidator();
+        var request = LikeRequestFactory.CreateGetLikesRequest(postId: Guid.Empty);
 
         // Act
         ValidationResult result = validator.Validate(request);
@@ -93,13 +92,4 @@ public class LikeValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(request.PostId));
     }
-
-    private static LikePost.Request CreateLikePostRequest(Guid? postId = null) =>
-        new(postId ?? ValidatorTestData.PrimaryId);
-
-    private static UnlikePost.Request CreateUnlikePostRequest(Guid? postId = null) =>
-        new(postId ?? ValidatorTestData.PrimaryId);
-
-    private static GetPostLikes.Request CreateGetPostLikesRequest(Guid? postId = null) =>
-        new(postId ?? ValidatorTestData.PrimaryId, Cursor: null);
 }
