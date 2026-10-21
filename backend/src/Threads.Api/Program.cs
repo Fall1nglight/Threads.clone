@@ -1,9 +1,25 @@
-using Microsoft.AspNetCore.Builder;
+using Serilog;
+using Threads.Api.Startup;
 
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
 
-app.MapGet("/api", () => "Hello World!");
-app.Map("/api/test", () => "test123");
+try
+{
+    Log.Information("Starting Threads.Api");
 
-app.Run();
+    var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddApiServices(builder.Configuration);
+
+    var app = builder.Build();
+    app.UseMiddlewares();
+    app.MapEndpoints();
+    app.Run();
+}
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

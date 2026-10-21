@@ -44,4 +44,4 @@ _ReSharper*/
 __screenshots__/
 
 # Vite
-*.timestamp-*-*.mjs
+*.createdAtUtc-*-*.mjs

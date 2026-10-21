@@ -15,3 +15,10 @@ Desktop.ini
 *.temp
 *.bak
 *.log
+
+.codex/
+.agents/
+
+.playwright-cli/
+.codex-tmp/
+/node_modules/

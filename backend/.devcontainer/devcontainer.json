@@ -8,12 +8,16 @@
     "postgres-db"
   ],
   
+  forwardPorts: [
+    8080
+  ],
+  
   "remoteUser": "root",
-  "workspaceFolder": "/workspaces/backend",
+  "workspaceFolder": "/workspaces/threads/backend",
   "shutdownAction": "stopCompose",
   "overrideCommand": false,
   
-  "postCreateCommand": "dotnet restore /workspaces/backend/Threads.sln && dotnet tool restore",
+  "postCreateCommand": "git config --global --add safe.directory /workspaces/threads && dotnet restore /workspaces/threads/backend/Threads.sln && dotnet tool restore",
   
   "customizations": {
     "jetbrains": {
