@@ -4,241 +4,275 @@ import ProfileHeader from '@/features/users/components/ProfileHeader.vue'
 import ProfileTabs from '@/features/users/components/ProfileTabs.vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { useFetch } from '@/shared/composables/fetch.ts'
+import { useFetch } from '@/shared/composables/useFetch.ts'
+import { usePaginatedFetch } from '@/shared/composables/usePaginatedFetch.ts'
 import userApi from '@/features/users/userApi.ts'
 import postApi from '@/features/posts/postApi.ts'
-import likeApi from '@/features/posts/likeApi.ts'
-import FeedLoadMoreTrigger from '@/features/posts/components/FeedLoadMoreTrigger.vue'
+import PaginationObserver from '@/shared/components/PaginationObserver.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { FollowStatus } from '@/features/follow/followTypes.ts'
-import followApi from '@/features/follow/followApi.ts'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
 import blockApi from '@/features/block/blockApi.ts'
+import { useLoginPrompt } from '@/features/auth/composables/useLoginPrompt.ts'
+import { useToggleLike } from '@/features/posts/composables/useToggleLike.ts'
+import { useToggleFollow } from '@/features/follow/composables/useToggleFollow.ts'
+import { useModalStore } from '@/shared/modal/modalStore.ts'
+import BaseLoader from '@/shared/components/BaseLoader.vue'
+import BaseErrorMessage from '@/shared/components/BaseErrorMessage.vue'
+import BaseEmptyMessage from '@/shared/components/BaseEmptyMessage.vue'
+import { getInitials } from '@/shared/helpers/profileInitials.ts'
+
+const { runOrShowLoginForm } = useLoginPrompt()
 
 const router = useRouter()
 const route = useRoute()
-
+const modalStore = useModalStore()
 const authStore = useAuthStore()
-const { user } = storeToRefs(authStore)
+const { isLoggedIn, loggedInUserId } = storeToRefs(authStore)
 
-const userId = computed<string>(() => String(route.params.userId))
-const isProfileActionsOpen = ref(false)
-const profileActions = useTemplateRef<HTMLElement>('profileActions')
+const userId = computed(() => String(route.params.userId))
+const { state: profileState } = useFetch(userId, (currentUserId) => userApi.getUser(currentUserId))
+const profile = computed(() =>
+  profileState.value.status === 'success' ? profileState.value.item : null,
+)
+const isOwnProfile = computed(() => profile.value?.id === loggedInUserId.value)
 
-function toggleProfileActions() {
-  isProfileActionsOpen.value = !isProfileActionsOpen.value
-}
+const { toggleLike } = useToggleLike()
 
-function closeProfileActions(restoreFocus = false) {
-  isProfileActionsOpen.value = false
-
-  if (restoreFocus) {
-    nextTick(() => profileActions.value?.querySelector<HTMLButtonElement>('button')?.focus())
-  }
-}
-
-function handleDocumentPointerDown(event: PointerEvent) {
-  if (!isProfileActionsOpen.value) return
-  if (!(event.target instanceof Node)) return
-  if (profileActions.value?.contains(event.target)) return
-
-  closeProfileActions()
-}
-
-onMounted(() => document.addEventListener('pointerdown', handleDocumentPointerDown))
-onBeforeUnmount(() => document.removeEventListener('pointerdown', handleDocumentPointerDown))
-watch(userId, () => closeProfileActions())
-
+// ========= POSTS =========
 const {
-  status: profileStatus,
-  data: profile,
-  error: profileError,
-} = useFetch(() => userApi.getUser(userId.value))
+  state: postsState,
+  canLoadMore: canLoadMorePosts,
+  loadMore: loadMorePosts,
+} = usePaginatedFetch(userId, (currentUserId, request) =>
+  postApi.getPostsForUser(currentUserId, request),
+)
 
-const {
-  status: postStatus,
-  data: posts,
-  error: postError,
-} = useFetch(() => postApi.getPostsForUser(userId.value))
+const posts = computed(() => ('items' in postsState.value ? postsState.value.items : null))
 
-async function handleLike(id: string, nextLikeState: boolean) {
-  const post = posts.value?.items.find((post) => post.id === id)
-  if (!post) return
+const messageIfNoPosts = computed(() =>
+  isOwnProfile.value ? 'You have no posts yet.' : 'This user has no posts.',
+)
 
-  try {
-    if (nextLikeState) {
-      await likeApi.likePost(post.id)
-    } else {
-      await likeApi.unlikePost(post.id)
-    }
+// ========= EVENTS =========
 
-    if (nextLikeState == post.isLikedByCurrentUser) return
-
-    post.isLikedByCurrentUser = nextLikeState
-    post.likeCount = Math.max(0, post.likeCount + (nextLikeState ? 1 : -1))
-  } catch (err) {
-    console.error(err)
-  }
-}
-
-async function loadMore() {
-  if (!posts.value?.hasMore) return
-  if (!posts.value?.cursor) return
-
-  try {
-    const response = await postApi.getPostsForUser(userId.value, {
-      pageSize: 5,
-      cursor: posts.value.cursor,
-    })
-
-    posts.value.items.push(...response.items)
-    posts.value.hasMore = response.hasMore
-    posts.value.cursor = response.cursor ?? null
-  } catch (err) {
-    console.error(err)
-  }
-}
+const { toggleFollow } = useToggleFollow()
 
 async function handleFollow() {
   if (!profile.value) return
 
-  try {
-    switch (profile.value.followStatusWithCurrentUser) {
-      // Pending => already sent follow request
-      // action => remove outgoing Pending follow request
-      case FollowStatus.Pending:
-        await followApi.removeFollowedUser(userId.value)
-        profile.value.followStatusWithCurrentUser = null
-        profile.value.followerCount = Math.max(0, profile.value.followerCount - 1)
-        break
+  const followResult = await toggleFollow(profile.value)
+  if (!followResult) return
 
-      case FollowStatus.Accepted:
-        await followApi.removeFollowedUser(userId.value)
-        profile.value.followStatusWithCurrentUser = null
-        profile.value.followerCount = Math.max(0, profile.value.followerCount - 1)
-        break
+  if (followResult.action === 'followed' && followResult.status === FollowStatus.Accepted) {
+    profile.value.followerCount++
+    return
+  }
 
-      case null:
-        const result = await followApi.sendFollowRequest(userId.value)
-        profile.value.followStatusWithCurrentUser = result.status
-        if (result.status == FollowStatus.Accepted) profile.value.followerCount++
-        break
-    }
-  } catch (err) {
-    console.error(err)
+  // user has been unfollowed
+  if (followResult.action === 'removed' && followResult.previousStatus === FollowStatus.Accepted) {
+    profile.value.followerCount = Math.max(0, profile.value.followerCount - 1)
   }
 }
 
 async function handleBlock() {
   if (!confirm('Are you sure you want to block this user?')) return
-  closeProfileActions(true)
+  closeProfileActionsMenu(true)
   if (!profile.value) return
 
   try {
     await blockApi.blockUser(profile.value.id)
-    router.push('/')
+    await router.replace({ name: 'home' })
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    console.error(err)
+    modalStore.openAlertModal('Failed to block user. Please try again later!')
   }
 }
+
+// ========= Helpers =========
+function navigateToPost(postId: string) {
+  router.replace({ name: 'post-detail', params: { postId } })
+}
+
+// ========= MENU =========
+const isProfileActionsMenuOpen = ref(false)
+const profileActionsMenu = useTemplateRef<HTMLElement>('profileActionsMenu')
+const profileActionsMenuPanelId = 'visitedProfile-actions-panel'
+
+function toggleProfileActionsMenu() {
+  isProfileActionsMenuOpen.value = !isProfileActionsMenuOpen.value
+}
+
+function closeProfileActionsMenu(restoreFocus = false) {
+  if (!isProfileActionsMenuOpen.value) return
+
+  isProfileActionsMenuOpen.value = false
+
+  if (restoreFocus) {
+    nextTick(() => profileActionsMenu.value?.querySelector<HTMLButtonElement>('button')?.focus())
+  }
+}
+
+function handleDocumentPointerDown(event: PointerEvent) {
+  if (!isProfileActionsMenuOpen.value) return
+  if (!(event.target instanceof Node)) return
+  if (profileActionsMenu.value?.contains(event.target)) return
+
+  closeProfileActionsMenu()
+}
+
+onMounted(() => document.addEventListener('pointerdown', handleDocumentPointerDown))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', handleDocumentPointerDown))
+watch(userId, () => closeProfileActionsMenu())
+watch(isLoggedIn, (isLoggedIn) => {
+  if (!isLoggedIn) closeProfileActionsMenu()
+})
 </script>
 
 <template>
-  <div v-if="profileStatus == 'loading'">
-    <h1>Loading...</h1>
-  </div>
-  <div v-else-if="profileStatus == 'error'">
-    <h1>Failed to load user profile.</h1>
-  </div>
-  <div v-else-if="profile">
-    <ProfileHeader
-      :user-id="profile.id"
-      :username="profile.username"
-      :initials="profile.username.slice(0, 2)"
-      :bio="profile.bio ?? ''"
-      :follower-count="profile.followerCount + ''"
-      :following-count="profile.followingCount + ''"
-      :show-follow-button="profile.id !== user?.id"
-      :follow-status="profile.followStatusWithCurrentUser"
-      @handle-follow="handleFollow"
+  <Transition name="async-fade" mode="out-in">
+    <BaseLoader
+      v-if="profileState.status === 'loading'"
+      key="profile-loader"
+      message="Loading profile..."
+    />
+
+    <div
+      v-else-if="profileState.status === 'error'"
+      key="profile-error"
+      class="profile-view__error"
     >
-      <template #actions>
-        <div
-          ref="profileActions"
-          class="profile-actions"
-          @keydown.esc.stop.prevent="closeProfileActions(true)"
-        >
-          <BaseIconButton
-            aria-controls="profile-actions-panel"
-            :aria-expanded="isProfileActionsOpen"
-            :active="isProfileActionsOpen"
-            label="More profile options"
-            @click="toggleProfileActions"
-          >
-            <AppIcon name="more" />
-          </BaseIconButton>
+      <BaseErrorMessage message="Failed to load this profile. Please try again later!" />
+    </div>
 
+    <div v-else-if="profile" key="profile-content">
+      <ProfileHeader
+        :user-id="profile.id"
+        :username="profile.username"
+        :initials="getInitials(profile.username)"
+        :bio="profile.bio"
+        :follower-count="profile.followerCount"
+        :following-count="profile.followingCount"
+        :show-button="!isOwnProfile && isLoggedIn"
+        :follow-status-with-current-user="profile.followStatusWithCurrentUser"
+        @handle-follow="runOrShowLoginForm(handleFollow)"
+      >
+        <template v-if="isLoggedIn" #actions>
           <div
-            v-if="isProfileActionsOpen"
-            id="profile-actions-panel"
-            aria-label="Profile actions"
-            class="profile-actions__panel"
-            role="group"
+            ref="profileActionsMenu"
+            class="profile-actions"
+            @keydown.esc.stop.prevent="closeProfileActionsMenu(true)"
           >
-            <RouterLink
-              v-if="profile.id === user?.id"
-              class="profile-actions__item"
-              :to="{ name: 'blocked-users' }"
-              @click="closeProfileActions()"
+            <BaseIconButton
+              :aria-controls="profileActionsMenuPanelId"
+              :aria-expanded="isProfileActionsMenuOpen"
+              :active="isProfileActionsMenuOpen"
+              label="More profile options"
+              @click="toggleProfileActionsMenu"
             >
-              View blocked users
-            </RouterLink>
-            <button
-              v-else
-              class="profile-actions__item profile-actions__item--danger"
-              type="button"
-              @click="handleBlock"
+              <AppIcon name="more" />
+            </BaseIconButton>
+
+            <div
+              v-if="isProfileActionsMenuOpen"
+              :id="profileActionsMenuPanelId"
+              aria-label="Profile actions"
+              class="profile-actions__panel"
+              role="group"
             >
-              Block user
-            </button>
+              <RouterLink
+                v-if="isOwnProfile"
+                :to="{ name: 'blocked-users' }"
+                aria-label="View blocked users"
+                class="profile-actions__item"
+                @click="closeProfileActionsMenu()"
+              >
+                View blocked users
+              </RouterLink>
+
+              <button
+                v-else
+                class="profile-actions__item profile-actions__item--danger"
+                type="button"
+                @click="handleBlock"
+              >
+                Block user
+              </button>
+            </div>
           </div>
-        </div>
-      </template>
-    </ProfileHeader>
+        </template>
+      </ProfileHeader>
 
-    <ProfileTabs />
+      <ProfileTabs />
 
-    <section aria-label="Profile threads">
-      <div v-if="posts?.items">
-        <PostCard
-          v-for="post in posts.items"
-          :key="post.id"
-          :content="post.content"
-          :post-id="post.id"
-          :user-id="post.user.id"
-          :author-name="post.user.username"
-          :username="post.user.username"
-          :avatar-initials="post.user.username.slice(0, 2)"
-          :createdAtUtc="post.createdAtUtc"
-          :updated-at-utc="post.updatedAtUtc"
-          :comment-count="post.commentCount"
-          :like-count="post.likeCount"
-          :is-liked-by-current-user="post.isLikedByCurrentUser"
-          @toggle-like="handleLike"
-          @show-comments="router.push({ name: 'post-detail', params: { postId: post.id } })"
-          detail
-          threaded
-        />
+      <section aria-label="Profile threads">
+        <Transition name="async-fade" mode="out-in">
+          <BaseLoader
+            v-if="postsState.status === 'initial-loading'"
+            key="profile-posts-loader"
+            message="Loading posts..."
+          />
 
-        <FeedLoadMoreTrigger v-if="posts?.hasMore && posts?.cursor" @visible="loadMore" />
-      </div>
-    </section>
-  </div>
+          <BaseErrorMessage
+            v-else-if="postsState.status === 'initial-error'"
+            key="profile-posts-error"
+            message="Failed to load posts. Please try again later!"
+          />
+
+          <div v-else-if="posts" key="profile-posts-content">
+            <TransitionGroup name="async-list-fade">
+              <PostCard
+                v-for="post in posts"
+                :key="post.id"
+                :content="post.content"
+                :post-id="post.id"
+                :user-id="post.user.id"
+                :author-name="post.user.username"
+                :username="post.user.username"
+                :avatar-initials="getInitials(post.user.username)"
+                :createdAtUtc="post.createdAtUtc"
+                :updated-at-utc="post.updatedAtUtc"
+                :comment-count="post.commentCount"
+                :like-count="post.likeCount"
+                :is-liked-by-current-user="post.isLikedByCurrentUser"
+                @toggle-like="toggleLike(post)"
+                @show-comments="navigateToPost(post.id)"
+                detail
+                threaded
+              />
+            </TransitionGroup>
+
+            <BaseEmptyMessage v-if="!posts.length" :message="messageIfNoPosts" />
+
+            <PaginationObserver v-if="canLoadMorePosts" @visible="loadMorePosts" />
+
+            <Transition name="async-fade" mode="out-in">
+              <BaseLoader
+                v-if="postsState.status === 'more-loading'"
+                key="profile-posts-more-loader"
+                message="Loading more posts..."
+              />
+
+              <BaseErrorMessage
+                v-else-if="postsState.status === 'more-error'"
+                key="profile-posts-more-error"
+                message="Failed to load more posts. Please try again later!"
+              />
+            </Transition>
+          </div>
+        </Transition>
+      </section>
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
+.profile-view__error {
+  display: flow-root;
+}
+
 .profile-actions {
   position: relative;
   display: flex;
