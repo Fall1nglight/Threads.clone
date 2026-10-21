@@ -5,6 +5,6 @@
 }
 
 export type PagedRequest = {
-  cursor?: string
+  cursor: string | null
   pageSize: number
 }
