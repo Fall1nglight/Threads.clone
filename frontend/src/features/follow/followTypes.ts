@@ -3,7 +3,7 @@
   username: string
   isPrivate: boolean
   createdAtUtc: string
-  followStatusWithCurrentUser?: FollowStatus | null
+  followStatusWithCurrentUser: FollowStatus | null
 }
 
 export enum FollowStatus {
