@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import AppIcon from '@/shared/icons/AppIcon.vue'
-import BaseAvatar from '@/shared/ui/BaseAvatar.vue'
-import BaseIconButton from '@/shared/ui/BaseIconButton.vue'
-import { onBeforeUnmount, ref, toRefs, useId, useTemplateRef, watch } from 'vue'
-import BaseTextField from '@/shared/ui/BaseTextField.vue'
-import BaseButton from '@/shared/ui/BaseButton.vue'
+import { type RouteLocationRaw, RouterLink } from 'vue-router'
+import AppIcon from '@/app/components/AppIcon.vue'
+import BaseAvatar from '@/shared/components/BaseAvatar.vue'
+import BaseIconButton from '@/shared/components/BaseIconButton.vue'
+import { computed, onBeforeUnmount, ref, toRefs, useId, useTemplateRef, watch } from 'vue'
+import BaseTextAreaField from '@/shared/components/BaseTextAreaField.vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
 import { useDateFormatter } from '@/shared/composables/useDateFormatter.ts'
 
 const props = withDefaults(
@@ -33,47 +33,61 @@ const { createdAtUtc, updatedAtUtc, isSubmitting, validationErrorMessage } = toR
 const { formattedDate: formattedCreatedAtUtc } = useDateFormatter(createdAtUtc)
 const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 
-const isEditing = ref<boolean>(false)
+const authorPage = computed<RouteLocationRaw>(() => ({
+  name: 'user-profile',
+  params: { userId: props.userId },
+}))
+const authorPageDesc = computed(() => `View ${props.authorName}'s profile`)
+const authorAvatarDesc = computed(() => `${props.authorName}'s avatar`)
 
 const emit = defineEmits<{
   deleteComment: [commentId: string]
   editComment: [commentId: string, content: string]
 }>()
 
-const isCommentActionsOpen = ref(false)
-const commentActions = useTemplateRef<HTMLElement>('commentActions')
-const commentActionsPanelId = `comment-actions-${useId()}`
+const isCommentActionsMenuOpen = ref(false)
+const commentActionsMenu = useTemplateRef<HTMLElement>('commentActionsMenu')
+const commentActionsMenuPanelId = `comment-actions-${useId()}`
 
-function toggleCommentActions() {
-  isCommentActionsOpen.value = !isCommentActionsOpen.value
+function toggleCommentActionsMenu() {
+  isCommentActionsMenuOpen.value = !isCommentActionsMenuOpen.value
 }
 
-function closeCommentActions(restoreFocus = false) {
-  if (!isCommentActionsOpen.value) return
+function handleActionsButtonClick() {
+  if (isEditing.value) {
+    isEditing.value = false
+    return
+  }
 
-  isCommentActionsOpen.value = false
+  toggleCommentActionsMenu()
+}
+
+function closeCommentActionsMenu(restoreFocus = false) {
+  if (!isCommentActionsMenuOpen.value) return
+
+  isCommentActionsMenuOpen.value = false
 
   if (restoreFocus) {
-    commentActions.value?.querySelector<HTMLButtonElement>('button[aria-expanded]')?.focus()
+    commentActionsMenu.value?.querySelector<HTMLButtonElement>('button[aria-expanded]')?.focus()
   }
 }
 
 function handleDocumentPointerDown(event: PointerEvent) {
-  if (!isCommentActionsOpen.value || !(event.target instanceof Node)) return
-  if (commentActions.value?.contains(event.target)) return
+  if (!isCommentActionsMenuOpen.value || !(event.target instanceof Node)) return
+  if (commentActionsMenu.value?.contains(event.target)) return
 
-  closeCommentActions()
+  closeCommentActionsMenu()
 }
 
 function handleDocumentFocusIn(event: FocusEvent) {
-  if (!isCommentActionsOpen.value || !(event.target instanceof Node)) return
-  if (commentActions.value?.contains(event.target)) return
+  if (!isCommentActionsMenuOpen.value || !(event.target instanceof Node)) return
+  if (commentActionsMenu.value?.contains(event.target)) return
 
-  closeCommentActions()
+  closeCommentActionsMenu()
 }
 
 function handleViewportResize() {
-  closeCommentActions()
+  closeCommentActionsMenu()
 }
 
 function removeOpenMenuListeners() {
@@ -82,7 +96,7 @@ function removeOpenMenuListeners() {
   window.removeEventListener('resize', handleViewportResize)
 }
 
-watch(isCommentActionsOpen, (isOpen) => {
+watch(isCommentActionsMenuOpen, (isOpen) => {
   if (!isOpen) {
     removeOpenMenuListeners()
     return
@@ -96,74 +110,92 @@ watch(isCommentActionsOpen, (isOpen) => {
 watch(
   () => props.showMoreOptions,
   (showMoreOptions) => {
-    if (!showMoreOptions) closeCommentActions()
+    if (!showMoreOptions) closeCommentActionsMenu()
   },
 )
 
 onBeforeUnmount(removeOpenMenuListeners)
 
 function handleDeleteComment(commentId: string) {
-  closeCommentActions()
+  closeCommentActionsMenu()
   if (!confirm('Are you sure you want to delete this comment?')) return
   emit('deleteComment', commentId)
 }
 
 function toggleIsEditing() {
-  closeCommentActions()
+  closeCommentActionsMenu()
   isEditing.value = !isEditing.value
 }
-
-const newContent = ref(props.content)
-
-watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationErrorMessage]) => {
-  if (isEditing.value && !newIsSubmitting && !newValidationErrorMessage) {
-    isEditing.value = false
-  }
+const isEditing = ref<boolean>(false)
+const newContent = ref<string>(props.content)
+const apiError = defineModel<boolean>('apiError', {
+  default: false,
 })
+
+watch(
+  [isSubmitting, validationErrorMessage, apiError],
+  ([newIsSubmitting, newValidationErrorMessage, newApiError]) => {
+    if (isEditing.value && !newIsSubmitting && !newValidationErrorMessage && !newApiError) {
+      isEditing.value = false
+    }
+  },
+)
 </script>
 
 <template>
-  <article class="comment-card">
-    <RouterLink
-      :aria-label="`View ${authorName}'s profile`"
-      class="comment-card__avatar-link"
-      :to="`/users/${userId}`"
-    >
-      <BaseAvatar :initials="avatarInitials" :label="`${authorName}'s avatar`" />
+  <article
+    :class="[
+      'comment-card',
+      {
+        'comment-card--editing': isEditing,
+        'comment-card--has-actions': showMoreOptions,
+        'comment-card--menu-open': isCommentActionsMenuOpen,
+      },
+    ]"
+  >
+    <RouterLink :to="authorPage" :aria-label="authorPageDesc" class="comment-card__avatar-link">
+      <BaseAvatar :initials="avatarInitials" :label="authorAvatarDesc" />
     </RouterLink>
 
     <div class="comment-card__body">
       <header class="comment-card__header">
         <div class="comment-card__identity">
-          <RouterLink class="comment-card__author" :to="`/users/${userId}`">
+          <RouterLink :to="authorPage" :aria-label="authorPageDesc" class="comment-card__author">
             {{ authorName }}
           </RouterLink>
+
           <AppIcon v-if="verified" class="comment-card__verified" name="verified" />
+
           <span aria-hidden="true">·</span>
+
           <time v-if="formattedCreatedAtUtc" class="comment-card__timestamp">
             {{ formattedCreatedAtUtc }}
           </time>
         </div>
 
+        <time v-if="formattedUpdatedAtUtc && !isEditing" class="comment-card__updated-at">
+          Updated {{ formattedUpdatedAtUtc }}
+        </time>
+
         <div
           v-if="showMoreOptions"
-          ref="commentActions"
+          ref="commentActionsMenu"
           class="comment-card__actions"
-          @keydown.esc.stop.prevent="closeCommentActions(true)"
+          @keydown.esc.stop.prevent="closeCommentActionsMenu(true)"
         >
           <BaseIconButton
-            :aria-controls="commentActionsPanelId"
-            :aria-expanded="isCommentActionsOpen"
-            :active="isCommentActionsOpen"
-            label="More comment options"
-            @click="toggleCommentActions"
+            :aria-controls="isEditing ? undefined : commentActionsMenuPanelId"
+            :aria-expanded="isEditing ? undefined : isCommentActionsMenuOpen"
+            :active="isCommentActionsMenuOpen"
+            :label="isEditing ? 'Cancel comment editing' : 'More comment options'"
+            @click="handleActionsButtonClick"
           >
-            <AppIcon name="more" />
+            <AppIcon :name="isEditing ? 'close' : 'more'" />
           </BaseIconButton>
 
           <div
-            v-if="isCommentActionsOpen"
-            :id="commentActionsPanelId"
+            v-if="isCommentActionsMenuOpen"
+            :id="commentActionsMenuPanelId"
             aria-label="Comment actions"
             class="comment-card__actions-panel"
             role="group"
@@ -171,6 +203,7 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
             <button class="comment-card__action-item" type="button" @click="toggleIsEditing">
               Edit comment
             </button>
+
             <button
               class="comment-card__action-item comment-card__action-item--danger"
               type="button"
@@ -184,27 +217,35 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
 
       <div class="comment-card__content-row">
         <div v-if="isEditing" class="comment-card__editor">
-          <form @submit.prevent="emit('editComment', id, newContent)">
-            <BaseTextField
+          <form
+            class="comment-card__editor-form"
+            @submit.prevent="emit('editComment', id, newContent)"
+          >
+            <BaseTextAreaField
               v-model="newContent"
+              @keydown.ctrl.enter.prevent="emit('editComment', id, newContent)"
+              :id="`update-comment-content-${id}`"
+              :disabled="isSubmitting"
               :error-message="validationErrorMessage"
-              id="update-comment-content"
-              label=""
+              class="comment-card__editor-field"
+              label="Comment content"
+              visually-hidden-label
             />
 
             <BaseButton
+              class="comment-card__editor-submit"
+              :disabled="isSubmitting || !newContent.trim() || newContent === content"
               :is-loading="isSubmitting"
               loading-text="Saving..."
+              size="compact"
               type="submit"
-              variant="primary"
-              >Save changes</BaseButton
+              variant="secondary"
             >
+              Save changes
+            </BaseButton>
           </form>
         </div>
         <p v-else class="comment-card__content">{{ content }}</p>
-        <time v-if="formattedUpdatedAtUtc" class="comment-card__updated-at">
-          Updated {{ formattedUpdatedAtUtc }}
-        </time>
       </div>
     </div>
   </article>
@@ -212,11 +253,28 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
 
 <style scoped>
 .comment-card {
+  --comment-content-offset: 0.75rem;
+  --comment-spacing: 2rem;
+
+  position: relative;
   display: grid;
+  height: 7.5rem;
   padding: var(--space-4);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
-  border-block-end: 1px solid var(--color-border);
+}
+
+.comment-card + .comment-card {
+  margin-block-start: var(--comment-spacing);
+}
+
+.comment-card--editing {
+  height: auto;
+  min-height: 7.5rem;
+}
+
+.comment-card--menu-open {
+  z-index: 1;
 }
 
 .comment-card__avatar-link {
@@ -226,7 +284,9 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
 }
 
 .comment-card__body {
+  display: grid;
   min-width: 0;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .comment-card__header {
@@ -249,9 +309,19 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
 }
 
 .comment-card__actions {
-  position: relative;
+  position: absolute;
+  inset-block-start: calc(50% + var(--space-2));
+  inset-inline-end: var(--space-4);
   display: flex;
   flex: 0 0 auto;
+  transform: translateY(-50%);
+}
+
+.comment-card--editing .comment-card__actions {
+  position: relative;
+  inset: auto;
+  margin-inline-start: auto;
+  transform: none;
 }
 
 .comment-card__actions-panel {
@@ -328,24 +398,51 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
 }
 
 .comment-card__timestamp {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.comment-card__timestamp {
-  min-width: 0;
-}
-
 .comment-card__content-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  min-height: 0;
+  margin-block-start: var(--comment-content-offset);
+  align-items: center;
   gap: var(--space-2);
+}
+
+.comment-card--has-actions:not(.comment-card--editing) .comment-card__content-row {
+  padding-inline-end: calc(var(--control-height) + var(--space-4));
 }
 
 .comment-card__editor {
   min-width: 0;
   flex: 0 0 100%;
+}
+
+.comment-card__editor-form {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-2) var(--space-3);
+}
+
+.comment-card__editor-field {
+  min-width: 0;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.comment-card__editor-field :deep(.base-field__input) {
+  height: 6.25rem;
+  min-height: 6.25rem;
+}
+
+.comment-card__editor-submit {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
 }
 
 .comment-card__updated-at {
@@ -363,5 +460,54 @@ watch([isSubmitting, validationErrorMessage], ([newIsSubmitting, newValidationEr
   overflow-wrap: anywhere;
   line-height: 1.5;
   text-wrap: pretty;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 47.999rem) {
+  .comment-card {
+    height: auto;
+    min-height: 7.5rem;
+  }
+
+  .comment-card__header,
+  .comment-card__identity {
+    min-width: 0;
+  }
+
+  .comment-card__identity {
+    overflow: hidden;
+  }
+
+  .comment-card__actions {
+    position: relative;
+    inset: auto;
+    margin-inline-start: auto;
+    transform: none;
+  }
+
+  .comment-card--has-actions:not(.comment-card--editing) .comment-card__content-row {
+    padding-inline-end: 0;
+  }
+
+  .comment-card__updated-at {
+    display: none;
+  }
+
+  .comment-card__editor-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .comment-card__editor-field {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .comment-card__editor-submit {
+    margin-block-start: var(--space-2);
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-self: end;
+  }
 }
 </style>
