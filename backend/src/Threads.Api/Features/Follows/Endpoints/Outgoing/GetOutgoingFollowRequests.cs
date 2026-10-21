@@ -6,34 +6,32 @@ using Threads.Api.Data.Follows;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 
-namespace Threads.Api.Features.Follows.Endpoints;
+namespace Threads.Api.Features.Follows.Endpoints.Outgoing;
 
-public class GetUserFollowers : IEndpoint
+public class GetOutgoingFollowRequests : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("/{userId}/followers", Handle).WithSummary("Retrieves followers");
+        builder
+            .MapGet("/follow-requests/outgoing", Handle)
+            .WithSummary("Retrieves outgoing pending follow requests");
     }
 
-    public record Request(Guid UserId, string? Cursor, int PageSize = 20);
-
     private static async Task<Ok<PagedResponse<FollowUserDto>>> Handle(
-        [AsParameters] Request request,
+        [AsParameters] PagedRequest request,
         AppDbContext db,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
-        var pagedRequest = new PagedRequest(request.Cursor, request.PageSize);
-
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var users = await db
             .Follows.Where(follow =>
-                follow.FollowedId == request.UserId && follow.Status == FollowStatus.Accepted
+                follow.FollowerId == loggedInUserId && follow.Status == FollowStatus.Pending
             )
             .WhereParticipantsHaveNoBlockRelationship(db)
-            .ToExtendedFollowerDto(currentUserId, db)
-            .ToPagedResponse(pagedRequest, cancellationToken);
+            .ToFollowedDto(loggedInUserId, db)
+            .ToPagedResponse(request, cancellationToken);
 
         return TypedResults.Ok(users);
     }

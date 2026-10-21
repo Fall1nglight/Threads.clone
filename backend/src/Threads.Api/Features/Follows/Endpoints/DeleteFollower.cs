@@ -9,7 +9,7 @@ using Threads.Api.Data.Shared.Interfaces;
 
 namespace Threads.Api.Features.Follows.Endpoints;
 
-public class RemoveFollower : IEndpoint
+public class DeleteFollower : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
@@ -21,9 +21,9 @@ public class RemoveFollower : IEndpoint
 
     public record Request(Guid FollowerId);
 
-    public class RemoveFollowerValidator : AbstractValidator<Request>
+    public class DeleteFollowerValidator : AbstractValidator<Request>
     {
-        public RemoveFollowerValidator()
+        public DeleteFollowerValidator()
         {
             RuleFor(x => x.FollowerId).NotEmpty();
         }
@@ -36,11 +36,11 @@ public class RemoveFollower : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
         var follow = await db.Follows.FirstOrDefaultAsync(
             follow =>
                 follow.FollowerId == request.FollowerId
-                && follow.FollowedId == currentUserId
+                && follow.FollowedId == loggedInUserId
                 && follow.Status == FollowStatus.Accepted,
             cancellationToken
         );

@@ -4,26 +4,27 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Follows;
+using Threads.Api.Data.Notifications;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
 
-namespace Threads.Api.Features.Follows.Endpoints;
+namespace Threads.Api.Features.Follows.Endpoints.Incoming;
 
-public class AcceptIncomingFollowRequest : IEndpoint
+public class RejectIncomingFollowRequest : IEndpoint
 {
     public static void Map(IEndpointRouteBuilder builder)
     {
         builder
-            .MapPost("/requests/incoming/{followerId}/accept", Handle)
+            .MapPost("/follow-requests/incoming/{followerId}/reject", Handle)
             .WithValidation<Request>()
-            .WithSummary("Accepts an incoming follow request");
+            .WithSummary("Rejects an incoming follow request");
     }
 
     public record Request(Guid FollowerId);
 
-    public class AcceptIncomingFollowRequestValidator : AbstractValidator<Request>
+    public class RejectIncomingFollowRequestValidator : AbstractValidator<Request>
     {
-        public AcceptIncomingFollowRequestValidator()
+        public RejectIncomingFollowRequestValidator()
         {
             RuleFor(x => x.FollowerId).NotEmpty();
         }
@@ -36,14 +37,14 @@ public class AcceptIncomingFollowRequest : IEndpoint
         CancellationToken cancellationToken
     )
     {
-        var currentUserId = claimsPrincipal.GetUserId();
+        var loggedInUserId = claimsPrincipal.GetUserId();
 
         var follow = await db
             .Follows.WhereParticipantsHaveNoBlockRelationship(db)
             .FirstOrDefaultAsync(
                 follow =>
                     follow.FollowerId == request.FollowerId
-                    && follow.FollowedId == currentUserId
+                    && follow.FollowedId == loggedInUserId
                     && follow.Status == FollowStatus.Pending,
                 cancellationToken
             );
@@ -51,8 +52,20 @@ public class AcceptIncomingFollowRequest : IEndpoint
         if (follow == null)
             return TypedResults.NotFound();
 
-        follow.Status = FollowStatus.Accepted;
+        var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        await db
+            .Notifications.Where(notification =>
+                notification.TriggeredByUserId == request.FollowerId
+                && notification.NotifiedUserId == loggedInUserId
+                && notification.Type == NotificationType.FollowRequestReceived
+            )
+            .ExecuteDeleteAsync(cancellationToken);
+
+        db.Follows.Remove(follow);
+
         await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return TypedResults.NoContent();
     }
