@@ -7,7 +7,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Blocks;
 
-public class GetBlockedUsersTests : BlockIntegrationTestBase
+public class GetBlockedUsersTests : IntegrationTestBase
 {
     public GetBlockedUsersTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -16,8 +16,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldReturnEmptyPage_WhenRequesterHasNoBlocks()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -38,14 +37,11 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldReturnRequesterBlocksWithCompleteDtoInDescendingOrder()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var userSeeder = CreateUserSeeder();
-        var blockSeeder = CreateBlockSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(2);
-        var reverseBlocker = await userSeeder.CreateUserAsync(
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(2);
+        var reverseBlocker = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.HenryUsername
         );
-        await blockSeeder.CreateUserBlockAsync(reverseBlocker, seed.Requester);
+        await Seeders.Blocks.CreateUserBlockAsync(reverseBlocker, seed.Requester);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -74,8 +70,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldReturnNextPage_WhenCursorIsProvided()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(5);
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(5);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -102,8 +97,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldUseDefaultPageSize()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(21);
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(21);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -124,8 +118,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldClampPageSizeToMinimum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(2);
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(2);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -145,8 +138,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldClampPageSizeToMaximum(int pageSize)
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(101);
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(101);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -164,8 +156,7 @@ public class GetBlockedUsersTests : BlockIntegrationTestBase
     public async Task GetBlockedUsers_ShouldTreatInvalidCursorAsFirstPage()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedBlockedUsersAsync(3);
+        var seed = await Scenarios.BlockRelationships.SeedBlockedUsersAsync(3);
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act

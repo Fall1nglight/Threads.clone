@@ -5,7 +5,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Blocks;
 
-public class BlockAuthorizationTests : BlockIntegrationTestBase
+public class BlockAuthorizationTests : IntegrationTestBase
 {
     private const string TargetId = "11111111-1111-1111-1111-111111111111";
 

@@ -6,7 +6,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Blocks;
 
-public class UnblockUserTests : BlockIntegrationTestBase
+public class UnblockUserTests : IntegrationTestBase
 {
     public UnblockUserTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -15,8 +15,8 @@ public class UnblockUserTests : BlockIntegrationTestBase
     public async Task UnblockUser_ShouldRemoveRequesterBlockOnly()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var blockSeeder = CreateBlockSeeder();
+        var userSeeder = Seeders.Users;
+        var blockSeeder = Seeders.Blocks;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
@@ -42,7 +42,7 @@ public class UnblockUserTests : BlockIntegrationTestBase
     public async Task UnblockUser_ShouldReturnNoContent_WhenBlockDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
+        var userSeeder = Seeders.Users;
         var requester = await userSeeder.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
@@ -61,8 +61,7 @@ public class UnblockUserTests : BlockIntegrationTestBase
     public async Task UnblockUser_ShouldReturnNoContent_WhenTargetDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -78,8 +77,7 @@ public class UnblockUserTests : BlockIntegrationTestBase
     public async Task UnblockUser_ShouldReturnBadRequest_WhenTargetIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);

@@ -6,7 +6,7 @@ using Threads.Api.IntegrationTests.Infrastructure;
 
 namespace Threads.Api.IntegrationTests.Blocks;
 
-public class BlockUserTests : BlockIntegrationTestBase
+public class BlockUserTests : IntegrationTestBase
 {
     public BlockUserTests(CustomWebApplicationFactory factory)
         : base(factory) { }
@@ -15,8 +15,7 @@ public class BlockUserTests : BlockIntegrationTestBase
     public async Task BlockUser_ShouldCreateBlockAndRemoveFollowsInBothDirections()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedFollowCleanupAsync();
+        var seed = await Scenarios.BlockRelationships.SeedFollowCleanupAsync();
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
         var before = DateTime.UtcNow;
 
@@ -40,8 +39,9 @@ public class BlockUserTests : BlockIntegrationTestBase
     public async Task BlockUser_ShouldRemainIdempotentAndRemoveFollows_WhenBlockAlreadyExists()
     {
         // Arrange
-        var scenarioSeeder = CreateBlockRelationshipScenarioSeeder();
-        var seed = await scenarioSeeder.SeedFollowCleanupAsync(blockAlreadyExists: true);
+        var seed = await Scenarios.BlockRelationships.SeedFollowCleanupAsync(
+            blockAlreadyExists: true
+        );
         var client = await CreateAuthenticatedClientAsync(seed.Requester);
 
         // Act
@@ -60,8 +60,7 @@ public class BlockUserTests : BlockIntegrationTestBase
     public async Task BlockUser_ShouldReturnBadRequest_WhenTargetIsRequester()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -78,8 +77,7 @@ public class BlockUserTests : BlockIntegrationTestBase
     public async Task BlockUser_ShouldReturnNotFound_WhenTargetDoesNotExist()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
@@ -96,8 +94,7 @@ public class BlockUserTests : BlockIntegrationTestBase
     public async Task BlockUser_ShouldReturnBadRequest_WhenTargetIdIsEmpty()
     {
         // Arrange
-        var userSeeder = CreateUserSeeder();
-        var requester = await userSeeder.CreateUserAsync(
+        var requester = await Seeders.Users.CreateUserAsync(
             username: IntegrationTestData.AliceUsername
         );
         var client = await CreateAuthenticatedClientAsync(requester);
