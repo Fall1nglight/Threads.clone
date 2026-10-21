@@ -78,6 +78,22 @@ a {
   transform: translateY(0);
 }
 
+.async-fade-enter-active,
+.async-fade-leave-active,
+.async-list-fade-enter-active {
+  transition: opacity var(--async-fade-duration) ease-out;
+}
+
+.async-fade-enter-from,
+.async-fade-leave-to,
+.async-list-fade-enter-from {
+  opacity: 0;
+}
+
+.async-list-fade-enter-active {
+  transition-delay: var(--async-fade-duration);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -86,5 +102,9 @@ a {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  .async-list-fade-enter-active {
+    transition-delay: 0ms;
   }
 }
