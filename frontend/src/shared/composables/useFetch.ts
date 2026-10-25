@@ -1,5 +1,4 @@
 import { onScopeDispose, ref, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue'
-import { sleep } from '@/shared/helpers/sleep.ts'
 
 export type FetchState<T> =
   | { readonly status: 'idle' | 'loading'; readonly item: null; readonly error: null }
@@ -64,7 +63,6 @@ export function useFetch<TItem>(sourceOrSources: unknown, fetcher: unknown): Fet
       }
 
       try {
-        await sleep(2000)
         if (isDisposed || session !== activeSession) return
 
         const item = await fetchItem(sourceValue)
