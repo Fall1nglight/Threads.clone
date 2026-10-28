@@ -16,6 +16,9 @@ const router = createRouter({
       to.name === 'home' ||
       to.name === 'post-detail' ||
       to.name === 'user-profile' ||
+      to.name === 'profile-settings' ||
+      to.name === 'profile-details' ||
+      to.name === 'change-password' ||
       to.name === 'user-followers' ||
       to.name === 'user-following' ||
       to.name === 'blocked-users'
@@ -53,6 +56,30 @@ const router = createRouter({
           path: 'users/:userId',
           name: 'user-profile',
           component: () => import('@/features/users/views/ProfileView.vue'),
+        },
+        {
+          path: 'settings',
+          component: () => import('@/features/settings/views/SettingsView.vue'),
+          meta: {
+            [metaOptions.requiresAuth]: true,
+          },
+          children: [
+            {
+              path: '',
+              name: 'profile-details',
+              component: () => import('@/features/settings/views/ProfileDetailsView.vue'),
+            },
+            {
+              path: 'profile',
+              name: 'profile-settings',
+              component: () => import('@/features/settings/views/ProfileSettingsView.vue'),
+            },
+            {
+              path: 'change-password',
+              name: 'change-password',
+              component: () => import('@/features/settings/views/ChangePasswordView.vue'),
+            },
+          ],
         },
         {
           path: 'users/:userId/followers',

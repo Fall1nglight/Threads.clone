@@ -1,18 +1,22 @@
-﻿import { getApi } from '@/shared/api/baseApi.ts'
+import { getApi, getPaginatedUrl } from '@/shared/api/baseApi.ts'
 import type { PagedRequest, PagedResponse } from '@/shared/types/paginationTypes.ts'
-import type { UserProfileDto } from '@/features/users/userTypes.ts'
-import { getPaginatedUrl } from '@/shared/api/baseApi.ts'
+import type { UpdateUserDto, UserProfileDto } from '@/features/users/userTypes.ts'
 
 const api = getApi('/users')
 
 const paths = {
   getUser: (userId: string) => `/${userId}`,
+  updateUser: (userId: string) => `/${userId}`,
   searchUsers: (username: string) => `/search?username=${username}`,
 } as const
 
 async function getUser(userId: string) {
   const response = await api.get<UserProfileDto>(paths.getUser(userId))
   return response.data
+}
+
+async function updateUser(userId: string, payload: UpdateUserDto): Promise<void> {
+  await api.put(paths.updateUser(userId), payload)
 }
 
 async function searchUsers(
@@ -24,4 +28,4 @@ async function searchUsers(
   return response.data
 }
 
-export default { getUser, searchUsers }
+export default { getUser, updateUser, searchUsers }

@@ -4,11 +4,8 @@ namespace Threads.Api.Common;
 
 public static class HttpResultFactory
 {
-    public static ProblemHttpResult Unauthorized(string? detail)
+    public static ProblemHttpResult Create(int statusCode, string? detail)
     {
-        return TypedResults.Problem(
-            statusCode: StatusCodes.Status401Unauthorized,
-            detail: detail ?? string.Empty
-        );
+        return TypedResults.Problem(statusCode: statusCode, detail: detail ?? "Unknown error");
     }
 }

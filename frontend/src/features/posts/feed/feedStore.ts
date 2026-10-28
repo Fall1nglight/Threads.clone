@@ -6,7 +6,6 @@ import feedApi from '@/features/posts/feed/feedApi.ts'
 import postApi from '@/features/posts/postApi.ts'
 import type { FeedKind } from '@/features/posts/feed/feedTypes.ts'
 import likeApi from '@/features/posts/likes/likeApi.ts'
-import { sleep } from '@/shared/helpers/sleep.ts'
 
 export type FeedStatus =
   | 'idle'
@@ -55,7 +54,6 @@ export const useFeedStore = defineStore('feed', () => {
     feed.error = null
 
     try {
-      await sleep(2000)
       const response = await feedApi.getFeed(kind, { pageSize: 5, cursor: null })
       feed.items = response.items
       feed.hasMore = response.hasMore
@@ -85,7 +83,6 @@ export const useFeedStore = defineStore('feed', () => {
     }
 
     try {
-      await sleep(2000)
       const response = await feedApi.getFeed(kind, pagedRequest)
       feed.items.push(...response.items)
       feed.hasMore = response.hasMore

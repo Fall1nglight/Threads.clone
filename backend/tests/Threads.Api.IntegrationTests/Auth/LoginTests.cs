@@ -92,7 +92,7 @@ public class LoginTests : AuthIntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
         var problem = await ReadJsonAsync<ProblemDetails>(response);
-        problem.Detail.Should().Be("The provided email is incorrect");
+        problem.Detail.Should().Be("The provided credentials are invalid.");
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class LoginTests : AuthIntegrationTestBase
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
         var problem = await ReadJsonAsync<ProblemDetails>(response);
-        problem.Detail.Should().Be("The provided password is incorrect");
+        problem.Detail.Should().Be("The provided credentials are invalid.");
         (await Db.RefreshTokens.CountAsync()).Should().Be(0);
     }
 

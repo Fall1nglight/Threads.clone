@@ -1,4 +1,4 @@
-﻿import type { FollowStatus } from '@/features/follow/followTypes.ts'
+import type { FollowStatus } from '@/features/follow/followTypes.ts'
 
 export type UserProfileDto = {
   id: string
@@ -10,4 +10,9 @@ export type UserProfileDto = {
   followerCount: number
   followingCount: number
   followStatusWithCurrentUser: FollowStatus | null
+}
+
+export type UpdateUserDto = {
+  isPrivate: boolean
+  bio: string | null
 }
