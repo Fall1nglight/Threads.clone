@@ -1,4 +1,4 @@
-﻿export type AuthResponseDto = {
+export type AuthResponseDto = {
   accessToken: string
   refreshToken: string
 }
@@ -14,4 +14,9 @@ export type SignupRequestDto = {
   password: string
   isPrivate: boolean
   bio?: string
+}
+
+export type ChangePasswordDto = {
+  currentPassword: string
+  newPassword: string
 }

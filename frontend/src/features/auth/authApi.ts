@@ -1,6 +1,7 @@
-﻿import { getApi } from '@/shared/api/baseApi.ts'
+import { getApi } from '@/shared/api/baseApi.ts'
 import type {
   AuthResponseDto,
+  ChangePasswordDto,
   LoginRequestDto,
   SignupRequestDto,
 } from '@/features/auth/authApiTypes.ts'
@@ -13,6 +14,7 @@ const paths = {
   renewToken: '/renew-token',
   logout: '/logout',
   logoutAll: '/logout-all',
+  changePassword: '/password/change',
 } as const
 
 async function login(payload: LoginRequestDto) {
@@ -40,4 +42,8 @@ async function logoutAll() {
   return response.data
 }
 
-export default { login, signup, renewToken, logout, logoutAll }
+async function changePassword(payload: ChangePasswordDto): Promise<void> {
+  await api.put(paths.changePassword, payload)
+}
+
+export default { login, signup, renewToken, logout, logoutAll, changePassword }
