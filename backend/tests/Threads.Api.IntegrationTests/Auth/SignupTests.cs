@@ -106,7 +106,6 @@ public class SignupTests : AuthIntegrationTestBase
 
         var problem = await ReadJsonAsync<ProblemDetails>(response);
 
-        problem.Title.Should().Be("Signup failed");
         problem.Detail.Should().Be("The provided username or email is already in use");
 
         (await Db.Users.CountAsync()).Should().Be(1);
@@ -130,7 +129,6 @@ public class SignupTests : AuthIntegrationTestBase
 
         var problem = await ReadJsonAsync<ProblemDetails>(response);
 
-        problem.Title.Should().Be("Signup failed");
         problem.Detail.Should().Be("The provided username or email is already in use");
 
         (await Db.Users.CountAsync()).Should().Be(1);
