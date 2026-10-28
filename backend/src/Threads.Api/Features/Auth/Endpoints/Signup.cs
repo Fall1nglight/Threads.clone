@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Threads.Api.Common;
 using Threads.Api.Common.Extensions;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Shared.Interfaces;
@@ -73,10 +74,13 @@ public class Signup : IEndpoint
 
         IdentityResult result = await userManager.CreateAsync(newUser, request.Password);
 
+        // there could be more scenarios when this result is not successfull:
+        // email/username already in use or server error
+        // handle server error differently as it is not caused by the client, so it should return HTTP 5xx
+
         if (!result.Succeeded)
-            return TypedResults.Problem(
+            return HttpResultFactory.Create(
                 statusCode: StatusCodes.Status400BadRequest,
-                title: "Signup failed",
                 detail: "The provided username or email is already in use"
             );
 

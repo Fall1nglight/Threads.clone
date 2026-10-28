@@ -39,6 +39,8 @@ public class Login : IEndpoint
         }
     }
 
+    private static readonly string ErrorMessage = "The provided credentials are invalid.";
+
     private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
         [FromBody] Request request,
         UserManager<User> userManager,
@@ -49,11 +51,11 @@ public class Login : IEndpoint
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
-            return HttpResultFactory.Unauthorized("The provided email is incorrect");
+            return HttpResultFactory.Create(StatusCodes.Status401Unauthorized, ErrorMessage);
 
         var isValidPassword = await userManager.CheckPasswordAsync(user, request.Password);
         if (!isValidPassword)
-            return HttpResultFactory.Unauthorized("The provided password is incorrect");
+            return HttpResultFactory.Create(StatusCodes.Status401Unauthorized, ErrorMessage);
 
         var accessToken = await jwtProvider.GenerateAsync(user);
         var refreshToken = await rtManager.GenerateAsync(user.Id, cancellationToken);
