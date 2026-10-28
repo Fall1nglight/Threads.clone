@@ -38,11 +38,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                         "integration-test-secret-key-with-enough-bytes-for-hmac",
                     ["RefreshTokenOptions:LifetimeInDays"] = "7",
                     ["RefreshTokenOptions:MaxActiveTokensPerUser"] = "5",
+                    ["EmailOptions:ResendApiToken"] = "integration-test-token",
+                    ["EmailOptions:From"] = "tests@example.test",
                 };
 
                 configBuilder.AddInMemoryCollection(jwtOptions);
             }
         );
+
+        // todo | replace IEmailSender implementation before adding related tests
 
         builder.ConfigureServices(services =>
         {
