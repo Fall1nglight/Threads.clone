@@ -3,7 +3,10 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Resend;
 using Serilog;
+using Threads.Api.Common.Email;
 using Threads.Api.Common.ExceptionHandlers;
 using Threads.Api.Data.Shared;
 using Threads.Api.Data.Users;
@@ -25,8 +28,34 @@ public static class DependencyInjection
         AddExceptionHandling(services);
         AddSerilogLogging(services, configuration);
         AddValidation(services);
+        AddEmailSender(services, configuration);
 
         return services;
+    }
+
+    private static void AddEmailSender(IServiceCollection services, IConfiguration configuration)
+    {
+        services
+            .AddOptions<EmailOptions>()
+            .Bind(configuration.GetSection(nameof(EmailOptions)))
+            .Validate(
+                options => !string.IsNullOrEmpty(options.ResendApiToken),
+                "ResendApiKey is required to start"
+            )
+            .ValidateOnStart();
+
+        services
+            .AddOptions<ResendClientOptions>()
+            .Configure<IOptions<EmailOptions>>(
+                (options, emailOptions) =>
+                {
+                    options.ApiToken = emailOptions.Value.ResendApiToken;
+                }
+            );
+
+        services.AddHttpClient<ResendClient>();
+        services.AddTransient<IResend, ResendClient>();
+        services.AddTransient<IEmailSender, EmailSender>();
     }
 
     private static void AddPersistence(IServiceCollection services, IConfiguration configuration)
@@ -60,7 +89,8 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
             })
             .AddRoles<IdentityRole<Guid>>()
-            .AddEntityFrameworkStores<AppDbContext>();
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
 
         services
             .AddAuthentication(options =>
