@@ -1,6 +1,7 @@
 using FluentAssertions;
 using FluentValidation.Results;
 using Threads.Api.Features.Auth.Endpoints;
+using Threads.Api.Features.Auth.Endpoints.EmailVerification;
 
 namespace Threads.Api.UnitTests.Auth.Validator;
 
@@ -145,5 +146,47 @@ public class AuthValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(x => x.PropertyName == nameof(request.RefreshToken));
+    }
+
+    [Theory]
+    [InlineData("AQID")]
+    [InlineData("AQIDBA==")]
+    public void VerifyEmailVerificationCodeValidator_ShouldPass_WhenCodeIsCanonicalBase64(
+        string code
+    )
+    {
+        // Arrange
+        var validator = new VerifyEmailVerificationCode.VerifyEmailVerificationCodeValidator();
+        var request = new VerifyEmailVerificationCode.Request(code);
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-token")]
+    [InlineData("AQIDBA")]
+    [InlineData("AQIDBA-_")]
+    [InlineData("AB==")]
+    [InlineData(" AQID ")]
+    public void VerifyEmailVerificationCodeValidator_ShouldFail_WhenCodeIsNotCanonicalBase64(
+        string? code
+    )
+    {
+        // Arrange
+        var validator = new VerifyEmailVerificationCode.VerifyEmailVerificationCodeValidator();
+        var request = new VerifyEmailVerificationCode.Request(code!);
+
+        // Act
+        ValidationResult result = validator.Validate(request);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(request.Code));
     }
 }

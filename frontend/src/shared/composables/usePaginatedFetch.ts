@@ -1,6 +1,5 @@
 import type { PagedRequest, PagedResponse } from '@/shared/types/paginationTypes.ts'
 import { watch, ref, computed, onScopeDispose, toValue, type ComputedRef, type Ref } from 'vue'
-import { sleep } from '@/shared/helpers/sleep.ts'
 import type { FetchSource, FetchSourceTuple } from '@/shared/composables/useFetch.ts'
 
 export type PaginatedFetchState<T> =
@@ -90,7 +89,6 @@ export function usePaginatedFetch<TItem>(
       }
 
       try {
-        await sleep(2000)
         if (isDisposed || session !== activeSession) return
 
         const response = await fetchPage(sourceValue)
@@ -138,7 +136,6 @@ export function usePaginatedFetch<TItem>(
     }
 
     try {
-      await sleep(2000)
       if (isDisposed || session !== activeSession) return
 
       const response = await fetchPage(sourceValue, newRequest)

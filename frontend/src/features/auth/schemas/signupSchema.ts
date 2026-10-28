@@ -1,36 +1,19 @@
-﻿import Joi from 'joi'
-import { emailSchema, passwordSchema } from '@/features/auth/schemas/authFieldSchemas.ts'
+import Joi from 'joi'
 import type { SignupRequestDto } from '@/features/auth/authApiTypes.ts'
+import {
+  bioSchema,
+  emailSchema,
+  isPrivateSchema,
+  passwordSchema,
+  usernameSchema,
+} from '@/features/users/schemas/userFieldSchemas.ts'
 
 const signupSchema = Joi.object<SignupRequestDto, true>({
-  username: Joi.string()
-    .min(3)
-    .max(30)
-    .pattern(/^[a-zA-Z0-9_.]+$/)
-    .required()
-    .messages({
-      'any.required': 'Username is required.',
-      'string.empty': 'Username is required.',
-      'string.min': 'Username must be at least {{#limit}} characters long.',
-      'string.max': 'Username must not exceed {{#limit}} characters.',
-      'string.pattern.base':
-        'Username may only contain letters, numbers, underscores, and periods.',
-    }),
-
+  username: usernameSchema,
   email: emailSchema,
-
-  password: passwordSchema.max(100).messages({
-    'string.max': 'Password must not exceed {{#limit}} characters.',
-  }),
-
-  isPrivate: Joi.boolean().required().messages({
-    'any.required': 'Privacy setting is required.',
-    'boolean.base': 'Privacy setting must be true or false.',
-  }),
-
-  bio: Joi.string().max(300).allow('').optional().messages({
-    'string.max': 'Bio must not exceed {{#limit}} characters.',
-  }),
+  password: passwordSchema,
+  isPrivate: isPrivateSchema,
+  bio: bioSchema,
 })
 
 export default signupSchema

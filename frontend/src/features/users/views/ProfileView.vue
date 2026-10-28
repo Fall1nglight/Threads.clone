@@ -184,6 +184,15 @@ watch(isLoggedIn, (isLoggedIn) => {
             >
               <RouterLink
                 v-if="isOwnProfile"
+                :to="{ name: 'profile-details' }"
+                class="profile-actions__item"
+                @click="closeProfileActionsMenu()"
+              >
+                Settings
+              </RouterLink>
+
+              <RouterLink
+                v-if="isOwnProfile"
                 :to="{ name: 'blocked-users' }"
                 aria-label="View blocked users"
                 class="profile-actions__item"
@@ -283,9 +292,11 @@ watch(isLoggedIn, (isLoggedIn) => {
   z-index: 10;
   inset-block-start: calc(100% + var(--space-1));
   inset-inline-end: 0;
+  display: grid;
   min-width: 12rem;
   max-width: calc(100vw - var(--space-8));
   padding: var(--space-1);
+  gap: var(--space-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
