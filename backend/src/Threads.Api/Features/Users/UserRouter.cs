@@ -12,6 +12,6 @@ public class UserRouter : IEndpointRouter
         anonGroup.MapEndpoint<GetUser>().MapEndpoint<SearchUsers>();
 
         var protectedGroup = builder.MapGroup("/users").RequireAuthorization();
-        protectedGroup.MapEndpoint<DeleteUser>();
+        protectedGroup.MapEndpoint<UpdateUser>().MapEndpoint<DeleteUser>();
     }
 }
