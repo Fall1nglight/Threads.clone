@@ -264,6 +264,10 @@ onBeforeUnmount(removeOpenMenuListeners)
   background: var(--color-border);
 }
 
+.post-card--detail .post-card__thread-line {
+  margin-block-end: calc((var(--space-2) + 1px) * -1);
+}
+
 .post-card__body {
   display: grid;
   min-width: 0;
