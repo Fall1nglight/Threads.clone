@@ -1,9 +1,15 @@
-﻿import { defineStore } from 'pinia'
+import { defineStore } from 'pinia'
 import { type Component, computed, markRaw, ref, shallowRef } from 'vue'
 import RedirectToLogin from '@/shared/modal/components/RedirectToLogin.vue'
-import AlertMessage from '@/shared/modal/components/AlertMessage.vue'
+import MessageModal, { type MessageType } from '@/shared/modal/components/MessageModal.vue'
 
 export type ModalStatus = 'hidden' | 'active'
+
+const MESSAGE_TITLES: Record<MessageType, string> = {
+  error: 'Error',
+  info: 'Info',
+  success: 'Success',
+}
 
 export const useModalStore = defineStore('modalStore', () => {
   const view = shallowRef<Component | null>(null)
@@ -18,20 +24,39 @@ export const useModalStore = defineStore('modalStore', () => {
   }
 
   function openLoginForm() {
-    view.value = markRaw(RedirectToLogin)
-    props.value = {}
-    status.value = 'active'
+    open(RedirectToLogin)
   }
 
-  function openAlertModal(message: string) {
-    view.value = markRaw(AlertMessage)
-    props.value = { message }
-    status.value = 'active'
+  function openMessageModal(message: string, type: MessageType, title = MESSAGE_TITLES[type]) {
+    open(MessageModal, { title, message, type })
+  }
+
+  function openErrorModal(message: string, title?: string) {
+    openMessageModal(message, 'error', title)
+  }
+
+  function openInfoModal(message: string, title?: string) {
+    openMessageModal(message, 'info', title)
+  }
+
+  function openSuccessModal(message: string, title?: string) {
+    openMessageModal(message, 'success', title)
   }
 
   function close() {
     status.value = 'hidden'
   }
 
-  return { view, props, status, isOpen, open, openLoginForm, openAlertModal, close }
+  return {
+    view,
+    props,
+    status,
+    isOpen,
+    open,
+    openLoginForm,
+    openErrorModal,
+    openInfoModal,
+    openSuccessModal,
+    close,
+  }
 })
