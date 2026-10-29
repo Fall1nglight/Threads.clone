@@ -42,7 +42,7 @@ async function handleDeletePostEvent(postId: string) {
     await router.replace({ name: 'home' })
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to delete post. Please try again later!')
+    modalStore.openErrorModal('Failed to delete post. Please try again later!')
   }
 }
 
@@ -107,7 +107,7 @@ async function performUpdateComment(validPayload: UpdateCommentDto) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     updateCommentError.value = true
-    modalStore.openAlertModal('Failed to update comment. Please try again later!')
+    modalStore.openErrorModal('Failed to update comment. Please try again later!')
   }
 }
 
@@ -127,7 +127,7 @@ async function handleDeleteCommentEvent(commentId: string) {
     _post.commentCount = Math.max(0, _post.commentCount - 1)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to delete comment. Please try again later!')
+    modalStore.openErrorModal('Failed to delete comment. Please try again later!')
   }
 }
 </script>
@@ -254,98 +254,23 @@ async function handleDeleteCommentEvent(commentId: string) {
 </template>
 
 <style scoped>
-.post-detail {
-  --thread-line-inline: calc(var(--space-4) + 1.3125rem);
-  --comment-indent: calc(var(--space-8) + var(--space-4));
-}
-
 .post-detail__thread-flow {
-  margin-block-start: var(--space-2);
+  margin-top: 0;
 }
-
 .post-detail__post {
-  border-block-end: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
 }
-
 .post-detail__thread-rail {
   position: relative;
 }
-
-.post-detail__thread-rail::before {
-  position: absolute;
-  z-index: 1;
-  inset-block-start: calc(var(--space-4) * -1 - 0.125rem);
-  inset-block-end: 0;
-  inset-inline-start: var(--thread-line-inline);
-  width: 0.125rem;
-  border-radius: var(--radius-full);
-  background: var(--color-border);
-  content: '';
-}
-
-.post-detail__thread-rail--without-comments :deep(.reply-composer__avatar-column::after) {
-  position: absolute;
-  z-index: 2;
-  inset-block-start: calc(1.375rem + 0.0625rem);
-  inset-inline-start: calc(var(--thread-line-inline) - var(--comment-indent) - var(--space-4));
-  width: 0.125rem;
-  height: calc(100% + var(--space-8));
-  background: var(--color-surface);
-  content: '';
-}
-
-.post-detail__reply-composer {
-  position: relative;
-  margin-inline-start: var(--comment-indent);
-}
-
-.post-detail__reply-composer :deep(.reply-composer__avatar-column) {
-  position: relative;
-}
-
-.post-detail__reply-composer :deep(.reply-composer__avatar-column::before) {
-  position: absolute;
-  inset-block-start: 1.375rem;
-  inset-inline-start: calc(var(--thread-line-inline) - var(--comment-indent) - var(--space-4));
-  width: calc(var(--comment-indent) + var(--space-4) - var(--thread-line-inline));
-  height: 0.125rem;
-  background: var(--color-border);
-  content: '';
-}
-
 .post-detail__comments {
-  margin-inline-start: var(--comment-indent);
+  margin-inline-start: var(--page-gutter);
+  border-inline-start: 2px solid var(--color-border);
 }
-
-.post-detail__comments :deep(.comment-card) {
-  position: relative;
+.post-detail__comments :deep(.comment-card:last-child) {
+  border-bottom: 0;
 }
-
-.post-detail__comments :deep(.comment-card::before) {
-  position: absolute;
-  inset-block-start: calc(var(--space-4) + 1.375rem);
-  inset-inline-start: calc(var(--thread-line-inline) - var(--comment-indent));
-  width: calc(var(--comment-indent) + var(--space-4) - var(--thread-line-inline));
-  height: 0.125rem;
-  background: var(--color-border);
-  content: '';
-}
-
-.post-detail__comments :deep(.comment-card:last-of-type::after) {
-  position: absolute;
-  z-index: 2;
-  inset-block: calc(var(--space-4) + 1.375rem + 0.0625rem) 0;
-  inset-inline-start: calc(var(--thread-line-inline) - var(--comment-indent));
-  width: 0.125rem;
-  background: var(--color-surface);
-  content: '';
-}
-
-.post-detail__comments :deep(.comment-card:last-of-type .comment-card__actions-panel) {
-  inset-block: auto calc(100% + var(--space-1));
-}
-
 .post-detail__comment-status {
-  margin-inline-start: var(--comment-indent);
+  padding-bottom: var(--space-6);
 }
 </style>

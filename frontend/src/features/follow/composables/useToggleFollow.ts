@@ -59,7 +59,7 @@ export function useToggleFollow() {
         previousStatus,
       }
     } catch {
-      modalStore.openAlertModal('Failed to update the follow status. Please try again later!')
+      modalStore.openErrorModal('Failed to update the follow status. Please try again later!')
     } finally {
       pendingFollowIds.delete(user.id)
     }

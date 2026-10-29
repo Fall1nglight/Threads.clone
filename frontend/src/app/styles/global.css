@@ -1,5 +1,6 @@
 html {
-  scroll-padding-top: var(--mobile-top-height);
+  scroll-padding-top: calc(var(--mobile-top-height) + 5rem);
+  scroll-padding-bottom: calc(var(--mobile-bottom-height) + 1rem);
 }
 
 body {
@@ -14,7 +15,9 @@ body {
 
 body,
 button,
-input {
+input,
+textarea,
+select {
   color: var(--color-text);
 }
 
@@ -45,7 +48,39 @@ a {
 }
 
 #app {
-  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+button,
+a,
+input,
+textarea {
+  touch-action: manipulation;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+input,
+textarea {
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+::selection {
+  background: var(--color-text);
+  color: var(--color-surface);
+}
+
+@media (min-width: 48rem) {
+  html {
+    scroll-padding-top: 5rem;
+  }
 }
 
 .sr-only {

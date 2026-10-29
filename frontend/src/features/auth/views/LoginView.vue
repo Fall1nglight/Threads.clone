@@ -55,6 +55,7 @@ async function performLogin(validPayload: LoginRequestDto) {
         v-model="loginForm.email"
         :error-message="loginValidationErrors.email"
         id="login-identity"
+        autocomplete="username"
         label="Email"
         placeholder="name@example.com"
         type="text"
@@ -65,6 +66,7 @@ async function performLogin(validPayload: LoginRequestDto) {
         v-model="loginForm.password"
         :error-message="loginValidationErrors.password"
         id="login-password"
+        autocomplete="current-password"
         label="Password"
         placeholder="Enter your password"
         type="password"
@@ -96,7 +98,8 @@ async function performLogin(validPayload: LoginRequestDto) {
 }
 
 .auth-form__submit {
-  justify-self: center;
+  width: 100%;
+  min-height: 3.25rem;
   margin-block-start: var(--space-2);
 }
 

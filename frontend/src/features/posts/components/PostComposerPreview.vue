@@ -42,7 +42,7 @@ async function performCreatePost(validPayload: CreatePostDto) {
     postForm.value.content = ''
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to create post. Please try again later!')
+    modalStore.openErrorModal('Failed to create post. Please try again later!')
   }
 }
 </script>
@@ -64,7 +64,8 @@ async function performCreatePost(validPayload: CreatePostDto) {
         :error-message="postValidationErrors.content"
         id="postComposer-input"
         label="Post content"
-        placeholder="Start a thread..."
+        placeholder="What’s new?"
+        variant="bare"
         visually-hidden-label
       />
 
@@ -86,8 +87,8 @@ async function performCreatePost(validPayload: CreatePostDto) {
 <style scoped>
 .composer-preview {
   display: flex;
-  min-height: 7rem;
-  padding: var(--space-8) var(--space-4);
+  min-height: 6rem;
+  padding: var(--space-6) var(--page-gutter);
   align-items: center;
   border-block-end: 1px solid var(--color-border);
 }
@@ -101,10 +102,16 @@ async function performCreatePost(validPayload: CreatePostDto) {
 }
 
 .composer-preview__avatar {
-  align-self: start;
+  align-self: center;
 }
 
 .composer-preview__submit {
-  align-self: end;
+  align-self: center;
+}
+.composer-preview :deep(textarea) {
+  min-height: 2.75rem;
+  max-height: 16rem;
+  field-sizing: content;
+  resize: vertical;
 }
 </style>

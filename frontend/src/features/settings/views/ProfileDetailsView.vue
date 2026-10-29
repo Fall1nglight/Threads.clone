@@ -42,8 +42,8 @@ const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
       class="profile-details__section"
     >
       <header class="profile-details__section-header">
-        <h2 id="profile-details-heading">Account details</h2>
-        <p>Basic information associated with your account.</p>
+        <h2 id="profile-details-heading">Profile details</h2>
+        <p>Basic information associated with your profile.</p>
       </header>
 
       <dl class="profile-details__details">
@@ -83,7 +83,7 @@ const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 <style scoped>
 .profile-details__section {
   display: grid;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-6) var(--page-gutter);
   gap: var(--space-6);
   border-block-end: 1px solid var(--color-border);
 }
@@ -130,6 +130,7 @@ const { formattedDate: formattedUpdatedAtUtc } = useDateFormatter(updatedAtUtc)
 
 .profile-details__detail dd {
   min-width: 0;
+  margin: 0;
   overflow-wrap: anywhere;
 }
 

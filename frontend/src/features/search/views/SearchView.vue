@@ -187,6 +187,11 @@ function getUserSummary(user: UserProfileDto): string {
         </BaseButton>
       </form>
 
+      <BaseEmptyMessage
+        v-if="searchState.status === 'idle'"
+        message="Find your people. Search for a username to start a conversation."
+      />
+
       <Transition name="async-fade" mode="out-in">
         <BaseLoader
           v-if="searchState.status === 'initial-loading'"
@@ -244,7 +249,7 @@ function getUserSummary(user: UserProfileDto): string {
 
 <style scoped>
 .search-view {
-  padding: var(--space-4);
+  padding: var(--space-6) var(--page-gutter);
 }
 
 .search-view__form {

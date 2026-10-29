@@ -145,6 +145,6 @@ function getUserSummary(user: FollowUserDto) {
 
 <style scoped>
 .follow-list {
-  padding: var(--space-4);
+  padding: var(--space-4) var(--page-gutter);
 }
 </style>

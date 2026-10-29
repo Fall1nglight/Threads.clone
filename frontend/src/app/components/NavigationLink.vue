@@ -11,7 +11,12 @@ defineProps<{
 </script>
 
 <template>
-  <RouterLink :aria-label="accessibleLabel ?? label" class="navigation-link" :to="to">
+  <RouterLink
+    :aria-label="accessibleLabel ?? label"
+    :title="label"
+    class="navigation-link"
+    :to="to"
+  >
     <span class="navigation-link__icon">
       <AppIcon :name="icon" />
       <slot name="badge" />
@@ -24,68 +29,62 @@ defineProps<{
 .navigation-link {
   position: relative;
   display: flex;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  width: 3.75rem;
+  min-height: 3.25rem;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-lg);
   color: var(--color-text-muted);
   transition:
     background-color var(--transition-fast),
-    color var(--transition-fast),
-    transform 90ms ease-out;
+    color var(--transition-fast);
 }
-
 .navigation-link:hover {
   background: var(--color-surface-subtle);
   color: var(--color-text);
 }
-
-.navigation-link:active {
-  transform: scale(0.96);
-}
-
 .navigation-link.router-link-exact-active {
   color: var(--color-text);
 }
-
-.navigation-link.router-link-exact-active::after {
-  position: absolute;
-  inset-block-end: 0;
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: var(--radius-full);
-  background: currentColor;
-  content: '';
+.navigation-link.router-link-exact-active :deep(.app-icon) {
+  stroke-width: 2.5;
 }
-
 .navigation-link__icon {
   position: relative;
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
 }
-
-.navigation-link__label {
-  display: none;
-  font-weight: var(--font-weight-semibold);
+.navigation-link__icon :deep(.app-icon) {
+  width: 1.75rem;
+  height: 1.75rem;
 }
-
-@media (min-width: 75rem) {
+.navigation-link__label {
+  position: absolute;
+  left: calc(100% + 0.5rem);
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-panel);
+  font-size: var(--font-size-support);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+@media (min-width: 48rem) {
+  .navigation-link:hover .navigation-link__label,
+  .navigation-link:focus-visible .navigation-link__label {
+    opacity: 1;
+  }
+}
+@media (max-width: 47.999rem) {
   .navigation-link {
     width: 100%;
-    justify-content: flex-start;
-    padding-inline: var(--space-4);
   }
-
-  .navigation-link.router-link-exact-active::after {
-    inset-block-end: auto;
-    inset-inline-start: 0;
-  }
-
   .navigation-link__label {
-    display: inline;
+    display: none;
   }
 }
 </style>

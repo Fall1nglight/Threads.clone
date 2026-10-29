@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/features/auth/stores/authStore'
 import BaseAvatar from '@/shared/components/BaseAvatar.vue'
 import BaseButton from '@/shared/components/BaseButton.vue'
 import BaseTextAreaField from '@/shared/components/BaseTextAreaField.vue'
@@ -17,6 +19,7 @@ const emit = defineEmits<{
   commentCreated: [comment: CommentDto]
 }>()
 
+const { loggedInUserInitials, loggedInUsername } = storeToRefs(useAuthStore())
 const modalStore = useModalStore()
 const { runOrShowLoginForm } = useLoginPrompt()
 const initialCommentForm: CreateCommentDto = { content: '' }
@@ -35,7 +38,7 @@ async function performCreateComment(validComment: CreateCommentDto) {
     commentForm.value.content = ''
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to create comment. Please try again later!')
+    modalStore.openErrorModal('Failed to create comment. Please try again later!')
   }
 }
 </script>
@@ -43,7 +46,10 @@ async function performCreateComment(validComment: CreateCommentDto) {
 <template>
   <section aria-label="Reply to this thread" class="reply-composer">
     <div class="reply-composer__avatar-column">
-      <BaseAvatar initials="SZ" label="Your profile avatar" />
+      <BaseAvatar
+        :initials="loggedInUserInitials ?? 'NA'"
+        :label="loggedInUsername ? `${loggedInUsername}'s avatar` : 'Your profile avatar'"
+      />
     </div>
 
     <form class="reply-composer__form" @submit.prevent="runOrShowLoginForm(submitComment)">
@@ -56,6 +62,7 @@ async function performCreateComment(validComment: CreateCommentDto) {
         id="replyComposer-input"
         label="Add a comment"
         placeholder="Reply to this thread..."
+        variant="bare"
         visually-hidden-label
       />
 
@@ -77,8 +84,9 @@ async function performCreateComment(validComment: CreateCommentDto) {
 <style scoped>
 .reply-composer {
   display: grid;
-  min-height: 10rem;
-  padding: var(--space-4) var(--space-4);
+  min-height: 8rem;
+  padding: var(--space-6) var(--page-gutter);
+  border-bottom: 1px solid var(--color-border);
   grid-template-columns: auto minmax(0, 1fr);
   align-content: center;
   gap: var(--space-3);
