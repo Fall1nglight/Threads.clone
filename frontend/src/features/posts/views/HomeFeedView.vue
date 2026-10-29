@@ -58,7 +58,7 @@ async function handleToggleLike(post: PostDto) {
     await feedStore.toggleLike(post)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal(
+    modalStore.openErrorModal(
       post.isLikedByCurrentUser
         ? 'Failed to unlike this post. Please try again later!'
         : 'Failed to like this post. Please try again later!',
@@ -71,7 +71,7 @@ async function handleDeletePost(postId: string) {
     await feedStore.deletePost(postId)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to delete post. Please try again later!')
+    modalStore.openErrorModal('Failed to delete post. Please try again later!')
   }
 }
 </script>

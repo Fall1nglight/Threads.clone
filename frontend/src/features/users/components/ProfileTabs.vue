@@ -1,8 +1,12 @@
 <template>
   <div aria-label="Profile sections" class="profile-tabs">
     <span aria-current="page" class="profile-tabs__item profile-tabs__item--active">Threads</span>
-    <span class="profile-tabs__item">Replies</span>
-    <span class="profile-tabs__item">Reposts</span>
+    <span class="profile-tabs__item" aria-disabled="true" title="Replies are not available yet"
+      >Replies</span
+    >
+    <span class="profile-tabs__item" aria-disabled="true" title="Reposts are not available yet"
+      >Reposts</span
+    >
   </div>
 </template>
 
@@ -30,7 +34,7 @@
 .profile-tabs__item--active::after {
   position: absolute;
   inset-block-end: 0;
-  inset-inline: var(--space-3);
+  inset-inline: 0;
   height: 0.125rem;
   background: var(--color-text);
   content: '';

@@ -81,7 +81,7 @@ const emit = defineEmits(['clicked'])
 }
 
 .base-button--secondary {
-  border-color: var(--color-control-border);
+  border-color: var(--color-button-border);
   background: var(--color-surface);
   color: var(--color-text);
 }
@@ -109,7 +109,7 @@ const emit = defineEmits(['clicked'])
 }
 
 .base-button:disabled {
-  border-color: var(--color-control-border);
+  border-color: var(--color-border);
   background: var(--color-disabled);
   color: var(--color-disabled-text);
   cursor: not-allowed;
@@ -127,7 +127,7 @@ const emit = defineEmits(['clicked'])
 
 .base-button--secondary.base-button--loading:disabled,
 .base-button--ghost.base-button--loading:disabled {
-  border-color: var(--color-control-border);
+  border-color: var(--color-button-border);
   background: var(--color-surface-subtle);
   color: var(--color-text-muted);
 }

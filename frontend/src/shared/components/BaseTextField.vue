@@ -84,10 +84,10 @@ withDefaults(
 
 .base-field__input {
   width: 100%;
-  min-height: var(--control-height);
+  min-height: 3.25rem;
   padding-inline: var(--space-4);
   border: 1px solid var(--color-control-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-raised);
   color: var(--color-text);
   font-size: var(--font-size-body);

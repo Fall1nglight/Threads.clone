@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { useModalStore } from '@/shared/modal/modalStore.ts'
+import { useAppStartupStore } from '@/app/stores/appStartupStore.ts'
 
 const metaOptions = {
   requiresAuth: 'requiresAuth',
@@ -150,12 +151,12 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
+  const startupStore = useAppStartupStore()
   const authStore = useAuthStore()
   const modalStore = useModalStore()
   const { isLoggedIn } = storeToRefs(authStore)
 
-  // this makes sure the auth-flow is completed
-  await authStore.ensureSessionReady()
+  await startupStore.ensureReady()
 
   if (to.meta[metaOptions.requiresAuth] === true && !isLoggedIn.value) {
     if (to.meta[metaOptions.showLoginPrompt] === true) {

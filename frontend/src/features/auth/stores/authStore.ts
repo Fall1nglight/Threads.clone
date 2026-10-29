@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function ensureSessionReady() {
     if (!initializationPromise.value) {
       initializationPromise.value = initializeCore().catch(() => {
-        modalStore.openAlertModal('Failed to restore session. Please login again!')
+        modalStore.openErrorModal('Failed to restore session. Please login again!')
       })
     }
 

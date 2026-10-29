@@ -46,50 +46,39 @@ const settingsNavigations = [
 <style scoped>
 .settings {
   display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
 }
-
 .settings__sidebar {
-  padding: var(--space-3);
-  border-inline-end: 1px solid var(--color-border);
+  padding: var(--space-3) var(--page-gutter);
+  border-bottom: 1px solid var(--color-border);
 }
-
 .settings__navigation {
-  display: grid;
-  gap: var(--space-1);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
-
 .settings__link {
   display: flex;
+  flex: 1 1 auto;
   min-height: var(--control-height);
   align-items: center;
+  justify-content: center;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
+  font-size: var(--font-size-support);
+  text-align: center;
 }
-
-.settings__link:hover,
-.settings__link--active {
+.settings__link:hover {
   background: var(--color-surface-subtle);
   color: var(--color-text);
 }
-
 .settings__link--active {
+  background: var(--color-action);
+  color: var(--color-action-contrast);
   font-weight: var(--font-weight-semibold);
 }
-
 .settings__content {
   min-width: 0;
-}
-
-@media (max-width: 35rem) {
-  .settings {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .settings__sidebar {
-    border-inline-end: 0;
-    border-block-end: 1px solid var(--color-border);
-  }
 }
 </style>

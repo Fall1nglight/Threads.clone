@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import NavigationLink from '@/app/components/NavigationLink.vue'
 import ActivityNavigationLink from '@/features/activity/components/ActivityNavigationLink.vue'
-import AppIcon from '@/app/components/AppIcon.vue'
-import BaseIconButton from '@/shared/components/BaseIconButton.vue'
+import CreateThreadButton from '@/app/components/CreateThreadButton.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
@@ -21,9 +20,7 @@ const loggedInUserPage = computed(() => ({
     <NavigationLink icon="home" label="Home" to="/" />
     <NavigationLink icon="search" label="Search" to="/search" />
 
-    <BaseIconButton disabled label="Create a thread — coming later">
-      <AppIcon name="plus" />
-    </BaseIconButton>
+    <CreateThreadButton />
 
     <ActivityNavigationLink />
     <NavigationLink v-if="isLoggedIn" icon="user" label="Profile" :to="loggedInUserPage" />

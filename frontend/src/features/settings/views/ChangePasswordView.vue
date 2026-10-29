@@ -37,9 +37,9 @@ async function performChangePassword(validPayload: ChangePasswordDto): Promise<v
       newPassword: '',
     }
 
-    modalStore.openAlertModal('Your password has been changed successfully.')
+    modalStore.openSuccessModal('Your password has been changed successfully.')
   } catch {
-    modalStore.openAlertModal('Failed to change your password. Please try again later!')
+    modalStore.openErrorModal('Failed to change your password. Please try again later!')
   }
 }
 </script>
@@ -88,7 +88,7 @@ async function performChangePassword(validPayload: ChangePasswordDto): Promise<v
 .change-password {
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-6) var(--page-gutter);
 }
 
 .change-password h2 {

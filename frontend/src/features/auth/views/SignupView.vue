@@ -128,7 +128,8 @@ async function performSignup(validPayload: SignupRequestDto) {
 }
 
 .auth-form__submit {
-  justify-self: center;
+  width: 100%;
+  min-height: 3.25rem;
   margin-block-start: var(--space-2);
 }
 

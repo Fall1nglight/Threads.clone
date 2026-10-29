@@ -268,9 +268,9 @@ onBeforeUnmount(() => {
 <style scoped>
 .activity-filters {
   display: flex;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--page-gutter);
   gap: var(--space-2);
-  overflow-x: auto;
+  flex-wrap: wrap;
   border-block-end: 1px solid var(--color-border);
   scrollbar-width: none;
 }
@@ -291,9 +291,9 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-control-border);
+  border: 1px solid var(--color-button-border);
   border-radius: var(--radius-full);
-  background: var(--color-surface-subtle);
+  background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
   font-weight: var(--font-weight-medium);
@@ -311,8 +311,8 @@ onBeforeUnmount(() => {
 }
 
 .activity-filters__trigger:hover {
-  background: var(--color-control-border);
-  color: var(--color-action-contrast);
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
 }
 
 .activity-filters__trigger--active {
@@ -337,7 +337,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
-  box-shadow: 0 var(--space-2) var(--space-6) rgb(0 0 0 / 18%);
+  box-shadow: var(--shadow-menu);
 }
 
 .activity-filters__option {

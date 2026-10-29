@@ -84,8 +84,8 @@ withDefaults(
   width: 100%;
   min-height: 6.25rem;
   padding: calc((var(--control-height) - 1.5rem - 2px) / 2) var(--space-4);
-  border: 1px solid rgb(255 255 255 / 50%);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-raised);
   color: var(--color-text);
   font-family: inherit;
@@ -104,7 +104,7 @@ withDefaults(
 }
 
 .base-field__input:focus-visible {
-  outline-color: rgb(255 255 255 / 90%);
+  outline-color: var(--color-focus);
 }
 
 .base-field--subtle .base-field__input {

@@ -230,8 +230,8 @@ onBeforeUnmount(removeOpenMenuListeners)
 <style scoped>
 .post-card {
   display: grid;
-  height: 12.5rem;
-  padding: var(--space-4);
+  min-height: 8rem;
+  padding: var(--space-4) var(--page-gutter);
   padding-block-end: var(--space-2);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
@@ -239,7 +239,7 @@ onBeforeUnmount(removeOpenMenuListeners)
 }
 
 .post-card--detail {
-  height: 15.625rem;
+  min-height: 10rem;
   padding-block: var(--space-6) var(--space-2);
 }
 
@@ -267,12 +267,12 @@ onBeforeUnmount(removeOpenMenuListeners)
 .post-card__body {
   display: grid;
   min-width: 0;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: start;
 }
 
 .post-card__header {
   display: flex;
-  min-height: 2.75rem;
+  min-height: 2rem;
   margin-block-start: calc(var(--space-1) * -1);
   align-items: center;
   justify-content: space-between;
@@ -307,9 +307,9 @@ onBeforeUnmount(removeOpenMenuListeners)
   padding: var(--space-1);
   gap: var(--space-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-raised);
-  box-shadow: 0 var(--space-2) var(--space-6) rgb(0 0 0 / 18%);
+  box-shadow: var(--shadow-menu);
 }
 
 .post-card__action-item {
@@ -346,7 +346,7 @@ onBeforeUnmount(removeOpenMenuListeners)
 
 .post-card__author {
   display: inline-flex;
-  min-height: var(--control-height);
+  min-height: 2rem;
   align-items: center;
   overflow: hidden;
   color: var(--color-text);
@@ -380,6 +380,7 @@ onBeforeUnmount(removeOpenMenuListeners)
 .post-card__footer {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -388,14 +389,13 @@ onBeforeUnmount(removeOpenMenuListeners)
   color: var(--color-text-muted);
   font-size: var(--font-size-support);
   text-align: end;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .post-card__content {
-  display: flex;
   min-height: 0;
   max-width: 65ch;
-  align-items: center;
+  padding-block: var(--space-1) var(--space-2);
   overflow-wrap: anywhere;
   line-height: 1.5;
   text-wrap: pretty;
@@ -409,7 +409,7 @@ onBeforeUnmount(removeOpenMenuListeners)
 .post-card__media-window {
   display: grid;
   min-height: 13rem;
-  padding: var(--space-4);
+  padding: var(--space-4) var(--page-gutter);
   align-content: space-between;
   gap: var(--space-6);
   overflow: hidden;

@@ -102,7 +102,7 @@ const isBusy = computed(() => props.isMarkingSeen || props.isUpdatingRequest)
 <style scoped>
 .activity-item {
   display: grid;
-  padding: var(--space-4);
+  padding: var(--space-4) var(--page-gutter);
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--space-3);

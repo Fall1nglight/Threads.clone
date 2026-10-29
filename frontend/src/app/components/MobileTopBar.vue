@@ -23,12 +23,15 @@ import AuthSessionMenu from '@/features/auth/components/AuthSessionMenu.vue'
   height: var(--mobile-top-height);
   padding-inline: var(--space-3);
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   border-block-end: 1px solid var(--color-border);
   background: var(--color-surface);
 }
 
 .mobile-top-bar__brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: grid;
   width: 2.75rem;
   height: 2.75rem;

@@ -38,6 +38,19 @@ function handleLikeButtonClick() {
 <template>
   <div aria-label="Thread actions" class="post-actions">
     <button
+      @click="runOrShowLoginForm(handleLikeButtonClick)"
+      :aria-label="likeButtonAriaLabel"
+      class="post-actions__button post-actions__button--like"
+      :class="{ 'post-actions__button--liked': isLikedByCurrentUser }"
+      :aria-pressed="isLikedByCurrentUser"
+      :disabled="disabled"
+      type="button"
+    >
+      <AppIcon :name="likeButtonIconName" />
+      <span>{{ likeCount }}</span>
+    </button>
+
+    <button
       @click="handleCommentButtonClick"
       :aria-label="commentButtonAriaLabel"
       class="post-actions__button"
@@ -46,17 +59,6 @@ function handleLikeButtonClick() {
     >
       <AppIcon name="reply" />
       <span>{{ commentCount }}</span>
-    </button>
-
-    <button
-      @click="runOrShowLoginForm(handleLikeButtonClick)"
-      :aria-label="likeButtonAriaLabel"
-      class="post-actions__button"
-      :disabled="disabled"
-      type="button"
-    >
-      <AppIcon :name="likeButtonIconName" />
-      <span>{{ likeCount }}</span>
     </button>
   </div>
 </template>
@@ -79,7 +81,7 @@ function handleLikeButtonClick() {
   gap: var(--space-1);
   border-radius: var(--radius-full);
   background: transparent;
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font-size: var(--font-size-support);
   cursor: pointer;
   transition:
@@ -104,5 +106,13 @@ function handleLikeButtonClick() {
 
 .post-actions__button--icon {
   margin-inline-start: auto;
+}
+.post-actions__button--liked,
+.post-actions__button--liked:hover:not(:disabled) {
+  color: var(--color-like);
+}
+.post-actions :deep(.app-icon) {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 </style>

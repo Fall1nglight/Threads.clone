@@ -35,7 +35,7 @@ async function handleUnblock(targetUserId: string) {
     _blockedUsers.items = _blockedUsers.items.filter((u) => u.id !== targetUserId)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to unblock user. Please try again later!')
+    modalStore.openErrorModal('Failed to unblock user. Please try again later!')
   }
 }
 </script>
@@ -100,6 +100,6 @@ async function handleUnblock(targetUserId: string) {
 
 <style scoped>
 .blocked-users-list {
-  padding: var(--space-4);
+  padding: var(--space-4) var(--page-gutter);
 }
 </style>

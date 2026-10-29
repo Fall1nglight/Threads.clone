@@ -32,7 +32,7 @@ export function useToggleLike() {
       post.isLikedByCurrentUser = nextLikeState
       post.likeCount = Math.max(0, post.likeCount + (nextLikeState ? 1 : -1))
     } catch (_err) {
-      modalStore.openAlertModal(
+      modalStore.openErrorModal(
         nextLikeState
           ? 'Failed to like this post. Please try again later!'
           : 'Failed to unlike this post. Please try again later!',

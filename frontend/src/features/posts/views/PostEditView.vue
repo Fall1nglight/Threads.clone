@@ -62,7 +62,7 @@ async function performUpdatePost(validPayload: UpdatePostDto): Promise<void> {
     await router.push(postPage.value)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to update post. Please try again later!')
+    modalStore.openErrorModal('Failed to update post. Please try again later!')
   }
 }
 </script>
