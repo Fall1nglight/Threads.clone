@@ -4,11 +4,14 @@ export type MessageType = 'error' | 'info' | 'success'
 
 <script setup lang="ts">
 import { computed, type CSSProperties } from 'vue'
+import BaseButton from '@/shared/components/BaseButton.vue'
 
 const props = defineProps<{
   title: string
   message: string
   type: MessageType
+  actionLabel?: string
+  onAction?: () => void
 }>()
 
 const styles: Record<MessageType, CSSProperties> = {
@@ -43,6 +46,10 @@ const ariaLive = computed(() => (props.type === 'error' ? 'assertive' : 'polite'
     <p class="message-modal__text">
       {{ message }}
     </p>
+
+    <BaseButton v-if="actionLabel && onAction" type="button" @clicked="onAction">
+      {{ actionLabel }}
+    </BaseButton>
   </section>
 </template>
 
