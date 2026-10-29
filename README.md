@@ -29,7 +29,21 @@ The repository contains the following applications and supporting projects:
 
 ## Screenshots
 
-<!-- Add screenshots here once the image files are included in the repository. -->
+| Home |
+|---|
+| ![Home page showing the main post feed](./screenshots/home_page.png) |
+
+| Post details | Profile details |
+|---|---|
+| ![Post details page showing a conversation](./screenshots/post_details_page.png) | ![Profile details page showing user information and posts](./screenshots/profile_details_page.png) |
+
+| Profile settings |
+|---|
+| ![Profile settings page](./screenshots/profile_settings_page.png) |
+
+| Activity |
+|---|
+| ![Activity page showing recent notifications](./screenshots/activity_page.png) |
 
 ---
 
