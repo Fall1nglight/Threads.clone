@@ -62,6 +62,7 @@ async function performCreatePost(validPayload: CreatePostDto) {
         @keydown.ctrl.enter.prevent="runOrShowLoginForm(submitPost)"
         :disabled="isCreatingPost"
         :error-message="postValidationErrors.content"
+        class="composer-preview__field"
         id="postComposer-input"
         label="Post content"
         placeholder="What’s new?"
@@ -108,9 +109,16 @@ async function performCreatePost(validPayload: CreatePostDto) {
 .composer-preview__submit {
   align-self: center;
 }
-.composer-preview :deep(textarea) {
+.composer-preview__field {
+  min-width: 0;
+}
+
+.composer-preview__field :deep(.base-field__input) {
   min-height: 2.75rem;
   max-height: 16rem;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
   field-sizing: content;
   resize: vertical;
 }
