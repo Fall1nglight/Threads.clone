@@ -52,7 +52,7 @@ defineProps<{
 }
 
 .page-header__title {
-  font-size: var(--font-size-title);
+  font-size: var(--font-size-body);
   font-weight: var(--font-weight-semibold);
   line-height: 1.2;
   text-align: center;
@@ -61,6 +61,7 @@ defineProps<{
 @media (min-width: 48rem) {
   .page-header {
     inset-block-start: 0;
+    min-height: 4rem;
     border-start-start-radius: var(--radius-xl);
     border-start-end-radius: var(--radius-xl);
   }

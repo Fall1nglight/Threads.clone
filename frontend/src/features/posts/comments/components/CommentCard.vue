@@ -253,13 +253,14 @@ watch(
 
 <style scoped>
 .comment-card {
-  --comment-content-offset: 0.75rem;
-  --comment-spacing: 2rem;
+  --comment-content-offset: 0.25rem;
+  --comment-spacing: 0;
 
   position: relative;
   display: grid;
-  height: 7.5rem;
-  padding: var(--space-4);
+  min-height: 7.5rem;
+  padding: var(--space-4) var(--page-gutter);
+  border-bottom: 1px solid var(--color-border);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
 }
@@ -286,7 +287,7 @@ watch(
 .comment-card__body {
   display: grid;
   min-width: 0;
-  grid-template-rows: auto minmax(0, 1fr);
+  align-content: start;
 }
 
 .comment-card__header {
@@ -309,12 +310,11 @@ watch(
 }
 
 .comment-card__actions {
-  position: absolute;
-  inset-block-start: calc(50% + var(--space-2));
-  inset-inline-end: var(--space-4);
+  position: relative;
+  margin-inline-start: auto;
   display: flex;
   flex: 0 0 auto;
-  transform: translateY(-50%);
+  transform: none;
 }
 
 .comment-card--editing .comment-card__actions {
@@ -407,12 +407,13 @@ watch(
   display: flex;
   min-height: 0;
   margin-block-start: var(--comment-content-offset);
-  align-items: center;
+  align-items: start;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
 .comment-card--has-actions:not(.comment-card--editing) .comment-card__content-row {
-  padding-inline-end: calc(var(--control-height) + var(--space-4));
+  padding-inline-end: 0;
 }
 
 .comment-card__editor {
@@ -450,7 +451,7 @@ watch(
   color: var(--color-text-muted);
   font-size: var(--font-size-support);
   text-align: end;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .comment-card__content {
@@ -490,7 +491,7 @@ watch(
   }
 
   .comment-card__updated-at {
-    display: none;
+    white-space: normal;
   }
 
   .comment-card__editor-form {

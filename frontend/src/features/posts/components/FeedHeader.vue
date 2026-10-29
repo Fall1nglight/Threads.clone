@@ -27,10 +27,12 @@ const options: FeedOptions[] = [
 
 <template>
   <header class="feed-header">
-    <h1>Home</h1>
+    <h1 class="sr-only">Home</h1>
 
-    <div aria-label="Feed views" class="feed-header__tabs">
-      <span
+    <div role="group" aria-label="Feed views" class="feed-header__tabs">
+      <button
+        type="button"
+        :aria-pressed="selectedFeed === option.value"
         v-for="option in options"
         :key="option.value"
         class="feed-header__tab"
@@ -38,7 +40,7 @@ const options: FeedOptions[] = [
         @click="runOrShowLoginForm(() => (selectedFeed = option.value))"
       >
         {{ option.label }}
-      </span>
+      </button>
     </div>
   </header>
 </template>
@@ -46,54 +48,57 @@ const options: FeedOptions[] = [
 <style scoped>
 .feed-header {
   position: sticky;
-  inset-block-start: var(--mobile-top-height);
+  top: var(--mobile-top-height);
   z-index: 10;
-  display: grid;
-  border-block-end: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
-
-h1 {
-  padding: var(--space-4);
-  font-size: var(--font-size-title);
-  line-height: 1.2;
-  text-align: center;
-}
-
 .feed-header__tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  border-radius: inherit;
 }
-
+.feed-header__tab:first-child {
+  border-start-start-radius: inherit;
+}
+.feed-header__tab:last-child {
+  border-start-end-radius: inherit;
+}
 .feed-header__tab {
   position: relative;
-  min-height: 2.75rem;
-  padding: var(--space-3);
+  min-height: 3.75rem;
+  padding: var(--space-4);
+  background: transparent;
   color: var(--color-text-muted);
-  font-weight: var(--font-weight-medium);
-  text-align: center;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
-
+.feed-header__tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+}
 .feed-header__tab--active {
   color: var(--color-text);
-  font-weight: var(--font-weight-semibold);
 }
-
 .feed-header__tab--active::after {
   position: absolute;
-  inset-block-end: 0;
-  inset-inline: var(--space-4);
-  height: 0.125rem;
+  bottom: -1px;
+  inset-inline: 0;
+  height: 2px;
   background: var(--color-text);
   content: '';
 }
-
 @media (min-width: 48rem) {
   .feed-header {
-    inset-block-start: 0;
+    top: 0;
     border-start-start-radius: var(--radius-xl);
     border-start-end-radius: var(--radius-xl);
+  }
+  .feed-header__tab {
+    min-height: 4rem;
   }
 }
 </style>

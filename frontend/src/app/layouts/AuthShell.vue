@@ -12,6 +12,7 @@ import AppLogo from '@/app/components/AppLogo.vue'
 
     <RouterView></RouterView>
     <slot />
+    <p class="auth-shell__footer">Threads clone · A place for conversations</p>
   </main>
 </template>
 
@@ -19,16 +20,24 @@ import AppLogo from '@/app/components/AppLogo.vue'
 .auth-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  min-height: 100vh;
-  padding: var(--space-8) var(--space-4);
-  place-content: center;
+  min-height: 100dvh;
+  padding: 4rem var(--space-4);
+  align-content: center;
   justify-items: center;
   gap: var(--space-8);
   background: var(--color-page);
 }
-
 .auth-shell__brand {
   display: grid;
   border-radius: var(--radius-full);
+}
+.auth-shell__brand :deep(.app-logo) {
+  width: 4rem;
+  height: 4rem;
+}
+.auth-shell__footer {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-micro);
+  text-align: center;
 }
 </style>

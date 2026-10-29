@@ -70,7 +70,7 @@ async function performUpdateUser(validPayload: UpdateUserDto): Promise<void> {
       params: { userId: loggedInUserId.value! },
     })
   } catch {
-    modalStore.openAlertModal('Failed to update your profile. Please try again later!')
+    modalStore.openErrorModal('Failed to update your profile. Please try again later!')
   }
 }
 </script>
@@ -162,7 +162,7 @@ async function performUpdateUser(validPayload: UpdateUserDto): Promise<void> {
 
 .profile-settings__section {
   display: grid;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-6) var(--page-gutter);
   gap: var(--space-6);
   border-block-end: 1px solid var(--color-border);
 }
@@ -187,7 +187,7 @@ async function performUpdateUser(validPayload: UpdateUserDto): Promise<void> {
 .profile-settings__privacy {
   display: flex;
   min-height: var(--control-height);
-  padding: var(--space-4);
+  padding: var(--page-gutter);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
@@ -266,7 +266,7 @@ async function performUpdateUser(validPayload: UpdateUserDto): Promise<void> {
 
 .profile-settings__actions {
   display: flex;
-  padding: var(--space-4);
+  padding: var(--page-gutter);
   justify-content: flex-end;
 }
 

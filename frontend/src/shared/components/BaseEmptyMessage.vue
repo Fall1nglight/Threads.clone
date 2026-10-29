@@ -10,16 +10,15 @@ defineProps<{
 
 <style scoped>
 .base-empty-message {
-  width: calc(100% - var(--space-8));
-  margin: var(--space-8) auto 0;
-  min-width: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-subtle);
+  display: grid;
+  min-height: 12rem;
+  margin: 0;
+  padding: var(--space-8) var(--page-gutter);
+  place-content: center;
   color: var(--color-text-muted);
   font-size: var(--font-size-support);
   line-height: 1.5;
+  text-align: center;
   overflow-wrap: anywhere;
 }
 </style>

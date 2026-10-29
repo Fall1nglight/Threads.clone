@@ -3,8 +3,7 @@ import { RouterLink } from 'vue-router'
 import AppLogo from '@/app/components/AppLogo.vue'
 import NavigationLink from '@/app/components/NavigationLink.vue'
 import ActivityNavigationLink from '@/features/activity/components/ActivityNavigationLink.vue'
-import AppIcon from '@/app/components/AppIcon.vue'
-import BaseIconButton from '@/shared/components/BaseIconButton.vue'
+import CreateThreadButton from '@/app/components/CreateThreadButton.vue'
 import { useAuthStore } from '@/features/auth/stores/authStore.ts'
 import AuthSessionMenu from '@/features/auth/components/AuthSessionMenu.vue'
 import { storeToRefs } from 'pinia'
@@ -29,9 +28,7 @@ const loggedInUserPage = computed(() => ({
       <NavigationLink icon="home" label="Home" to="/" />
       <NavigationLink icon="search" label="Search" to="/search" />
 
-      <BaseIconButton disabled label="Create a thread — coming later">
-        <AppIcon name="plus" />
-      </BaseIconButton>
+      <CreateThreadButton />
 
       <ActivityNavigationLink />
       <NavigationLink v-if="isLoggedIn" icon="user" label="Profile" :to="loggedInUserPage" />
@@ -50,47 +47,42 @@ const loggedInUserPage = computed(() => ({
   z-index: 20;
   display: none;
   width: var(--desktop-nav-width);
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-4) var(--space-2);
   align-items: center;
   justify-content: space-between;
-  border-inline-end: 1px solid var(--color-border);
   background: var(--color-page);
 }
-
 .desktop-navigation__brand {
   display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  transition: background-color var(--transition-fast);
+}
+.desktop-navigation__brand:hover {
+  background: var(--color-surface-subtle);
+}
+.desktop-navigation__brand :deep(.app-logo) {
   width: 2.75rem;
   height: 2.75rem;
-  place-items: center;
-  border-radius: var(--radius-full);
 }
-
 .desktop-navigation__links {
   display: grid;
   width: 100%;
   justify-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
-
+.desktop-navigation__links > :deep(button) {
+  width: 3.75rem;
+  height: 3.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+}
 @media (min-width: 48rem) {
   .desktop-navigation {
     display: flex;
     flex-direction: column;
-  }
-}
-
-@media (min-width: 75rem) {
-  .desktop-navigation {
-    width: 13rem;
-    align-items: stretch;
-  }
-
-  .desktop-navigation__brand {
-    margin-inline-start: var(--space-2);
-  }
-
-  .desktop-navigation__links {
-    justify-items: stretch;
   }
 }
 </style>

@@ -87,7 +87,7 @@ async function handleBlock() {
     await router.replace({ name: 'home' })
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    modalStore.openAlertModal('Failed to block user. Please try again later!')
+    modalStore.openErrorModal('Failed to block user. Please try again later!')
   }
 }
 
@@ -184,15 +184,6 @@ watch(isLoggedIn, (isLoggedIn) => {
             >
               <RouterLink
                 v-if="isOwnProfile"
-                :to="{ name: 'profile-details' }"
-                class="profile-actions__item"
-                @click="closeProfileActionsMenu()"
-              >
-                Settings
-              </RouterLink>
-
-              <RouterLink
-                v-if="isOwnProfile"
                 :to="{ name: 'blocked-users' }"
                 aria-label="View blocked users"
                 class="profile-actions__item"
@@ -214,6 +205,9 @@ watch(isLoggedIn, (isLoggedIn) => {
         </template>
       </ProfileHeader>
 
+      <RouterLink v-if="isOwnProfile" class="profile-edit-link" :to="{ name: 'profile-settings' }"
+        >Edit profile</RouterLink
+      >
       <ProfileTabs />
 
       <section aria-label="Profile threads">
@@ -278,6 +272,21 @@ watch(isLoggedIn, (isLoggedIn) => {
 </template>
 
 <style scoped>
+.profile-edit-link {
+  display: flex;
+  min-height: var(--control-height);
+  margin: 0 var(--page-gutter) var(--space-4);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-button-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+}
+.profile-edit-link:hover {
+  background: var(--color-surface-subtle);
+}
+
 .profile-view__error {
   display: flow-root;
 }
@@ -300,7 +309,7 @@ watch(isLoggedIn, (isLoggedIn) => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
-  box-shadow: 0 var(--space-2) var(--space-6) rgb(0 0 0 / 18%);
+  box-shadow: var(--shadow-menu);
 }
 
 .profile-actions__item {

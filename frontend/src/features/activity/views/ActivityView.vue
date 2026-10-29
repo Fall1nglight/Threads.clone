@@ -71,7 +71,7 @@ async function handleMarkAsSeen(notification: NotificationDto) {
       if (index >= 0) currentNotifications?.splice(index, 1)
     }
   } catch {
-    modalStore.openAlertModal('Failed to mark this notification as seen. Please try again later!')
+    modalStore.openErrorModal('Failed to mark this notification as seen. Please try again later!')
   } finally {
     setPending(markingSeenIds, notification.id, false)
   }
@@ -90,7 +90,7 @@ async function handleAcceptRequest(notification: NotificationDto) {
     await followApi.acceptIncomingFollowRequest(notification.triggeredByUser.id)
     notification.type = NotificationType.Followed
   } catch {
-    modalStore.openAlertModal('Failed to accept this follow request. Please try again later!')
+    modalStore.openErrorModal('Failed to accept this follow request. Please try again later!')
   } finally {
     setPending(updatingRequestIds, notification.id, false)
   }
@@ -115,7 +115,7 @@ async function handleRejectRequest(notification: NotificationDto) {
     const index = currentNotifications?.findIndex((item) => item.id === notification.id) ?? -1
     if (index >= 0) currentNotifications?.splice(index, 1)
   } catch {
-    modalStore.openAlertModal('Failed to reject this follow request. Please try again later!')
+    modalStore.openErrorModal('Failed to reject this follow request. Please try again later!')
   } finally {
     setPending(updatingRequestIds, notification.id, false)
   }

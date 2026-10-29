@@ -1,22 +1,30 @@
 :root {
   color-scheme: light;
 
-  --color-page: #f5f5f5;
+  --color-page: #fafafa;
   --color-surface: #ffffff;
-  --color-surface-subtle: #eeeeee;
-  --color-surface-raised: #fafafa;
+  --color-surface-subtle: #f0f0f0;
+  --color-surface-raised: #f7f7f7;
   --color-text: #101010;
-  --color-text-muted: #5f5f5f;
-  --color-border: #dedede;
-  --color-control-border: #6f6f6f;
+  --color-text-muted: #6f6f6f;
+  --color-border: #e5e5e5;
+  --color-control-border: #8a8a8a;
+  --color-button-border: #d8d8d8;
+  --color-like: #c62045;
+  --shadow-panel: 0 2px 8px rgb(0 0 0 / 3%);
+  --shadow-menu: 0 8px 32px rgb(0 0 0 / 12%);
   --color-action: #101010;
   --color-action-hover: #2d2d2d;
   --color-action-active: #444444;
   --color-action-contrast: #f7f7f7;
   --color-focus: #005fcc;
   --color-danger: #b42318;
-  --color-disabled: #d7d7d7;
-  --color-disabled-text: #555555;
+  --color-success: #198754;
+  --color-info-text: #ffffff;
+  --color-info-background: #343a40;
+  --color-info-border: #495057;
+  --color-disabled: #f4f4f4;
+  --color-disabled-text: #767676;
   --color-media-ink: #232323;
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -39,14 +47,15 @@
   --space-8: 2rem;
 
   --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
   --radius-xl: 1.5rem;
   --radius-full: 999rem;
 
   --control-height: 2.75rem;
   --app-content-width: 40rem;
-  --desktop-nav-width: 5.5rem;
+  --desktop-nav-width: 5rem;
+  --page-gutter: 1.5rem;
   --mobile-top-height: 3.5rem;
   --mobile-bottom-height: 4rem;
   --async-fade-duration: 150ms;
@@ -57,22 +66,36 @@
   :root {
     color-scheme: dark;
 
-    --color-page: #0a0a0a;
-    --color-surface: #151515;
-    --color-surface-subtle: #242424;
-    --color-surface-raised: #1d1d1d;
+    --color-page: #101010;
+    --color-surface: #181818;
+    --color-surface-subtle: #252525;
+    --color-surface-raised: #202020;
     --color-text: #f2f2f2;
-    --color-text-muted: #adadad;
-    --color-border: #3b3b3b;
+    --color-text-muted: #a0a0a0;
+    --color-border: #303030;
     --color-control-border: #858585;
+    --color-button-border: #424242;
+    --color-like: #ff6685;
+    --shadow-panel: 0 2px 8px rgb(0 0 0 / 12%);
+    --shadow-menu: 0 8px 32px rgb(0 0 0 / 32%);
     --color-action: #f2f2f2;
     --color-action-hover: #dcdcdc;
     --color-action-active: #c7c7c7;
     --color-action-contrast: #111111;
     --color-focus: #79adff;
     --color-danger: #ff8a80;
+    --color-success: #75b798;
+    --color-info-text: #ffffff;
+    --color-info-background: #343a40;
+    --color-info-border: #6c757d;
     --color-disabled: #3a3a3a;
     --color-disabled-text: #b8b8b8;
     --color-media-ink: #ececec;
+  }
+}
+
+@media (max-width: 47.999rem) {
+  :root {
+    --page-gutter: 1rem;
   }
 }
