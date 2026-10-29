@@ -173,10 +173,6 @@ watch(
           </time>
         </div>
 
-        <time v-if="formattedUpdatedAtUtc && !isEditing" class="comment-card__updated-at">
-          Updated {{ formattedUpdatedAtUtc }}
-        </time>
-
         <div
           v-if="showMoreOptions"
           ref="commentActionsMenu"
@@ -247,6 +243,10 @@ watch(
         </div>
         <p v-else class="comment-card__content">{{ content }}</p>
       </div>
+
+      <time v-if="formattedUpdatedAtUtc && !isEditing" class="comment-card__updated-at">
+        Updated {{ formattedUpdatedAtUtc }}
+      </time>
     </div>
   </article>
 </template>
@@ -260,7 +260,6 @@ watch(
   display: grid;
   min-height: 7.5rem;
   padding: var(--space-4) var(--page-gutter);
-  border-bottom: 1px solid var(--color-border);
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--space-3);
 }
@@ -287,7 +286,7 @@ watch(
 .comment-card__body {
   display: grid;
   min-width: 0;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .comment-card__header {
@@ -447,7 +446,8 @@ watch(
 }
 
 .comment-card__updated-at {
-  margin-inline-start: auto;
+  margin-block-start: var(--space-2);
+  justify-self: end;
   color: var(--color-text-muted);
   font-size: var(--font-size-support);
   text-align: end;
@@ -491,7 +491,7 @@ watch(
   }
 
   .comment-card__updated-at {
-    white-space: normal;
+    display: none;
   }
 
   .comment-card__editor-form {

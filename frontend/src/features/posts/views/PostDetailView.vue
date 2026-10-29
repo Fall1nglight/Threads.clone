@@ -176,15 +176,11 @@ async function handleDeleteCommentEvent(commentId: string) {
       />
 
       <div class="post-detail__thread-flow">
-        <div
-          :class="[
-            'post-detail__thread-rail',
-            { 'post-detail__thread-rail--without-comments': !comments?.length },
-          ]"
-        >
+        <div class="post-detail__thread-rail">
           <!-- Add post -->
           <ReplyComposerPreview
             class="post-detail__reply-composer"
+            :continue-thread="Boolean(comments?.length)"
             :post-id="post.id"
             @comment-created="handleCreateCommentEvent"
           />
@@ -193,6 +189,7 @@ async function handleDeleteCommentEvent(commentId: string) {
             <CommentCard
               v-for="comment in comments ?? []"
               :key="comment.id"
+              class="post-detail__comment"
               :validation-error-message="updateCommentValidationErrors.content"
               :is-submitting="isUpdatingComment"
               :id="comment.id"
@@ -255,6 +252,13 @@ async function handleDeleteCommentEvent(commentId: string) {
 
 <style scoped>
 .post-detail__thread-flow {
+  --thread-avatar-column-width: 2.75rem;
+  --thread-line-width: 0.125rem;
+  --thread-comment-indent: var(--space-8);
+  --thread-rail-offset: calc(
+    var(--page-gutter) + var(--thread-avatar-column-width) / 2 - var(--thread-comment-indent)
+  );
+
   margin-top: 0;
 }
 .post-detail__post {
@@ -264,11 +268,40 @@ async function handleDeleteCommentEvent(commentId: string) {
   position: relative;
 }
 .post-detail__comments {
-  margin-inline-start: var(--page-gutter);
-  border-inline-start: 2px solid var(--color-border);
+  position: relative;
+  margin-inline-start: var(--thread-comment-indent);
 }
-.post-detail__comments :deep(.comment-card:last-child) {
-  border-bottom: 0;
+.post-detail__comments::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--thread-rail-offset);
+  width: var(--thread-line-width);
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  content: '';
+  transform: translateX(-50%);
+}
+.post-detail__comment::before {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: calc(var(--space-4) + 1.25rem);
+  inset-inline-start: var(--thread-rail-offset);
+  width: calc(var(--page-gutter) - var(--thread-rail-offset));
+  height: var(--thread-line-width);
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  content: '';
+  transform: translateY(-50%);
+}
+.post-detail__comment:last-child::after {
+  position: absolute;
+  z-index: 1;
+  inset-block: calc(var(--space-4) + 1.25rem + 0.0625rem) 0;
+  inset-inline-start: var(--thread-rail-offset);
+  width: var(--thread-line-width);
+  background: var(--color-surface);
+  content: '';
+  transform: translateX(-50%);
 }
 .post-detail__comment-status {
   padding-bottom: var(--space-6);

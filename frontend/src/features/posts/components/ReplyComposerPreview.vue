@@ -11,8 +11,9 @@ import { usePayloadValidator } from '@/shared/composables/usePayloadValidator.ts
 import createCommentSchema from '@/features/posts/comments/schemas/createCommentSchema.ts'
 import { useModalStore } from '@/shared/modal/modalStore.ts'
 
-const { postId } = defineProps<{
+const { postId, continueThread = true } = defineProps<{
   postId: string
+  continueThread?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -44,7 +45,10 @@ async function performCreateComment(validComment: CreateCommentDto) {
 </script>
 
 <template>
-  <section aria-label="Reply to this thread" class="reply-composer">
+  <section
+    aria-label="Reply to this thread"
+    :class="['reply-composer', { 'reply-composer--thread-end': !continueThread }]"
+  >
     <div class="reply-composer__avatar-column">
       <BaseAvatar
         :initials="loggedInUserInitials ?? 'NA'"
@@ -86,18 +90,40 @@ async function performCreateComment(validComment: CreateCommentDto) {
   display: grid;
   min-height: 8rem;
   padding: var(--space-6) var(--page-gutter);
-  border-bottom: 1px solid var(--color-border);
   grid-template-columns: auto minmax(0, 1fr);
   align-content: center;
   gap: var(--space-3);
 }
 
 .reply-composer__avatar-column {
+  position: relative;
   display: flex;
   min-width: 2.75rem;
   align-items: center;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+.reply-composer__avatar-column::before {
+  position: absolute;
+  z-index: 0;
+  inset-block: calc((var(--space-6) + 1px) * -1);
+  inset-inline-start: 50%;
+  width: 0.125rem;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  content: '';
+  transform: translateX(-50%);
+}
+
+.reply-composer__avatar-column :deep(.base-avatar) {
+  position: relative;
+  z-index: 1;
+}
+
+.reply-composer--thread-end .reply-composer__avatar-column::before {
+  inset-block-end: auto;
+  height: calc(var(--space-6) + 1px + 1.25rem);
 }
 
 .reply-composer__form {
@@ -117,17 +143,20 @@ async function performCreateComment(validComment: CreateCommentDto) {
 .reply-composer__field :deep(.base-field__input) {
   height: 6.25rem;
   min-height: 6.25rem;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-raised);
 }
 
 .reply-composer__submit {
   grid-column: 2;
   grid-row: 1;
-  align-self: end;
+  align-self: center;
 }
 
 @media (max-width: 47.999rem) {
   .reply-composer__form {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .reply-composer__field {
@@ -137,7 +166,7 @@ async function performCreateComment(validComment: CreateCommentDto) {
 
   .reply-composer__submit {
     margin-block-start: var(--space-2);
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 2;
     align-self: center;
     justify-self: end;
