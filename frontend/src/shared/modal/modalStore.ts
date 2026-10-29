@@ -43,6 +43,16 @@ export const useModalStore = defineStore('modalStore', () => {
     openMessageModal(message, 'success', title)
   }
 
+  function openServiceUnavailableModal(onRetry: () => void) {
+    open(MessageModal, {
+      title: 'Error',
+      message: 'Service unavailable, please try again later.',
+      type: 'error',
+      actionLabel: 'Retry',
+      onAction: onRetry,
+    })
+  }
+
   function close() {
     status.value = 'hidden'
   }
@@ -57,6 +67,7 @@ export const useModalStore = defineStore('modalStore', () => {
     openErrorModal,
     openInfoModal,
     openSuccessModal,
+    openServiceUnavailableModal,
     close,
   }
 })
